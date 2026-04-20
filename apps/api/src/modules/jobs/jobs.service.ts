@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../db/db.module';
-import { isValidJobTransition } from 'orchestration';
+import { isValidJobTransition, JobStatus, JOB_TERMINAL_STATES } from 'orchestration';
 import type { Job } from '@prisma/client';
 
 @Injectable()
@@ -31,7 +31,7 @@ export class JobsService {
     return job as Job & { subtasks: unknown[] };
   }
 
-  async updateStatus(id: string, status: string, error?: string): Promise<Job> {
+  async updateStatus(id: string, status: JobStatus, error?: string): Promise<Job> {
     const job = await this.prisma.job.findUnique({ where: { id } });
     if (!job) throw new NotFoundException(`Job ${id} not found`);
     if (!isValidJobTransition(job.status, status)) {
@@ -41,10 +41,8 @@ export class JobsService {
       where: { id },
       data: {
         status,
-        error: error ?? null,
-        finishedAt: ['COMPLETED', 'PARTIALLY_COMPLETED', 'FAILED'].includes(status)
-          ? new Date()
-          : undefined,
+        ...(error !== undefined ? { error } : {}),
+        finishedAt: JOB_TERMINAL_STATES.includes(status) ? new Date() : undefined,
       },
     });
   }

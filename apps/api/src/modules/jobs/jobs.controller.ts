@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Query, Sse, ParseIntPipe, DefaultValuePipe, MessageEvent } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Query, Sse, ParseIntPipe, DefaultValuePipe, MessageEvent, BadRequestException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JobsService } from './jobs.service';
 import { SseService } from '../sse/sse.service';
@@ -13,8 +13,11 @@ export class JobsController {
 
   @Post()
   async create(@Body() body: unknown) {
-    const { prompt } = CreateJobSchema.parse(body);
-    return this.jobs.createJob(prompt);
+    const result = CreateJobSchema.safeParse(body);
+    if (!result.success) {
+      throw new BadRequestException(result.error.issues);
+    }
+    return this.jobs.createJob(result.data.prompt);
   }
 
   @Get()

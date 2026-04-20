@@ -12,6 +12,8 @@ const SUBTASK_TRANSITIONS: Transitions = {
   PUSHING: ['PR_CREATED', 'FAILED'],
 };
 
+export const JOB_TERMINAL_STATES: string[] = ['COMPLETED', 'PARTIALLY_COMPLETED', 'FAILED'];
+
 export function isValidJobTransition(from: string, to: string): boolean {
   return JOB_TRANSITIONS[from]?.includes(to) ?? false;
 }
