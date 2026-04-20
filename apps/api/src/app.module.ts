@@ -4,6 +4,7 @@ import { DbModule } from './modules/db/db.module';
 import { SseModule } from './modules/sse/sse.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { SubtasksModule } from './modules/subtasks/subtasks.module';
+import { DecomposerModule } from './modules/decomposer/decomposer.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { SubtasksModule } from './modules/subtasks/subtasks.module';
     SseModule,
     JobsModule,
     SubtasksModule,
+    DecomposerModule,
   ],
 })
 export class AppModule {}
