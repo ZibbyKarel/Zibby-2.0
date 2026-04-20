@@ -1,0 +1,19 @@
+{
+  "name": "runner",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/runner/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/runner",
+        "main": "libs/runner/src/index.ts",
+        "tsConfig": "libs/runner/tsconfig.lib.json",
+        "assets": ["libs/runner/*.md"]
+      }
+    }
+  }
+}

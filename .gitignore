@@ -1,1 +1,11 @@
 .worktrees/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.nx/cache/
+
+# Vite
+vite.config.*.timestamp*
