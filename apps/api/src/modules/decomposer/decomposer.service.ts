@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
-import type { Tool } from '@anthropic-ai/sdk/resources/messages';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import { DecomposerOutputSchema, type DecomposerOutput } from 'shared-types';
 import { buildDecomposerPrompt, EMIT_SUBTASKS_TOOL } from './decomposer.prompt';
 
@@ -19,7 +20,7 @@ export class DecomposerService {
     const response = await this.client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      tools: [EMIT_SUBTASKS_TOOL as unknown as Tool],
+      tools: [EMIT_SUBTASKS_TOOL],
       tool_choice: { type: 'tool', name: 'emit_subtasks' },
       messages: [{ role: 'user', content: buildDecomposerPrompt(prompt, repoContext) }],
     });
@@ -38,8 +39,6 @@ export class DecomposerService {
   }
 
   async getRepoContext(repoPath: string): Promise<string | undefined> {
-    const { readFile } = await import('fs/promises');
-    const { join } = await import('path');
     for (const candidate of ['CLAUDE.md', 'README.md', 'readme.md']) {
       try {
         const content = await readFile(join(repoPath, candidate), 'utf8');

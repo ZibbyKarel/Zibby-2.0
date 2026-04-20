@@ -31,14 +31,24 @@ jest.mock('@anthropic-ai/sdk', () => ({
 
 describe('DecomposerService', () => {
   let service: DecomposerService;
+  let originalApiKey: string | undefined;
 
   beforeEach(async () => {
+    originalApiKey = process.env['ANTHROPIC_API_KEY'];
     process.env['ANTHROPIC_API_KEY'] = 'test-key';
     const module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot()],
       providers: [DecomposerService],
     }).compile();
     service = module.get(DecomposerService);
+  });
+
+  afterEach(() => {
+    if (originalApiKey === undefined) {
+      delete process.env['ANTHROPIC_API_KEY'];
+    } else {
+      process.env['ANTHROPIC_API_KEY'] = originalApiKey;
+    }
   });
 
   it('decomposes a prompt into subtasks', async () => {

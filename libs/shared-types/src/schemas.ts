@@ -47,7 +47,7 @@ export const DecomposerSubtaskSchema = z.object({
   order: z.number().int().positive(),
   title: z.string().min(1),
   spec: z.string().min(1),
-  acceptanceCriteria: z.array(z.string().min(1)).min(1, 'At least one acceptance criterion required'),
+  acceptanceCriteria: z.array(z.string().min(1)).min(2, 'At least two acceptance criteria required'),
 });
 
 export const DecomposerOutputSchema = z.object({

@@ -1,3 +1,5 @@
+import type { Tool } from '@anthropic-ai/sdk/resources';
+
 export function buildDecomposerPrompt(userPrompt: string, repoContext: string | undefined): string {
   const context = repoContext
     ? `\n\n## Repository Context\n${repoContext}`
@@ -45,4 +47,4 @@ export const EMIT_SUBTASKS_TOOL = {
     },
     required: ['subtasks'],
   },
-} as const;
+} satisfies Tool;
