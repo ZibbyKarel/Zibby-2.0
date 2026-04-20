@@ -30,7 +30,7 @@ function JobDetail({ jobId, onBack }: { jobId: string; onBack: () => void }) {
         {j.error && <p className="text-red-600 text-xs">{j.error}</p>}
       </div>
       <div className="space-y-3">
-        {j.subtasks?.sort((a, b) => a.order - b.order).map((s) => (
+        {[...(j.subtasks ?? [])].sort((a, b) => a.order - b.order).map((s) => (
           <SubtaskCard key={s.id} subtask={s} />
         ))}
       </div>
@@ -78,28 +78,26 @@ function JobList({ onSelect }: { onSelect: (id: string) => void }) {
 }
 
 export default function App() {
-  const params = new URLSearchParams(window.location.search);
-  const jobId = params.get('jobId');
+  const [currentJobId, setCurrentJobId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('jobId'),
+  );
 
   const selectJob = (id: string) => {
     window.history.pushState({}, '', `?jobId=${id}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    setCurrentJobId(id);
   };
 
   const goBack = () => {
     window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    setCurrentJobId(null);
   };
 
-  const [tick, setTick] = useState(0);
   useEffect(() => {
-    const handler = () => setTick((n) => n + 1);
+    const handler = () =>
+      setCurrentJobId(new URLSearchParams(window.location.search).get('jobId'));
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
-
-  void tick;
-  const currentJobId = new URLSearchParams(window.location.search).get('jobId');
 
   return (
     <div className="min-h-screen bg-gray-50">

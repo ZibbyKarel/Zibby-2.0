@@ -27,10 +27,6 @@ export function useSubtaskStream(subtaskId: string | null) {
       }
     };
 
-    es.onerror = () => {
-      es.close();
-    };
-
     return () => es.close();
   }, [subtaskId]);
 
