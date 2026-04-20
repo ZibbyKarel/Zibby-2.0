@@ -30,6 +30,8 @@ export async function hasNewCommits(
     );
     return stdout.trim().length > 0;
   } catch {
+    // git command itself failed (bad baseBranch name, corrupted repo, missing ref)
+    // return false so orchestrator marks subtask as FAILED rather than crashing
     return false;
   }
 }

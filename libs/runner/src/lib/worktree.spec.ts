@@ -9,7 +9,7 @@ describe('worktree helpers', () => {
 
   beforeAll(() => {
     repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'orch-test-'));
-    execSync('git init', { cwd: repoPath });
+    execSync('git init -b main', { cwd: repoPath });
     execSync('git config user.email "test@test.com"', { cwd: repoPath });
     execSync('git config user.name "Test"', { cwd: repoPath });
     execSync('echo "init" > README.md && git add . && git commit -m "init"', {
