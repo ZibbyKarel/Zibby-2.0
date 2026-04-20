@@ -15,7 +15,7 @@ describe('AsyncQueue', () => {
 
     await Promise.all([1, 2, 3, 4].map((n) => queue.add(() => process(n))));
 
-    expect(Math.max(...maxConcurrent)).toBeLessThanOrEqual(2);
+    expect(Math.max(...maxConcurrent)).toBe(2);
   });
 
   it('resolves all items even if some throw', async () => {
