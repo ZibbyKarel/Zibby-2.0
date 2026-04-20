@@ -5,7 +5,7 @@
   "scripts": {
     "db:migrate": "DATABASE_URL=file:./dev.sqlite prisma migrate dev --schema=libs/db/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/db/prisma/schema.prisma",
-    "db:studio": "prisma studio --schema=libs/db/prisma/schema.prisma"
+    "db:studio": "DATABASE_URL=file:./dev.sqlite prisma studio --schema=libs/db/prisma/schema.prisma"
   },
   "private": true,
   "packageManager": "pnpm@10.33.0",
