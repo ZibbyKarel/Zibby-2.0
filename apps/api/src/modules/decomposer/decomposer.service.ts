@@ -17,8 +17,9 @@ export class DecomposerService {
   }
 
   async decompose(prompt: string, repoContext: string | undefined): Promise<DecomposerOutput> {
+    const model = this.config.get('CLAUDE_MODEL', 'claude-sonnet-4-6');
     const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 4096,
       tools: [EMIT_SUBTASKS_TOOL],
       tool_choice: { type: 'tool', name: 'emit_subtasks' },

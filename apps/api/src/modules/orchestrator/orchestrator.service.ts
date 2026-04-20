@@ -114,7 +114,9 @@ export class OrchestratorService implements OnApplicationBootstrap {
       await this.jobs.updateStatus(jobId, 'RUNNING').catch(() => void 0);
     }
 
-    await this.jobs.updateStatus(jobId, finalStatus).catch(() => void 0);
+    await this.jobs.updateStatus(jobId, finalStatus).catch((err) =>
+      this.logger.warn(`Could not set final status ${finalStatus} for job ${jobId}`, String(err)),
+    );
     this.sse.emit(`job:${jobId}`, { type: 'status', status: finalStatus });
   }
 }

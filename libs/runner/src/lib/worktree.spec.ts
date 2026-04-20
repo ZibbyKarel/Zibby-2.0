@@ -24,21 +24,21 @@ describe('worktree helpers', () => {
 
   it('addWorktree creates a worktree directory with a new branch', async () => {
     const worktreePath = path.join(repoPath, '.worktrees', 'test-wt');
-    await addWorktree(repoPath, worktreePath, 'task/test-wt');
+    await addWorktree(repoPath, worktreePath, 'task/test-wt', 'main');
     expect(fs.existsSync(worktreePath)).toBe(true);
     await removeWorktree(repoPath, worktreePath);
   });
 
   it('removeWorktree removes the directory and deregisters the worktree', async () => {
     const worktreePath = path.join(repoPath, '.worktrees', 'test-wt2');
-    await addWorktree(repoPath, worktreePath, 'task/test-wt2');
+    await addWorktree(repoPath, worktreePath, 'task/test-wt2', 'main');
     await removeWorktree(repoPath, worktreePath);
     expect(fs.existsSync(worktreePath)).toBe(false);
   });
 
   it('hasNewCommits returns false when no commits beyond base branch', async () => {
     const worktreePath = path.join(repoPath, '.worktrees', 'test-wt3');
-    await addWorktree(repoPath, worktreePath, 'task/test-wt3');
+    await addWorktree(repoPath, worktreePath, 'task/test-wt3', 'main');
     const result = await hasNewCommits(worktreePath, 'main');
     expect(result).toBe(false);
     await removeWorktree(repoPath, worktreePath);
@@ -46,7 +46,7 @@ describe('worktree helpers', () => {
 
   it('hasNewCommits returns true after committing in the worktree', async () => {
     const worktreePath = path.join(repoPath, '.worktrees', 'test-wt4');
-    await addWorktree(repoPath, worktreePath, 'task/test-wt4');
+    await addWorktree(repoPath, worktreePath, 'task/test-wt4', 'main');
     execSync('echo "change" >> README.md && git add . && git commit -m "add change"', {
       cwd: worktreePath,
       shell: '/bin/sh',

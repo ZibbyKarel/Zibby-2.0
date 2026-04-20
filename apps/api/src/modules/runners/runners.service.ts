@@ -64,7 +64,7 @@ export class RunnersService {
     }, LOG_FLUSH_INTERVAL_MS);
 
     try {
-      await addWorktree(repoPath, worktreePath, branch);
+      await addWorktree(repoPath, worktreePath, branch, baseBranch);
 
       const prompt = buildSubtaskPrompt({
         title: subtask.title,
