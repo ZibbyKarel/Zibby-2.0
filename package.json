@@ -28,6 +28,7 @@
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",
     "@swc/jest": "~0.2.38",
+    "@tailwindcss/vite": "^4.2.2",
     "@types/jest": "^30.0.0",
     "@types/node": "20.19.9",
     "@types/react": "^19.0.0",
