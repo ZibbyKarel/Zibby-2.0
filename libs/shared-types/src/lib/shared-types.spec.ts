@@ -22,6 +22,12 @@ describe('shared-types', () => {
     expect(SubtaskStatus.FAILED).toBe('FAILED');
   });
 
+  it('LogStream enum has expected values', () => {
+    expect(LogStream.STDOUT).toBe('STDOUT');
+    expect(LogStream.STDERR).toBe('STDERR');
+    expect(LogStream.SYSTEM).toBe('SYSTEM');
+  });
+
   it('CreateJobSchema validates a valid payload', () => {
     const result = CreateJobSchema.safeParse({ prompt: 'Add dark mode' });
     expect(result.success).toBe(true);
