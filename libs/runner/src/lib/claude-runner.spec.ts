@@ -1,4 +1,5 @@
 import { detectSuccess, parseStreamLine } from './claude-runner';
+import { buildSubtaskPrompt } from './prompt-builder';
 
 describe('detectSuccess', () => {
   it('returns true when exit code 0, result success, and has new commits', () => {
@@ -65,5 +66,38 @@ describe('parseStreamLine', () => {
     const line = JSON.stringify({ type: 'user', message: { content: [] } });
     const event = parseStreamLine(line);
     expect(event?.type).toBe('log');
+  });
+});
+
+describe('buildSubtaskPrompt', () => {
+  it('parses JSON acceptanceCriteria and numbers them', () => {
+    const prompt = buildSubtaskPrompt({
+      title: 'Add dark mode toggle',
+      spec: 'Create a toggle button in the header.',
+      acceptanceCriteria: JSON.stringify(['Toggle changes class', 'State persists']),
+    });
+    expect(prompt).toContain('Add dark mode toggle');
+    expect(prompt).toContain('1. Toggle changes class');
+    expect(prompt).toContain('2. State persists');
+  });
+
+  it('falls back to raw string when acceptanceCriteria is not valid JSON', () => {
+    const prompt = buildSubtaskPrompt({
+      title: 'Fix login bug',
+      spec: 'Users cannot log in.',
+      acceptanceCriteria: 'Login works correctly',
+    });
+    expect(prompt).toContain('Fix login bug');
+    expect(prompt).toContain('Login works correctly');
+  });
+
+  it('includes mandatory instructions about not pushing', () => {
+    const prompt = buildSubtaskPrompt({
+      title: 'Test',
+      spec: 'Test spec.',
+      acceptanceCriteria: JSON.stringify(['AC1']),
+    });
+    expect(prompt).toContain('Do NOT push');
+    expect(prompt).toContain('commit');
   });
 });

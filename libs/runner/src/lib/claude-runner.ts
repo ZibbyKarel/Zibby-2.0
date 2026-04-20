@@ -83,8 +83,9 @@ export async function* runSubtask(
           resultSummary = event.summary;
         } else if (event.type === 'result_error') {
           resultSubtype = 'error';
+        } else {
+          yield event;  // only yield non-terminal events inline
         }
-        yield event;
       } else {
         yield { type: 'log', stream: 'STDOUT', line: rawLine };
       }
@@ -103,9 +104,16 @@ export async function* runSubtask(
   if (stdoutBuf.trim()) yield { type: 'log', stream: 'STDOUT', line: stdoutBuf };
   if (stderrBuf.trim()) yield { type: 'log', stream: 'STDERR', line: stderrBuf };
 
-  const exitCode: number = await new Promise((resolve) => {
-    proc.on('close', resolve);
-  });
+  let exitCode: number;
+  try {
+    exitCode = await new Promise<number>((resolve, reject) => {
+      proc.on('close', resolve);
+      proc.on('error', reject);
+    });
+  } catch (err) {
+    yield { type: 'result_error', error: `Process error: ${err instanceof Error ? err.message : String(err)}` };
+    return;
+  }
 
   const commits = await hasNewCommits(worktreePath, config.baseBranch);
 
