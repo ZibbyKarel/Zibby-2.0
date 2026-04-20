@@ -1,14 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { exec, ExecOptions } from 'child_process';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
-function execAsync(cmd: string, opts: ExecOptions): Promise<{ stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    exec(cmd, opts, (err, stdout, stderr) => {
-      if (err) reject(err);
-      else resolve({ stdout: String(stdout ?? ''), stderr: String(stderr ?? '') });
-    });
-  });
-}
+const execFileAsync = promisify(execFile);
 
 interface CreatePrOptions {
   worktreePath: string;
@@ -21,20 +15,25 @@ interface CreatePrOptions {
 @Injectable()
 export class GitHubService {
   async pushBranch(worktreePath: string, branch: string): Promise<void> {
-    await execAsync(`git push -u origin ${branch}`, {
+    await execFileAsync('git', ['push', '-u', 'origin', branch], {
       cwd: worktreePath,
       env: { ...process.env },
     });
   }
 
   async createPr(opts: CreatePrOptions): Promise<string> {
-    const escapedTitle = opts.title.replace(/"/g, '\\"');
-    const escapedBody = opts.body.replace(/"/g, '\\"');
-    const { stdout } = await execAsync(
-      `gh pr create --base "${opts.baseBranch}" --head "${opts.branch}" --title "${escapedTitle}" --body "${escapedBody}"`,
+    const { stdout } = await execFileAsync(
+      'gh',
+      [
+        'pr', 'create',
+        '--base', opts.baseBranch,
+        '--head', opts.branch,
+        '--title', opts.title,
+        '--body', opts.body,
+      ],
       {
         cwd: opts.worktreePath,
-        env: { ...process.env, GITHUB_TOKEN: process.env['GITHUB_TOKEN'] ?? '' },
+        env: { ...process.env },
       },
     );
     return stdout.trim();

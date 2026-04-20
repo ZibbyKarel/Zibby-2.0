@@ -2,9 +2,9 @@ import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { GitHubService } from './github.service';
 
-const mockExec = jest.fn();
+const mockExecFile = jest.fn();
 jest.mock('child_process', () => ({
-  exec: (...args: unknown[]) => mockExec(...args),
+  execFile: (...args: unknown[]) => mockExecFile(...args),
 }));
 
 describe('GitHubService', () => {
@@ -24,19 +24,24 @@ describe('GitHubService', () => {
     delete process.env['GITHUB_TOKEN'];
   });
 
-  it('pushBranch calls git push with the branch name', async () => {
-    mockExec.mockImplementation((_cmd: string, _opts: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''));
+  it('pushBranch calls git push with the correct args and cwd', async () => {
+    mockExecFile.mockImplementation(
+      (_cmd: string, _args: string[], _opts: unknown, cb: (err: null, result: { stdout: string; stderr: string }) => void) =>
+        cb(null, { stdout: '', stderr: '' }),
+    );
     await service.pushBranch('/workspace/.worktrees/t1', 'task/feature-1');
-    expect(mockExec).toHaveBeenCalledWith(
-      expect.stringContaining('git push -u origin task/feature-1'),
-      expect.anything(),
+    expect(mockExecFile).toHaveBeenCalledWith(
+      'git',
+      ['push', '-u', 'origin', 'task/feature-1'],
+      expect.objectContaining({ cwd: '/workspace/.worktrees/t1' }),
       expect.any(Function),
     );
   });
 
   it('createPr returns the PR URL from gh output', async () => {
-    mockExec.mockImplementation((_cmd: string, _opts: unknown, cb: (err: null, stdout: string) => void) =>
-      cb(null, 'https://github.com/owner/repo/pull/42\n'),
+    mockExecFile.mockImplementation(
+      (_cmd: string, _args: string[], _opts: unknown, cb: (err: null, result: { stdout: string; stderr: string }) => void) =>
+        cb(null, { stdout: 'https://github.com/owner/repo/pull/42\n', stderr: '' }),
     );
     const url = await service.createPr({
       worktreePath: '/workspace/.worktrees/t1',
@@ -46,5 +51,11 @@ describe('GitHubService', () => {
       body: 'Spec: ...',
     });
     expect(url).toBe('https://github.com/owner/repo/pull/42');
+    expect(mockExecFile).toHaveBeenCalledWith(
+      'gh',
+      expect.arrayContaining(['pr', 'create', '--title', 'Add dark mode']),
+      expect.objectContaining({ cwd: '/workspace/.worktrees/t1' }),
+      expect.any(Function),
+    );
   });
 });
