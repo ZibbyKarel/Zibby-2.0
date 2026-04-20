@@ -20,7 +20,7 @@ const isProduction = process.env['NODE_ENV'] === 'production';
       ? [
           ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'web'),
-            exclude: ['/api/(.*)'],
+            exclude: ['/api/*path'],
           }),
         ]
       : []),

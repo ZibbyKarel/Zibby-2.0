@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   orchestrator:
     build:
@@ -15,10 +14,10 @@ services:
       - DATABASE_URL=file:/data/db.sqlite
       - REPO_PATH=/workspace
       - NODE_ENV=production
-      - GIT_AUTHOR_NAME=Agent Orchestrator
-      - GIT_AUTHOR_EMAIL=agent@localhost
-      - GIT_COMMITTER_NAME=Agent Orchestrator
-      - GIT_COMMITTER_EMAIL=agent@localhost
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Agent Orchestrator}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-agent@localhost}
+      - GIT_COMMITTER_NAME=${GIT_COMMITTER_NAME:-Agent Orchestrator}
+      - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-agent@localhost}
     restart: unless-stopped
 
 volumes:

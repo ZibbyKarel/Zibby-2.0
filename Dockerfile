@@ -24,9 +24,10 @@ WORKDIR /app
 # Install system dependencies
 RUN apk add --no-cache git bash curl
 
-# Install GitHub CLI (from Alpine edge community)
+# Install GitHub CLI (from Alpine edge community, with architecture-aware fallback)
 RUN apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community github-cli || \
-    (curl -fsSL https://github.com/cli/cli/releases/download/v2.45.0/gh_2.45.0_linux_amd64.tar.gz | \
+    (ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+     curl -fsSL "https://github.com/cli/cli/releases/download/v2.45.0/gh_2.45.0_linux_${ARCH}.tar.gz" | \
      tar -xz -C /usr/local --strip-components=1)
 
 # Install Claude Code CLI globally

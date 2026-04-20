@@ -1,0 +1,10 @@
+node_modules
+dist
+.nx
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.local
+.git
+.worktrees
