@@ -6,8 +6,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     await this.$connect();
     // Enable WAL mode for better concurrent read performance
-    await this.$executeRawUnsafe('PRAGMA journal_mode=WAL;');
-    await this.$executeRawUnsafe('PRAGMA foreign_keys=ON;');
+    await this.$queryRawUnsafe('PRAGMA journal_mode=WAL;');
+    await this.$queryRawUnsafe('PRAGMA foreign_keys=ON;');
   }
 
   async onModuleDestroy() {

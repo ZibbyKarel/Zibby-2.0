@@ -19,3 +19,6 @@ vite.config.*.timestamp*
 # Environment variables
 .env
 .env.local
+
+# Aperant data directory
+.auto-claude/
