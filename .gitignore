@@ -9,3 +9,13 @@ dist/
 
 # Vite
 vite.config.*.timestamp*
+
+# SQLite database
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment variables
+.env
+.env.local
