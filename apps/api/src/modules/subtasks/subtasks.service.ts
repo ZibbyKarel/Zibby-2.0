@@ -17,14 +17,16 @@ export class SubtasksService {
       title: s.title,
       spec: s.spec,
       acceptanceCriteria: JSON.stringify(s.acceptanceCriteria),
-      status: 'QUEUED',
+      status: 'QUEUED' as const,
     }));
-    // createMany doesn't return rows in SQLite; use individual creates
-    const created: Subtask[] = [];
-    for (const d of data) {
-      created.push(await this.prisma.subtask.create({ data: d }));
-    }
-    return created;
+    // createMany doesn't return rows in SQLite; use individual creates in a transaction
+    return this.prisma.$transaction(async (tx) => {
+      const created: Subtask[] = [];
+      for (const d of data) {
+        created.push(await tx.subtask.create({ data: d }));
+      }
+      return created;
+    });
   }
 
   async findOne(id: string): Promise<Subtask> {
@@ -63,6 +65,7 @@ export class SubtasksService {
     });
   }
 
+  // SSE emission on log append is handled by RunnersService to avoid circular dependencies
   async appendLog(subtaskId: string, stream: string, line: string): Promise<void> {
     await this.prisma.subtaskLog.create({
       data: { subtaskId, stream, line },
@@ -70,6 +73,10 @@ export class SubtasksService {
   }
 
   async getLogs(subtaskId: string, sinceTs?: string): Promise<SubtaskLog[]> {
+    if (sinceTs) {
+      const d = new Date(sinceTs);
+      if (isNaN(d.getTime())) throw new BadRequestException('Invalid since_ts value');
+    }
     return this.prisma.subtaskLog.findMany({
       where: {
         subtaskId,
