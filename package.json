@@ -2,7 +2,11 @@
   "name": "zibby-orchestration",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "db:migrate": "DATABASE_URL=file:./dev.sqlite prisma migrate dev --schema=libs/db/prisma/schema.prisma",
+    "db:generate": "prisma generate --schema=libs/db/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema=libs/db/prisma/schema.prisma"
+  },
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "devDependencies": {
@@ -42,7 +46,7 @@
     "nx": "^22.6.5",
     "postcss": "^8.5.10",
     "prettier": "~3.6.2",
-    "prisma": "^7.7.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.2.2",
     "ts-jest": "^29.4.0",
     "ts-node": "10.9.1",
@@ -61,7 +65,7 @@
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/serve-static": "^5.0.5",
-    "@prisma/client": "^7.7.0",
+    "@prisma/client": "^6.19.3",
     "@tanstack/react-query": "^5.99.2",
     "axios": "^1.6.0",
     "react": "^19.0.0",

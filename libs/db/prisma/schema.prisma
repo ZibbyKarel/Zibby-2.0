@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id         String    @id @default(cuid())
+  prompt     String
+  status     String    @default("PENDING")
+  error      String?
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+  subtasks   Subtask[]
+}
+
+model Subtask {
+  id                 String       @id @default(cuid())
+  jobId              String
+  order              Int
+  title              String
+  spec               String
+  acceptanceCriteria String       // JSON-encoded string[]
+  status             String       @default("QUEUED")
+  branch             String?
+  prUrl              String?
+  error              String?
+  createdAt          DateTime     @default(now())
+  startedAt          DateTime?
+  finishedAt         DateTime?
+  job                Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  logs               SubtaskLog[]
+
+  @@index([jobId])
+}
+
+model SubtaskLog {
+  id        String   @id @default(cuid())
+  subtaskId String
+  ts        DateTime @default(now())
+  stream    String   @default("STDOUT") // STDOUT | STDERR | SYSTEM
+  line      String
+  subtask   Subtask  @relation(fields: [subtaskId], references: [id], onDelete: Cascade)
+
+  @@index([subtaskId, ts])
+}
