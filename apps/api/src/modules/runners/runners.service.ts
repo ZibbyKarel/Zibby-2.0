@@ -36,12 +36,18 @@ export class RunnersService {
 
     let logBuffer: Array<{ stream: string; line: string }> = [];
     let flushTimer: ReturnType<typeof setInterval> | null = null;
+    let isFlushing = false;
 
     const flushLogs = async () => {
-      if (logBuffer.length === 0) return;
+      if (isFlushing || logBuffer.length === 0) return;
+      isFlushing = true;
       const batch = logBuffer.splice(0, logBuffer.length);
-      for (const entry of batch) {
-        await this.subtasks.appendLog(subtask.id, entry.stream, entry.line);
+      try {
+        for (const entry of batch) {
+          await this.subtasks.appendLog(subtask.id, entry.stream, entry.line);
+        }
+      } finally {
+        isFlushing = false;
       }
     };
 
@@ -84,13 +90,21 @@ export class RunnersService {
       await flushLogs();
 
       if (success) {
+        // Parse acceptance criteria before we push — fail early rather than after push
+        let criteria: string[];
+        try {
+          criteria = JSON.parse(subtask.acceptanceCriteria) as string[];
+        } catch {
+          throw new Error(`Invalid acceptanceCriteria JSON for subtask ${subtask.id}`);
+        }
+
         await this.subtasks.updateStatus(subtask.id, 'PUSHING', { branch });
         this.sse.emit(`subtask:${subtask.id}`, { type: 'status', status: 'PUSHING' });
 
         await this.github.pushBranch(worktreePath, branch);
 
         const prBody = `## ${subtask.title}\n\n${subtask.spec}\n\n### Acceptance Criteria\n${
-          (JSON.parse(subtask.acceptanceCriteria) as string[]).map((c, i) => `${i + 1}. ${c}`).join('\n')
+          criteria.map((c, i) => `${i + 1}. ${c}`).join('\n')
         }`;
         const prUrl = await this.github.createPr({
           worktreePath,

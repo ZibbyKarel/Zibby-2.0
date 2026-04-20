@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Query, Sse, ParseIntPipe, DefaultValuePipe, MessageEvent, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Query, Sse, ParseIntPipe, DefaultValuePipe, MessageEvent, BadRequestException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JobsService } from './jobs.service';
 import { SseService } from '../sse/sse.service';
@@ -7,6 +7,8 @@ import { CreateJobSchema } from 'shared-types';
 
 @Controller('jobs')
 export class JobsController {
+  private readonly logger = new Logger(JobsController.name);
+
   constructor(
     private readonly jobs: JobsService,
     private readonly sse: SseService,
@@ -22,7 +24,7 @@ export class JobsController {
     const job = await this.jobs.createJob(result.data.prompt);
     // Fire-and-forget; orchestrator runs async
     this.orchestrator.submitJob(job.id).catch((err) =>
-      console.error('submitJob error', err),
+      this.logger.error('submitJob failed', err),
     );
     return job;
   }

@@ -1,6 +1,10 @@
 import { Injectable, Logger, OnApplicationBootstrap, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { PrismaService } from '../db/db.module';
+
+const execFileAsync = promisify(execFile);
 import { JobsService } from '../jobs/jobs.service';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { DecomposerService } from '../decomposer/decomposer.service';
@@ -23,12 +27,21 @@ export class OrchestratorService implements OnApplicationBootstrap {
     private readonly runners: RunnersService,
     private readonly sse: SseService,
   ) {
-    const maxParallel = Number(this.config.get('MAX_PARALLEL_RUNNERS', '3'));
+    const maxParallel = Math.max(1, Number(this.config.get('MAX_PARALLEL_RUNNERS', '3')) || 3);
     this.queue = new AsyncQueue<void>(maxParallel);
   }
 
   async onApplicationBootstrap() {
-    const stale = await this.prisma.subtask.findMany({ where: { status: 'RUNNING' } });
+    // Clean up dangling git worktree entries from crashed runs
+    const repoPath = this.config.get('REPO_PATH', '/workspace');
+    try {
+      await execFileAsync('git', ['worktree', 'prune'], { cwd: repoPath });
+      this.logger.log('Git worktree prune complete');
+    } catch (err) {
+      this.logger.warn('Git worktree prune failed (non-fatal)', String(err));
+    }
+
+    const stale = await this.prisma.subtask.findMany({ where: { status: { in: ['RUNNING', 'PUSHING'] } } });
     for (const s of stale) {
       this.logger.warn(`Marking stale subtask ${s.id} as FAILED (orchestrator restart)`);
       await this.subtasks.updateStatus(s.id, 'FAILED', { error: 'Orchestrator restarted while task was running' }).catch(() => void 0);
@@ -93,8 +106,14 @@ export class OrchestratorService implements OnApplicationBootstrap {
 
     const allSuccess = all.every((s) => s.status === 'PR_CREATED');
     const anySuccess = all.some((s) => s.status === 'PR_CREATED');
-
     const finalStatus = allSuccess ? 'COMPLETED' : anySuccess ? 'PARTIALLY_COMPLETED' : 'FAILED';
+
+    // If the job is in DECOMPOSING (crashed before RUNNING was set), advance it first
+    const job = await this.jobs.findOne(jobId);
+    if (job.status === 'DECOMPOSING') {
+      await this.jobs.updateStatus(jobId, 'RUNNING').catch(() => void 0);
+    }
+
     await this.jobs.updateStatus(jobId, finalStatus).catch(() => void 0);
     this.sse.emit(`job:${jobId}`, { type: 'status', status: finalStatus });
   }
