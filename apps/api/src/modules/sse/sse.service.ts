@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, MessageEvent } from '@nestjs/common';
 import { Subject, Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
@@ -22,7 +22,7 @@ export class SseService {
       map((msg) => ({
         data: JSON.stringify(msg.data),
         type: msg.event ?? 'message',
-      } as MessageEvent)),
+      })),
     );
   }
 }
