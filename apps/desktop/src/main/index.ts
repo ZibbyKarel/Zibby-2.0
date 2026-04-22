@@ -18,9 +18,12 @@ import {
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
+  type RemoveStoryPayload,
+  type RemoveStoryResult,
 } from '@zibby/shared-types/ipc';
 import { refine, advise } from '@zibby/ai-refiner';
-import { startPlanRun, runSingleStory, type PlanRunHandle } from '@zibby/orchestrator';
+import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
+import { deleteStoryBranch } from '@zibby/github';
 import { loadPersisted, savePersisted } from './state-store';
 
 const execFileP = promisify(execFile);
@@ -198,6 +201,39 @@ function registerIpc(getWebContents: () => WebContents | null) {
   ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
     await savePersisted(app.getPath('userData'), state);
   });
+
+  ipcMain.handle(
+    IpcChannels.RemoveStory,
+    async (_event, payload: RemoveStoryPayload): Promise<RemoveStoryResult> => {
+      if (activeRuns.size > 0) {
+        throw new Error('Cannot remove a story while a run is active');
+      }
+
+      const state = await loadPersisted(app.getPath('userData'));
+      if (!state.plan) {
+        throw new Error('No plan is currently stored');
+      }
+
+      const story = state.plan.stories[payload.storyIndex];
+      if (!story) {
+        throw new Error(`Story ${payload.storyIndex} not found in plan`);
+      }
+
+      const updatedPlan = removeStoryFromPlan(state.plan, payload.storyIndex);
+
+      let branchDeletionWarning: string | undefined;
+      if (state.folderPath) {
+        const slug = slugify(`${payload.storyIndex + 1}-${story.title}`);
+        const branch = `zibby/${slug}`;
+        const result = await deleteStoryBranch({ repoPath: state.folderPath, branch });
+        branchDeletionWarning = result.warning;
+      }
+
+      await savePersisted(app.getPath('userData'), { ...state, plan: updatedPlan });
+
+      return { plan: updatedPlan, ...(branchDeletionWarning !== undefined ? { branchDeletionWarning } : {}) };
+    }
+  );
 }
 
 let mainWindow: BrowserWindow | null = null;
