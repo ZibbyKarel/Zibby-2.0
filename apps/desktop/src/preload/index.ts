@@ -11,6 +11,8 @@ import {
   type RunStartRequest,
   type RunStartResult,
   type RunEvent,
+  type PersistedState,
+  type LoadedAppState,
 } from '@zibby/shared-types/ipc';
 
 const api: IpcApi = {
@@ -30,6 +32,8 @@ const api: IpcApi = {
       ipcRenderer.removeListener(IpcEvents.RunEvent, listener);
     };
   },
+  loadState: (): Promise<LoadedAppState> => ipcRenderer.invoke(IpcChannels.LoadState),
+  saveState: (state: PersistedState): Promise<void> => ipcRenderer.invoke(IpcChannels.SaveState, state),
 };
 
 contextBridge.exposeInMainWorld('zibby', api);

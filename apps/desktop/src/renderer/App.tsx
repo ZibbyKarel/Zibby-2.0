@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   PickFolderResult,
   RefinedPlan,
@@ -35,6 +35,38 @@ export default function App() {
 
   const [advising, setAdvising] = useState(false);
   const [review, setReview] = useState<AdvisorReview | null>(null);
+  const [loadedState, setLoadedState] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const restored = await window.zibby.loadState();
+      if (cancelled) return;
+      if (restored.folder && restored.folder.kind === 'selected') setFolder(restored.folder);
+      setBrief(restored.brief);
+      setPlan(restored.plan);
+      setLoadedState(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadedState) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void window.zibby.saveState({
+        folderPath: folder?.path,
+        brief: brief || undefined,
+        plan: plan ?? undefined,
+      });
+    }, 500);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [folder, brief, plan, loadedState]);
 
   const updateStory = (index: number, patch: Partial<Story>) =>
     setPlan((cur) =>

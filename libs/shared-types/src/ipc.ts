@@ -4,6 +4,8 @@ export const IpcChannels = {
   Advise: 'zibby:advise',
   StartRun: 'zibby:startRun',
   CancelRun: 'zibby:cancelRun',
+  LoadState: 'zibby:loadState',
+  SaveState: 'zibby:saveState',
 } as const;
 
 export const IpcEvents = {
@@ -85,6 +87,18 @@ export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'pr'; url: string; branch: string }
   | { runId: string; kind: 'run-done'; success: boolean };
 
+export type PersistedState = {
+  folderPath?: string;
+  brief?: string;
+  plan?: RefinedPlan;
+};
+
+export type LoadedAppState = {
+  folder: PickFolderResult | null;
+  brief: string;
+  plan: RefinedPlan | null;
+};
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -93,4 +107,6 @@ export type IpcApi = {
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   cancelRun: (runId: string) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
+  loadState: () => Promise<LoadedAppState>;
+  saveState: (state: PersistedState) => Promise<void>;
 };

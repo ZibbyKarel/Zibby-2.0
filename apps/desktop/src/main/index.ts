@@ -14,9 +14,12 @@ import {
   type RunStartRequest,
   type RunStartResult,
   type RunEvent,
+  type PersistedState,
+  type LoadedAppState,
 } from '@zibby/shared-types/ipc';
 import { refine, advise } from '@zibby/ai-refiner';
 import { startPlanRun, type PlanRunHandle } from '@zibby/orchestrator';
+import { loadPersisted, savePersisted } from './state-store';
 
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
@@ -135,6 +138,26 @@ function registerIpc(getWebContents: () => WebContents | null) {
 
   ipcMain.handle(IpcChannels.CancelRun, async (_event, runId: string): Promise<void> => {
     activeRuns.get(runId)?.cancel();
+  });
+
+  ipcMain.handle(IpcChannels.LoadState, async (): Promise<LoadedAppState> => {
+    const state = await loadPersisted(app.getPath('userData'));
+    let folder: PickFolderResult | null = null;
+    if (state.folderPath) {
+      try {
+        await access(path.join(state.folderPath, '.git'));
+        const gitRepo = await isGitRepo(state.folderPath);
+        const origin = gitRepo ? await hasGitOrigin(state.folderPath) : false;
+        folder = { kind: 'selected', path: state.folderPath, isGitRepo: gitRepo, hasOrigin: origin };
+      } catch {
+        folder = null;
+      }
+    }
+    return { folder, brief: state.brief ?? '', plan: state.plan ?? null };
+  });
+
+  ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
+    await savePersisted(app.getPath('userData'), state);
   });
 }
 
