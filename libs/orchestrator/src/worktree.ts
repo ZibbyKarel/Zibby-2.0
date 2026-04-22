@@ -77,14 +77,42 @@ export type WorktreeHandle = {
   cleanup: () => Promise<void>;
 };
 
+async function refExists(repoPath: string, ref: string): Promise<boolean> {
+  try {
+    await execFileP('git', ['rev-parse', '--verify', '--quiet', ref], { cwd: repoPath, ...OPTS });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function nextFreeName(repoPath: string, baseSlug: string): Promise<{ slug: string; branch: string; worktreePath: string }> {
+  let suffix = 0;
+  while (true) {
+    const slug = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
+    const branch = `zibby/${slug}`;
+    const worktreePath = path.join(repoPath, '.worktrees', slug);
+    const [branchTaken, pathTaken] = await Promise.all([
+      refExists(repoPath, `refs/heads/${branch}`),
+      exists(worktreePath),
+    ]);
+    if (!branchTaken && !pathTaken) return { slug, branch, worktreePath };
+    suffix++;
+    if (suffix > 50) throw new Error(`too many collisions for slug ${baseSlug}`);
+  }
+}
+
 export async function createWorktree(args: {
   repoPath: string;
   slug: string;
   baseBranch: string;
   onInfo?: (msg: string) => void;
 }): Promise<WorktreeHandle> {
-  const worktreePath = path.join(args.repoPath, '.worktrees', args.slug);
-  const branch = `zibby/${args.slug}`;
+  const resolved = await nextFreeName(args.repoPath, args.slug);
+  const { branch, worktreePath } = resolved;
+  if (resolved.slug !== args.slug) {
+    args.onInfo?.(`branch zibby/${args.slug} already existed, using ${branch}`);
+  }
 
   try {
     await execFileP(

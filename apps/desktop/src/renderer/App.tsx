@@ -83,7 +83,7 @@ export default function App() {
         const next: StoryRuntime = { ...cur };
         if (event.kind === 'status') next.status = event.status;
         else if (event.kind === 'log')
-          next.logs = [...cur.logs, { stream: event.stream, line: event.line, ts: Date.now() }].slice(-200);
+          next.logs = [...cur.logs, { stream: event.stream, line: event.line, ts: Date.now() }].slice(-2000);
         else if (event.kind === 'pr') {
           next.prUrl = event.url;
           next.branch = event.branch;
@@ -146,7 +146,12 @@ export default function App() {
   };
 
   const running = runId !== null;
-  const canRun = plan !== null && folder?.isGitRepo === true && folder?.hasOrigin === true && !running;
+  const canRun =
+    plan !== null &&
+    folder?.isGitRepo === true &&
+    folder?.hasOrigin === true &&
+    !running &&
+    !advising;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
@@ -524,20 +529,33 @@ function StoryCard({
 }
 
 function LogTail({ logs }: { logs: StoryRuntime['logs'] }) {
-  const tail = useMemo(() => logs.slice(-12), [logs]);
+  const [expanded, setExpanded] = useState(false);
+  const visible = useMemo(() => (expanded ? logs : logs.slice(-12)), [logs, expanded]);
   return (
-    <pre className="text-[11px] leading-tight font-mono bg-neutral-950/60 border border-neutral-800 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
-      {tail.map((l, i) => (
-        <div
-          key={i}
-          className={
-            l.stream === 'stderr' ? 'text-rose-300' : l.stream === 'info' ? 'text-sky-300' : 'text-neutral-300'
-          }
+    <div className="space-y-1">
+      <pre
+        className={`text-[11px] leading-tight font-mono bg-neutral-950/60 border border-neutral-800 rounded p-2 overflow-y-auto whitespace-pre-wrap break-words ${expanded ? 'max-h-[32rem]' : 'max-h-48'}`}
+      >
+        {visible.map((l, i) => (
+          <div
+            key={i}
+            className={
+              l.stream === 'stderr' ? 'text-rose-300' : l.stream === 'info' ? 'text-sky-300' : 'text-neutral-300'
+            }
+          >
+            {l.line}
+          </div>
+        ))}
+      </pre>
+      {logs.length > 12 && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="text-xs text-neutral-500 hover:text-neutral-300"
         >
-          {l.line}
-        </div>
-      ))}
-    </pre>
+          {expanded ? 'Collapse log' : `Show full log (${logs.length} lines)`}
+        </button>
+      )}
+    </div>
   );
 }
 
