@@ -78,7 +78,7 @@ export async function executeStory(args: {
     onEvent({ kind: 'log', stream: 'info', line: `worktree ${worktree.path} (branch ${worktree.branch})` });
 
     const handle = runClaudeInWorktree(
-      { cwd: worktree.path, prompt: buildPrompt(story), addDirs: [] },
+      { cwd: worktree.path, prompt: buildPrompt(story), addDirs: [], model: story.model },
       {
         onEvent: (e) => {
           const tag = e.kind === 'tool' ? `tool: ${e.line}` : e.kind === 'text' ? e.line : e.kind === 'error' ? `error: ${e.line}` : e.line;

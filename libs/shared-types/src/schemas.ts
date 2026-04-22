@@ -6,6 +6,7 @@ export const StorySchema = z.object({
   description: z.string().min(10),
   acceptanceCriteria: z.array(z.string().min(3)).min(1).max(12),
   affectedFiles: z.array(z.string()).max(40),
+  model: z.string().optional(),
 }) satisfies z.ZodType<Story>;
 
 export const DependencySchema = z.object({

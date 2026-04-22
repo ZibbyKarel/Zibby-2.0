@@ -70,6 +70,19 @@ export default function App() {
     );
   };
 
+  const addDependency = (dep: Dependency): string | null => {
+    if (!plan) return 'no plan';
+    if (dep.from === dep.to) return 'from and to must differ';
+    if (dep.from < 0 || dep.to < 0 || dep.from >= plan.stories.length || dep.to >= plan.stories.length) {
+      return 'story index out of range';
+    }
+    if (plan.dependencies.some((d) => d.from === dep.from && d.to === dep.to)) {
+      return 'dependency already exists';
+    }
+    setPlan((cur) => (cur ? { ...cur, dependencies: [...cur.dependencies, dep] } : cur));
+    return null;
+  };
+
   useEffect(() => {
     const unsub = window.zibby.onRunEvent((event: RunEvent) => {
       if (event.kind === 'run-done') {
@@ -198,6 +211,7 @@ export default function App() {
             advising={advising}
             onAdvise={handleAdvise}
             onApplySuggestedDependency={applySuggestedDependency}
+            onAddDependency={addDependency}
           />
         )}
       </div>
@@ -293,6 +307,7 @@ function PlanView({
   advising,
   onAdvise,
   onApplySuggestedDependency,
+  onAddDependency,
 }: {
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
@@ -307,6 +322,7 @@ function PlanView({
   advising: boolean;
   onAdvise: () => void;
   onApplySuggestedDependency: (dep: Dependency) => void;
+  onAddDependency: (dep: Dependency) => string | null;
 }) {
   return (
     <section className="space-y-4">
@@ -380,6 +396,9 @@ function PlanView({
           editable={!running}
           onRemove={onRemoveDependency}
         />
+      )}
+      {!running && plan.stories.length > 1 && (
+        <AddDependencyForm stories={plan.stories} onAdd={onAddDependency} />
       )}
     </section>
   );
@@ -483,33 +502,53 @@ function StoryCard({
 
       <div>
         {editing ? (
-          <label className="block">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
-              Affected files <span className="font-normal normal-case text-neutral-600">comma-separated</span>
-            </span>
-            <input
-              value={story.affectedFiles.join(', ')}
-              onChange={(e) =>
-                onChange({
-                  affectedFiles: e.target.value
-                    .split(',')
-                    .map((f) => f.trim())
-                    .filter((f) => f.length > 0),
-                })
-              }
-              className="w-full bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm font-mono text-neutral-300"
-            />
-          </label>
+          <div className="space-y-2">
+            <label className="block">
+              <span className="block text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
+                Affected files <span className="font-normal normal-case text-neutral-600">comma-separated</span>
+              </span>
+              <input
+                value={story.affectedFiles.join(', ')}
+                onChange={(e) =>
+                  onChange({
+                    affectedFiles: e.target.value
+                      .split(',')
+                      .map((f) => f.trim())
+                      .filter((f) => f.length > 0),
+                  })
+                }
+                className="w-full bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm font-mono text-neutral-300"
+              />
+            </label>
+            <label className="block">
+              <span className="block text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
+                Model override
+              </span>
+              <select
+                value={story.model ?? ''}
+                onChange={(e) => onChange({ model: e.target.value || undefined })}
+                className="w-48 bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-200"
+              >
+                <option value="">Default (sonnet)</option>
+                <option value="sonnet">Sonnet</option>
+                <option value="opus">Opus</option>
+                <option value="haiku">Haiku</option>
+              </select>
+            </label>
+          </div>
         ) : (
-          story.affectedFiles.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {story.affectedFiles.map((f, i) => (
-                <code key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-xs text-neutral-300">
-                  {f}
-                </code>
-              ))}
-            </div>
-          )
+          <div className="flex flex-wrap items-center gap-1.5">
+            {story.affectedFiles.map((f, i) => (
+              <code key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-xs text-neutral-300">
+                {f}
+              </code>
+            ))}
+            {story.model && (
+              <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/15 text-indigo-300">
+                model: {story.model}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -660,6 +699,79 @@ function DependencyList({
       </ul>
     </div>
   );
+}
+
+function AddDependencyForm({
+  stories,
+  onAdd,
+}: {
+  stories: Story[];
+  onAdd: (dep: Dependency) => string | null;
+}) {
+  const [from, setFrom] = useState(0);
+  const [to, setTo] = useState(1);
+  const [reason, setReason] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = () => {
+    setErr(null);
+    const trimmed = reason.trim();
+    if (trimmed.length < 3) {
+      setErr('Reason must be at least 3 characters');
+      return;
+    }
+    const e = onAdd({ from, to, reason: trimmed });
+    if (e) setErr(e);
+    else setReason('');
+  };
+
+  return (
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 space-y-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-neutral-500">Add dependency:</span>
+        <select
+          value={from}
+          onChange={(e) => setFrom(Number(e.target.value))}
+          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
+        >
+          {stories.map((s, i) => (
+            <option key={i} value={i}>
+              #{i} — {truncate(s.title, 40)}
+            </option>
+          ))}
+        </select>
+        <span className="text-neutral-600">→</span>
+        <select
+          value={to}
+          onChange={(e) => setTo(Number(e.target.value))}
+          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
+        >
+          {stories.map((s, i) => (
+            <option key={i} value={i}>
+              #{i} — {truncate(s.title, 40)}
+            </option>
+          ))}
+        </select>
+        <input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="reason (required)"
+          className="flex-1 min-w-[12rem] bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
+        />
+        <button
+          onClick={submit}
+          className="px-3 py-1 rounded text-xs font-medium bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200"
+        >
+          Add
+        </button>
+      </div>
+      {err && <p className="text-xs text-rose-300">{err}</p>}
+    </div>
+  );
+}
+
+function truncate(s: string, max: number): string {
+  return s.length <= max ? s : s.slice(0, max - 1) + '…';
 }
 
 function Badge({ ok, label }: { ok: boolean; label: string }) {

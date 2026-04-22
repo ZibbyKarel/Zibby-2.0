@@ -21,6 +21,7 @@ export type Story = {
   description: string;
   acceptanceCriteria: string[];
   affectedFiles: string[];
+  model?: string;
 };
 
 export type Dependency = {
