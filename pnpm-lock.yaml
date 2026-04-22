@@ -90,24 +90,15 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: 0.90.0
-        version: 0.90.0(zod@4.3.6)
       '@zibby/ai-refiner':
         specifier: workspace:*
         version: link:../../libs/ai-refiner
       '@zibby/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.6.1
 
   libs/ai-refiner:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: 0.90.0
-        version: 0.90.0(zod@4.3.6)
       '@zibby/shared-types':
         specifier: workspace:*
         version: link:../shared-types

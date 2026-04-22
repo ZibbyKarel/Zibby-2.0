@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { PickFolderResult, RefinedPlan, Story, Dependency } from '@zibby/shared-types';
+import type { PickFolderResult, RefinedPlan, Story, Dependency } from '@zibby/shared-types/ipc';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
@@ -119,7 +119,7 @@ function BriefSection({
           disabled={disabled}
           className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
         >
-          {refining ? 'Refining…' : 'Refine with Sonnet'}
+          {refining ? 'Refining…' : 'Refine with Sonnet (Max)'}
         </button>
       </div>
     </section>

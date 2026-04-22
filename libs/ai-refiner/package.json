@@ -9,7 +9,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.90.0",
     "@zibby/shared-types": "workspace:*",
     "zod": "^4.3.6"
   }

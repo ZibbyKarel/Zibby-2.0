@@ -18,8 +18,6 @@ export default defineConfig({
         'better-sqlite3',
         '@prisma/client',
         'execa',
-        '@anthropic-ai/sdk',
-        'dotenv',
       ],
     },
     sourcemap: true,

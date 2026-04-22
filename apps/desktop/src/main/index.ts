@@ -3,16 +3,13 @@ import path from 'node:path';
 import { access } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { config as loadDotenv } from 'dotenv';
 import {
   IpcChannels,
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
-} from '@zibby/shared-types';
+} from '@zibby/shared-types/ipc';
 import { refine } from '@zibby/ai-refiner';
-
-loadDotenv({ path: path.resolve(__dirname, '..', '..', '..', '..', '.env') });
 
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
