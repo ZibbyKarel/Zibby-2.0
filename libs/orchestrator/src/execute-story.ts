@@ -69,7 +69,12 @@ export async function executeStory(args: {
 
   let worktree: WorktreeHandle | null = null;
   try {
-    worktree = await createWorktree({ repoPath, slug, baseBranch });
+    worktree = await createWorktree({
+      repoPath,
+      slug,
+      baseBranch,
+      onInfo: (msg) => onEvent({ kind: 'log', stream: 'info', line: msg }),
+    });
     onEvent({ kind: 'log', stream: 'info', line: `worktree ${worktree.path} (branch ${worktree.branch})` });
 
     const handle = runClaudeInWorktree(
