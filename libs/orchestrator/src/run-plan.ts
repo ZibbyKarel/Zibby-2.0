@@ -13,6 +13,7 @@ export type PlanRunHandle = {
   runId: string;
   result: Promise<{ success: boolean }>;
   cancel: () => void;
+  cancelStory: (storyIndex: number) => void;
 };
 
 let nextRunId = 1;
@@ -26,6 +27,7 @@ export function startPlanRun(args: {
 }): PlanRunHandle {
   const runId = `run-${Date.now()}-${nextRunId++}`;
   const signal = { cancelled: false };
+  const storySignals = new Map<number, { cancelled: boolean }>();
   const usedSlugs = new Set<string>();
   const maxParallel = Math.max(1, args.maxParallel ?? DEFAULT_PARALLELISM);
 
@@ -37,7 +39,7 @@ export function startPlanRun(args: {
       return { success: false };
     }
 
-    const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked'> = dag.map(() => 'pending');
+    const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked' | 'cancelled'> = dag.map(() => 'pending');
     let failed = false;
 
     const blockCascade = (fromIndex: number) => {
@@ -60,6 +62,8 @@ export function startPlanRun(args: {
     };
 
     const runOne = async (index: number): Promise<void> => {
+      const storySignal = { cancelled: false };
+      storySignals.set(index, storySignal);
       status[index] = 'running';
       const res = await executeStory({
         story: args.plan.stories[index],
@@ -68,10 +72,15 @@ export function startPlanRun(args: {
         baseBranch,
         usedSlugs,
         signal,
+        storySignal,
         onEvent: (e) => args.onEvent({ storyIndex: index, ...e }),
       });
+      storySignals.delete(index);
       if (res.success) {
         status[index] = 'done';
+      } else if (storySignal.cancelled && !signal.cancelled) {
+        // Per-story cancellation: don't cascade blocked, don't mark run as failed
+        status[index] = 'cancelled';
       } else {
         status[index] = 'failed';
         failed = true;
@@ -103,6 +112,10 @@ export function startPlanRun(args: {
     result,
     cancel: () => {
       signal.cancelled = true;
+    },
+    cancelStory: (storyIndex: number) => {
+      const s = storySignals.get(storyIndex);
+      if (s) s.cancelled = true;
     },
   };
 }

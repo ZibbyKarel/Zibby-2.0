@@ -59,8 +59,10 @@ export async function executeStory(args: {
   usedSlugs: Set<string>;
   onEvent: (event: StoryExecutionEvent) => void;
   signal: { cancelled: boolean };
+  storySignal: { cancelled: boolean };
 }): Promise<StoryExecutionResult> {
-  const { story, repoPath, baseBranch, usedSlugs, onEvent, signal } = args;
+  const { story, repoPath, baseBranch, usedSlugs, onEvent, signal, storySignal } = args;
+  const isCancelled = () => signal.cancelled || storySignal.cancelled;
   const slugBase = slugify(`${args.storyIndex + 1}-${story.title}`);
   const slug = uniqueSlug(slugBase, usedSlugs);
   usedSlugs.add(slug);
@@ -79,7 +81,7 @@ export async function executeStory(args: {
 
     const abort = new AbortController();
     const cancelWatcher = setInterval(() => {
-      if (signal.cancelled && !abort.signal.aborted) abort.abort();
+      if (isCancelled() && !abort.signal.aborted) abort.abort();
     }, 250);
 
     const handle = runClaudeInWorktree(
@@ -94,14 +96,15 @@ export async function executeStory(args: {
     );
 
     const runnerCancelWatcher = setInterval(() => {
-      if (signal.cancelled) handle.cancel();
+      if (isCancelled()) handle.cancel();
     }, 250);
 
     const result = await handle.result;
     clearInterval(runnerCancelWatcher);
 
-    if (signal.cancelled) {
+    if (isCancelled()) {
       clearInterval(cancelWatcher);
+      onEvent({ kind: 'log', stream: 'info', line: 'Story cancelled' });
       onEvent({ kind: 'status', status: 'cancelled' });
       return { success: false, error: 'cancelled' };
     }
@@ -136,8 +139,8 @@ export async function executeStory(args: {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (signal.cancelled) {
-      onEvent({ kind: 'log', stream: 'info', line: 'cancelled during push/PR' });
+    if (isCancelled()) {
+      onEvent({ kind: 'log', stream: 'info', line: 'Story cancelled' });
       onEvent({ kind: 'status', status: 'cancelled' });
       return { success: false, error: 'cancelled' };
     }

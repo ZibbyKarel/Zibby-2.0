@@ -13,6 +13,7 @@ import {
   type AdviseResult,
   type RunStartRequest,
   type RunStartResult,
+  type CancelStoryRequest,
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
@@ -138,6 +139,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
 
   ipcMain.handle(IpcChannels.CancelRun, async (_event, runId: string): Promise<void> => {
     activeRuns.get(runId)?.cancel();
+  });
+
+  ipcMain.handle(IpcChannels.CancelStory, async (_event, req: CancelStoryRequest): Promise<void> => {
+    activeRuns.get(req.runId)?.cancelStory(req.storyIndex);
   });
 
   ipcMain.handle(IpcChannels.LoadState, async (): Promise<LoadedAppState> => {

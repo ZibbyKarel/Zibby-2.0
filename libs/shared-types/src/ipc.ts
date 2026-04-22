@@ -4,6 +4,7 @@ export const IpcChannels = {
   Advise: 'zibby:advise',
   StartRun: 'zibby:startRun',
   CancelRun: 'zibby:cancelRun',
+  CancelStory: 'zibby:cancelStory',
   LoadState: 'zibby:loadState',
   SaveState: 'zibby:saveState',
 } as const;
@@ -81,6 +82,11 @@ export type RunStartResult =
   | { kind: 'started'; runId: string }
   | { kind: 'error'; message: string };
 
+export type CancelStoryRequest = {
+  runId: string;
+  storyIndex: number;
+};
+
 export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'status'; status: StoryStatus }
   | { runId: string; storyIndex: number; kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
@@ -106,6 +112,7 @@ export type IpcApi = {
   advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   cancelRun: (runId: string) => Promise<void>;
+  cancelStory: (req: CancelStoryRequest) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
   loadState: () => Promise<LoadedAppState>;
   saveState: (state: PersistedState) => Promise<void>;
