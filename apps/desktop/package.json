@@ -13,6 +13,9 @@
     "dist:mac": "pnpm build && electron-builder --mac"
   },
   "dependencies": {
-    "@zibby/shared-types": "workspace:*"
+    "@zibby/shared-types": "workspace:*",
+    "@zibby/ai-refiner": "workspace:*",
+    "@anthropic-ai/sdk": "0.90.0",
+    "dotenv": "^16.4.7"
   }
 }

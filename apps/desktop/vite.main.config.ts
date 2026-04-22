@@ -12,7 +12,15 @@ export default defineConfig({
       fileName: () => 'index.cjs',
     },
     rollupOptions: {
-      external: ['electron', /^node:.*/, 'better-sqlite3', '@prisma/client', 'execa'],
+      external: [
+        'electron',
+        /^node:.*/,
+        'better-sqlite3',
+        '@prisma/client',
+        'execa',
+        '@anthropic-ai/sdk',
+        'dotenv',
+      ],
     },
     sourcemap: true,
     minify: false,

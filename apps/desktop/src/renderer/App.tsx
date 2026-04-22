@@ -1,61 +1,192 @@
 import { useState } from 'react';
-import type { PickFolderResult } from '@zibby/shared-types';
+import type { PickFolderResult, RefinedPlan, Story, Dependency } from '@zibby/shared-types';
+
+type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
 export default function App() {
-  const [selection, setSelection] = useState<PickFolderResult | null>(null);
-  const [picking, setPicking] = useState(false);
+  const [folder, setFolder] = useState<SelectedFolder | null>(null);
+  const [brief, setBrief] = useState('');
+  const [refining, setRefining] = useState(false);
+  const [plan, setPlan] = useState<RefinedPlan | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePick = async () => {
-    setPicking(true);
-    try {
-      const result = await window.zibby.pickFolder();
-      setSelection(result);
-    } finally {
-      setPicking(false);
+    const result = await window.zibby.pickFolder();
+    if (result.kind === 'selected') {
+      setFolder(result);
+      setPlan(null);
+      setError(null);
+    } else {
+      setFolder(null);
     }
   };
 
+  const handleRefine = async () => {
+    if (!folder) return;
+    setRefining(true);
+    setError(null);
+    setPlan(null);
+    const res = await window.zibby.refine({ folderPath: folder.path, brief });
+    setRefining(false);
+    if (res.kind === 'ok') setPlan(res.plan);
+    else setError(res.message);
+  };
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-8">
-      <div className="max-w-xl w-full space-y-6 text-center">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight">Zibby 2.0</h1>
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <header className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
           <p className="text-neutral-400 text-sm">
-            Preload bridge v{window.zibby?.version ?? '—'} · Electron + React + Vite + Tailwind 4
+            Pick a folder, describe what you want done, and AI will produce a refined plan.
           </p>
-        </div>
+        </header>
 
-        <button
-          onClick={handlePick}
-          disabled={picking}
-          className="px-5 py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium transition-colors"
-        >
-          {picking ? 'Opening…' : 'Select folder'}
-        </button>
+        <FolderSection folder={folder} onPick={handlePick} />
 
-        {selection && <SelectionSummary result={selection} />}
+        {folder && (
+          <BriefSection
+            brief={brief}
+            onBrief={setBrief}
+            disabled={refining || !brief.trim()}
+            refining={refining}
+            onRefine={handleRefine}
+          />
+        )}
+
+        {error && (
+          <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
+            <strong className="font-semibold">Refine failed:</strong> {error}
+          </div>
+        )}
+
+        {plan && <PlanView plan={plan} />}
       </div>
     </div>
   );
 }
 
-function SelectionSummary({ result }: { result: PickFolderResult }) {
-  if (result.kind === 'cancelled') {
-    return <p className="text-neutral-500 text-sm">No folder selected.</p>;
-  }
+function FolderSection({ folder, onPick }: { folder: SelectedFolder | null; onPick: () => void }) {
   return (
-    <div className="text-left bg-neutral-900 border border-neutral-800 rounded-lg p-4 space-y-1 text-sm">
+    <section className="space-y-3">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onPick}
+          className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium"
+        >
+          {folder ? 'Change folder' : 'Select folder'}
+        </button>
+        {folder && (
+          <span className="font-mono text-sm text-neutral-300 truncate">{folder.path}</span>
+        )}
+      </div>
+      {folder && (
+        <div className="flex gap-2 text-xs">
+          <Badge ok={folder.isGitRepo} label={folder.isGitRepo ? 'Git repo' : 'Not a git repo'} />
+          <Badge ok={folder.hasOrigin} label={folder.hasOrigin ? 'origin remote' : 'no origin'} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BriefSection({
+  brief,
+  onBrief,
+  disabled,
+  refining,
+  onRefine,
+}: {
+  brief: string;
+  onBrief: (v: string) => void;
+  disabled: boolean;
+  refining: boolean;
+  onRefine: () => void;
+}) {
+  return (
+    <section className="space-y-3">
+      <label className="block text-sm font-medium text-neutral-300">Brief</label>
+      <textarea
+        value={brief}
+        onChange={(e) => onBrief(e.target.value)}
+        placeholder="Describe one or more tasks — Sonnet will expand them into user stories with acceptance criteria."
+        rows={6}
+        className="w-full rounded-lg bg-neutral-900 border border-neutral-800 focus:border-indigo-500 focus:outline-none p-3 text-sm font-mono text-neutral-100 placeholder:text-neutral-600"
+      />
+      <div className="flex justify-end">
+        <button
+          onClick={onRefine}
+          disabled={disabled}
+          className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+        >
+          {refining ? 'Refining…' : 'Refine with Sonnet'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function PlanView({ plan }: { plan: RefinedPlan }) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
+      <div className="space-y-3">
+        {plan.stories.map((story, i) => (
+          <StoryCard key={i} index={i} story={story} />
+        ))}
+      </div>
+      {plan.dependencies.length > 0 && <DependencyList deps={plan.dependencies} />}
+    </section>
+  );
+}
+
+function StoryCard({ index, story }: { index: number; story: Story }) {
+  return (
+    <article className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3">
+      <header className="flex items-start gap-3">
+        <span className="shrink-0 text-xs font-semibold text-neutral-500 mt-0.5">#{index}</span>
+        <h3 className="text-base font-semibold text-neutral-100">{story.title}</h3>
+      </header>
+      <p className="text-sm text-neutral-300">{story.description}</p>
       <div>
-        <span className="text-neutral-500">Path: </span>
-        <span className="font-mono text-neutral-200">{result.path}</span>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
+          Acceptance criteria
+        </h4>
+        <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
+          {story.acceptanceCriteria.map((c, i) => (
+            <li key={i}>{c}</li>
+          ))}
+        </ul>
       </div>
-      <div className="flex gap-3">
-        <Badge ok={result.isGitRepo} label={result.isGitRepo ? 'Git repo' : 'Not a git repo'} />
-        <Badge
-          ok={result.hasOrigin}
-          label={result.hasOrigin ? 'Has origin remote' : 'No origin remote'}
-        />
-      </div>
+      {story.affectedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {story.affectedFiles.map((f, i) => (
+            <code key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-xs text-neutral-300">
+              {f}
+            </code>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function DependencyList({ deps }: { deps: Dependency[] }) {
+  return (
+    <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        Dependencies
+      </h4>
+      <ul className="text-sm space-y-1">
+        {deps.map((d, i) => (
+          <li key={i} className="text-neutral-300">
+            <span className="text-neutral-500">#{d.from}</span>
+            <span className="mx-2 text-neutral-600">→</span>
+            <span className="text-neutral-500">#{d.to}</span>
+            <span className="ml-3 text-neutral-400">{d.reason}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
