@@ -1,11 +1,11 @@
-import type { Story } from '@zibby/shared-types/ipc';
+import type { Story, StoryStatus } from '@zibby/shared-types/ipc';
 import { runClaudeInWorktree } from '@zibby/claude-runner';
 import { commitAllIfDirty, gitPush, ghCreatePr } from '@zibby/github';
 import { createWorktree, type WorktreeHandle } from './worktree';
 import { slugify, uniqueSlug } from './slug';
 
 export type StoryExecutionEvent =
-  | { kind: 'status'; status: 'pending' | 'running' | 'pushing' | 'done' | 'failed' | 'cancelled' }
+  | { kind: 'status'; status: StoryStatus }
   | { kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
   | { kind: 'pr'; url: string; branch: string };
 

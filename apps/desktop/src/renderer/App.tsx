@@ -269,9 +269,18 @@ function PlanView({
       )}
 
       <div className="space-y-3">
-        {plan.stories.map((story, i) => (
-          <StoryCard key={i} index={i} story={story} runtime={runtime[i] ?? emptyRuntime()} />
-        ))}
+        {plan.stories.map((story, i) => {
+          const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
+          return (
+            <StoryCard
+              key={i}
+              index={i}
+              story={story}
+              runtime={runtime[i] ?? emptyRuntime()}
+              waitsOn={waitsOn}
+            />
+          );
+        })}
       </div>
       {plan.dependencies.length > 0 && <DependencyList deps={plan.dependencies} />}
     </section>
@@ -280,6 +289,7 @@ function PlanView({
 
 const STATUS_STYLE: Record<StoryStatus, string> = {
   pending: 'bg-neutral-700 text-neutral-300',
+  blocked: 'bg-neutral-700 text-neutral-400',
   running: 'bg-indigo-500/20 text-indigo-300',
   pushing: 'bg-sky-500/20 text-sky-300',
   done: 'bg-emerald-500/20 text-emerald-300',
@@ -287,12 +297,27 @@ const STATUS_STYLE: Record<StoryStatus, string> = {
   cancelled: 'bg-amber-500/20 text-amber-300',
 };
 
-function StoryCard({ index, story, runtime }: { index: number; story: Story; runtime: StoryRuntime }) {
+function StoryCard({
+  index,
+  story,
+  runtime,
+  waitsOn,
+}: {
+  index: number;
+  story: Story;
+  runtime: StoryRuntime;
+  waitsOn: number[];
+}) {
   return (
     <article className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3">
       <header className="flex items-start gap-3">
         <span className="shrink-0 text-xs font-semibold text-neutral-500 mt-0.5">#{index}</span>
         <h3 className="text-base font-semibold text-neutral-100 flex-1">{story.title}</h3>
+        {waitsOn.length > 0 && (
+          <span className="shrink-0 text-xs text-neutral-500">
+            waits on {waitsOn.map((i) => `#${i}`).join(', ')}
+          </span>
+        )}
         <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLE[runtime.status]}`}>
           {runtime.status}
         </span>

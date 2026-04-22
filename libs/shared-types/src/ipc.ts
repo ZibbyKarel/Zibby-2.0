@@ -44,6 +44,7 @@ export type RefineResult =
 
 export type StoryStatus =
   | 'pending'
+  | 'blocked'
   | 'running'
   | 'pushing'
   | 'done'
