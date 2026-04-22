@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sh /Users/zibby/.claude/statusline-command.sh)",
+      "Bash(grep -iE \"readme|contributing|docs\" find /Users/zibby/Workspace/Zibby-2.0 -maxdepth 2 -iname \"README*\" -not -path \"*/node_modules/*\")"
+    ]
+  }
+}
