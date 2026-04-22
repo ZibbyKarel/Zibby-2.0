@@ -13,12 +13,14 @@ import {
   type AdviseResult,
   type RunStartRequest,
   type RunStartResult,
+  type RunStoryRequest,
+  type RunStoryResult,
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
 } from '@zibby/shared-types/ipc';
 import { refine, advise } from '@zibby/ai-refiner';
-import { startPlanRun, type PlanRunHandle } from '@zibby/orchestrator';
+import { startPlanRun, runSingleStory, type PlanRunHandle } from '@zibby/orchestrator';
 import { loadPersisted, savePersisted } from './state-store';
 
 const execFileP = promisify(execFile);
@@ -133,6 +135,43 @@ function registerIpc(getWebContents: () => WebContents | null) {
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
+    }
+  );
+
+  ipcMain.handle(
+    IpcChannels.RunStory,
+    async (_event, req: RunStoryRequest): Promise<RunStoryResult> => {
+      const story = req.plan.stories[req.storyIndex];
+      if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
+      const handle = runSingleStory({
+        story,
+        storyIndex: req.storyIndex,
+        repoPath: req.folderPath,
+        baseBranch: req.baseBranch,
+        onEvent: (e) => {
+          const wc = getWebContents();
+          if (!wc) return;
+          if (e.kind === 'status') {
+            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
+          } else if (e.kind === 'log') {
+            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+          } else if (e.kind === 'pr') {
+            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+          }
+        },
+      });
+      void handle.result.catch((err) => {
+        const wc = getWebContents();
+        if (!wc) return;
+        emitToRenderer(wc, {
+          runId: req.runId,
+          storyIndex: req.storyIndex,
+          kind: 'log',
+          stream: 'stderr',
+          line: err instanceof Error ? err.message : String(err),
+        });
+      });
+      return { kind: 'ok' };
     }
   );
 
