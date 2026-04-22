@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildDag, collectTransitiveSuccessors } from './dag';
+import { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
+import type { RefinedPlan } from '@zibby/shared-types/ipc';
 
 describe('buildDag', () => {
   it('returns empty-waitingFor nodes when there are no dependencies', () => {
@@ -53,6 +54,56 @@ describe('buildDag', () => {
     ]);
     expect([...nodes[0].successors].sort()).toEqual([1, 2]);
     expect([...nodes[3].waitingFor].sort()).toEqual([1, 2]);
+  });
+});
+
+const makeStory = (title: string) => ({
+  title,
+  description: 'desc',
+  acceptanceCriteria: ['ac'],
+  affectedFiles: [],
+});
+
+describe('removeStoryFromPlan', () => {
+  it('removes a story with no edges cleanly', () => {
+    const plan: RefinedPlan = {
+      stories: [makeStory('A'), makeStory('B'), makeStory('C')],
+      dependencies: [],
+    };
+    const result = removeStoryFromPlan(plan, 1);
+    expect(result.stories).toHaveLength(2);
+    expect(result.stories[0].title).toBe('A');
+    expect(result.stories[1].title).toBe('C');
+    expect(result.dependencies).toHaveLength(0);
+  });
+
+  it('drops edges where from or to equals the removed index', () => {
+    const plan: RefinedPlan = {
+      stories: [makeStory('A'), makeStory('B'), makeStory('C')],
+      dependencies: [
+        { from: 0, to: 1, reason: 'a needs b' },
+        { from: 1, to: 2, reason: 'b needs c' },
+        { from: 0, to: 2, reason: 'a needs c' },
+      ],
+    };
+    const result = removeStoryFromPlan(plan, 1);
+    expect(result.dependencies).toHaveLength(1);
+    expect(result.dependencies[0]).toEqual({ from: 0, to: 1, reason: 'a needs c' });
+  });
+
+  it('decrements edge indices that are greater than the removed index', () => {
+    const plan: RefinedPlan = {
+      stories: [makeStory('A'), makeStory('B'), makeStory('C'), makeStory('D')],
+      dependencies: [
+        { from: 0, to: 2, reason: 'a to c' },
+        { from: 2, to: 3, reason: 'c to d' },
+      ],
+    };
+    const result = removeStoryFromPlan(plan, 1);
+    expect(result.stories).toHaveLength(3);
+    expect(result.dependencies).toHaveLength(2);
+    expect(result.dependencies[0]).toEqual({ from: 0, to: 1, reason: 'a to c' });
+    expect(result.dependencies[1]).toEqual({ from: 1, to: 2, reason: 'c to d' });
   });
 });
 

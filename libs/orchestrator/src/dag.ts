@@ -1,4 +1,4 @@
-import type { Dependency } from '@zibby/shared-types/ipc';
+import type { Dependency, RefinedPlan } from '@zibby/shared-types/ipc';
 
 export type DagNode = {
   index: number;
@@ -50,6 +50,18 @@ function hasCycle(nodes: DagNode[]): boolean {
     }
   }
   return visited < nodes.length;
+}
+
+export function removeStoryFromPlan(plan: RefinedPlan, storyIndex: number): RefinedPlan {
+  const stories = plan.stories.filter((_, i) => i !== storyIndex);
+  const dependencies = plan.dependencies
+    .filter((d) => d.from !== storyIndex && d.to !== storyIndex)
+    .map((d) => ({
+      ...d,
+      from: d.from > storyIndex ? d.from - 1 : d.from,
+      to: d.to > storyIndex ? d.to - 1 : d.to,
+    }));
+  return { stories, dependencies };
 }
 
 export function collectTransitiveSuccessors(nodes: DagNode[], rootIndex: number): Set<number> {
