@@ -1,11 +1,9 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import { IpcChannels, type IpcApi, type PickFolderResult } from '@zibby/shared-types';
 
-export type ZibbyApi = {
-  version: string;
-};
-
-const api: ZibbyApi = {
+const api: IpcApi = {
   version: '0.0.1',
+  pickFolder: (): Promise<PickFolderResult> => ipcRenderer.invoke(IpcChannels.PickFolder),
 };
 
 contextBridge.exposeInMainWorld('zibby', api);

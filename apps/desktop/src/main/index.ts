@@ -1,8 +1,49 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
+import { access } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { IpcChannels, type PickFolderResult } from '@zibby/shared-types';
 
+const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
+
+async function isGitRepo(folder: string): Promise<boolean> {
+  try {
+    await access(path.join(folder, '.git'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function hasGitOrigin(folder: string): Promise<boolean> {
+  try {
+    const { stdout } = await execFileP('git', ['remote', 'get-url', 'origin'], {
+      cwd: folder,
+    });
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function registerIpc() {
+  ipcMain.handle(IpcChannels.PickFolder, async (): Promise<PickFolderResult> => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Select a folder',
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return { kind: 'cancelled' };
+    }
+    const folder = result.filePaths[0];
+    const gitRepo = await isGitRepo(folder);
+    const origin = gitRepo ? await hasGitOrigin(folder) : false;
+    return { kind: 'selected', path: folder, isGitRepo: gitRepo, hasOrigin: origin };
+  });
+}
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -25,7 +66,10 @@ async function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  registerIpc();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

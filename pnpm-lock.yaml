@@ -88,7 +88,13 @@ importers:
         specifier: ^8.0.1
         version: 8.0.5
 
-  apps/desktop: {}
+  apps/desktop:
+    dependencies:
+      '@zibby/shared-types':
+        specifier: workspace:*
+        version: link:../../libs/shared-types
+
+  libs/shared-types: {}
 
 packages:
 

@@ -1,8 +1,8 @@
+import type { IpcApi } from '@zibby/shared-types';
+
 declare global {
   interface Window {
-    zibby: {
-      version: string;
-    };
+    zibby: IpcApi;
   }
 }
 
