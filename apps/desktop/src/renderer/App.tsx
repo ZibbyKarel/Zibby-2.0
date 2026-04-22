@@ -7,9 +7,14 @@ import type {
   RunEvent,
   AdvisorReview,
 } from '@zibby/shared-types/ipc';
-import { StoryCard, emptyRuntime, type StoryRuntime } from './components/StoryCard';
+import { StoryCard } from './components/StoryCard';
+import type { StoryRuntime } from './components/StoryCard';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
+
+function emptyRuntime(): StoryRuntime {
+  return { status: 'pending', logs: [] };
+}
 
 export default function App() {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
