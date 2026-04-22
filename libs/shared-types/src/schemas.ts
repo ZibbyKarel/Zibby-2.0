@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Story, Dependency, RefinedPlan } from './ipc';
+import type { Story, Dependency, RefinedPlan, AdvisorReview } from './ipc';
 
 export const StorySchema = z.object({
   title: z.string().min(3).max(120),
@@ -18,3 +18,15 @@ export const RefinedPlanSchema = z.object({
   stories: z.array(StorySchema).min(1).max(10),
   dependencies: z.array(DependencySchema),
 }) satisfies z.ZodType<RefinedPlan>;
+
+export const AdvisorReviewSchema = z.object({
+  overall: z.string().min(1),
+  concerns: z.array(z.string().min(1)),
+  perStoryNotes: z.array(
+    z.object({
+      storyIndex: z.number().int().min(0),
+      note: z.string().min(1),
+    })
+  ),
+  suggestedDependencies: z.array(DependencySchema),
+}) satisfies z.ZodType<AdvisorReview>;

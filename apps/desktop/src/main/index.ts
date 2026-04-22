@@ -9,11 +9,13 @@ import {
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
+  type AdviseRequest,
+  type AdviseResult,
   type RunStartRequest,
   type RunStartResult,
   type RunEvent,
 } from '@zibby/shared-types/ipc';
-import { refine } from '@zibby/ai-refiner';
+import { refine, advise } from '@zibby/ai-refiner';
 import { startPlanRun, type PlanRunHandle } from '@zibby/orchestrator';
 
 const execFileP = promisify(execFile);
@@ -63,6 +65,18 @@ function registerIpc(getWebContents: () => WebContents | null) {
       try {
         const plan = await refine({ folderPath: req.folderPath, brief: req.brief });
         return { kind: 'ok', plan };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IpcChannels.Advise,
+    async (_event, req: AdviseRequest): Promise<AdviseResult> => {
+      try {
+        const review = await advise({ folderPath: req.folderPath, plan: req.plan });
+        return { kind: 'ok', review };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }

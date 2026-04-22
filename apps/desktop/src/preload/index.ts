@@ -6,6 +6,8 @@ import {
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
+  type AdviseRequest,
+  type AdviseResult,
   type RunStartRequest,
   type RunStartResult,
   type RunEvent,
@@ -16,6 +18,8 @@ const api: IpcApi = {
   pickFolder: (): Promise<PickFolderResult> => ipcRenderer.invoke(IpcChannels.PickFolder),
   refine: (req: RefineRequest): Promise<RefineResult> =>
     ipcRenderer.invoke(IpcChannels.Refine, req),
+  advise: (req: AdviseRequest): Promise<AdviseResult> =>
+    ipcRenderer.invoke(IpcChannels.Advise, req),
   startRun: (req: RunStartRequest): Promise<RunStartResult> =>
     ipcRenderer.invoke(IpcChannels.StartRun, req),
   cancelRun: (runId: string): Promise<void> => ipcRenderer.invoke(IpcChannels.CancelRun, runId),

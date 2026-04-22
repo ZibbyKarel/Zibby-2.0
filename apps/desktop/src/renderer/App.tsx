@@ -6,6 +6,7 @@ import type {
   Dependency,
   RunEvent,
   StoryStatus,
+  AdvisorReview,
 } from '@zibby/shared-types/ipc';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
@@ -32,6 +33,9 @@ export default function App() {
   const [runtime, setRuntime] = useState<Record<number, StoryRuntime>>({});
   const [runDone, setRunDone] = useState<boolean | null>(null);
 
+  const [advising, setAdvising] = useState(false);
+  const [review, setReview] = useState<AdvisorReview | null>(null);
+
   const updateStory = (index: number, patch: Partial<Story>) =>
     setPlan((cur) =>
       cur
@@ -46,6 +50,25 @@ export default function App() {
     setPlan((cur) =>
       cur ? { ...cur, dependencies: cur.dependencies.filter((_, i) => i !== depIndex) } : cur
     );
+
+  const applySuggestedDependency = (dep: Dependency) => {
+    setPlan((cur) => {
+      if (!cur) return cur;
+      const exists = cur.dependencies.some((d) => d.from === dep.from && d.to === dep.to);
+      if (exists) return cur;
+      return { ...cur, dependencies: [...cur.dependencies, dep] };
+    });
+    setReview((cur) =>
+      cur
+        ? {
+            ...cur,
+            suggestedDependencies: cur.suggestedDependencies.filter(
+              (d) => !(d.from === dep.from && d.to === dep.to)
+            ),
+          }
+        : cur
+    );
+  };
 
   useEffect(() => {
     const unsub = window.zibby.onRunEvent((event: RunEvent) => {
@@ -106,6 +129,17 @@ export default function App() {
     else setError(res.message);
   };
 
+  const handleAdvise = async () => {
+    if (!folder || !plan) return;
+    setAdvising(true);
+    setError(null);
+    setReview(null);
+    const res = await window.zibby.advise({ folderPath: folder.path, plan });
+    setAdvising(false);
+    if (res.kind === 'ok') setReview(res.review);
+    else setError(res.message);
+  };
+
   const handleCancel = async () => {
     if (!runId) return;
     await window.zibby.cancelRun(runId);
@@ -155,6 +189,10 @@ export default function App() {
             onCancel={handleCancel}
             onUpdateStory={updateStory}
             onRemoveDependency={removeDependency}
+            review={review}
+            advising={advising}
+            onAdvise={handleAdvise}
+            onApplySuggestedDependency={applySuggestedDependency}
           />
         )}
       </div>
@@ -246,6 +284,10 @@ function PlanView({
   onCancel,
   onUpdateStory,
   onRemoveDependency,
+  review,
+  advising,
+  onAdvise,
+  onApplySuggestedDependency,
 }: {
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
@@ -256,6 +298,10 @@ function PlanView({
   onCancel: () => void;
   onUpdateStory: (index: number, patch: Partial<Story>) => void;
   onRemoveDependency: (depIndex: number) => void;
+  review: AdvisorReview | null;
+  advising: boolean;
+  onAdvise: () => void;
+  onApplySuggestedDependency: (dep: Dependency) => void;
 }) {
   return (
     <section className="space-y-4">
@@ -264,6 +310,13 @@ function PlanView({
         <div className="flex items-center gap-3">
           {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
           {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
+          <button
+            onClick={onAdvise}
+            disabled={advising || running}
+            className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-200 text-sm font-medium border border-neutral-700"
+          >
+            {advising ? 'Asking Opus…' : 'Ask Opus'}
+          </button>
           {running ? (
             <button
               onClick={onCancel}
@@ -282,6 +335,17 @@ function PlanView({
           )}
         </div>
       </div>
+
+      {advising && (
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
+          <span className="inline-block h-2 w-2 rounded-full bg-fuchsia-400 animate-pulse" />
+          Opus is reviewing the plan…
+        </div>
+      )}
+
+      {review && (
+        <AdvisorPanel review={review} onApplySuggestedDependency={onApplySuggestedDependency} />
+      )}
 
       {!canRun && !running && (
         <p className="text-xs text-amber-300">
@@ -474,6 +538,74 @@ function LogTail({ logs }: { logs: StoryRuntime['logs'] }) {
         </div>
       ))}
     </pre>
+  );
+}
+
+function AdvisorPanel({
+  review,
+  onApplySuggestedDependency,
+}: {
+  review: AdvisorReview;
+  onApplySuggestedDependency: (dep: Dependency) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-4 space-y-4">
+      <header className="flex items-start gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-fuchsia-300">Opus advisor</span>
+      </header>
+      <p className="text-sm text-neutral-200">{review.overall}</p>
+
+      {review.concerns.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">Concerns</h4>
+          <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
+            {review.concerns.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {review.perStoryNotes.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
+            Per-story notes
+          </h4>
+          <ul className="text-sm space-y-1">
+            {review.perStoryNotes.map((n, i) => (
+              <li key={i} className="text-neutral-200">
+                <span className="text-neutral-500 font-mono mr-2">#{n.storyIndex}</span>
+                {n.note}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {review.suggestedDependencies.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
+            Suggested dependencies
+          </h4>
+          <ul className="text-sm space-y-1">
+            {review.suggestedDependencies.map((d, i) => (
+              <li key={i} className="flex items-center gap-2 text-neutral-200">
+                <span className="text-neutral-500">#{d.from}</span>
+                <span className="text-neutral-600">→</span>
+                <span className="text-neutral-500">#{d.to}</span>
+                <span className="flex-1 text-neutral-300">{d.reason}</span>
+                <button
+                  onClick={() => onApplySuggestedDependency(d)}
+                  className="shrink-0 px-2 py-0.5 rounded text-xs font-medium bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-200"
+                >
+                  Apply
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

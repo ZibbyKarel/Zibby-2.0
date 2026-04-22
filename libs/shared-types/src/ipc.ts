@@ -1,6 +1,7 @@
 export const IpcChannels = {
   PickFolder: 'zibby:pickFolder',
   Refine: 'zibby:refine',
+  Advise: 'zibby:advise',
   StartRun: 'zibby:startRun',
   CancelRun: 'zibby:cancelRun',
 } as const;
@@ -42,6 +43,22 @@ export type RefineResult =
   | { kind: 'ok'; plan: RefinedPlan }
   | { kind: 'error'; message: string };
 
+export type AdvisorReview = {
+  overall: string;
+  concerns: string[];
+  perStoryNotes: { storyIndex: number; note: string }[];
+  suggestedDependencies: Dependency[];
+};
+
+export type AdviseRequest = {
+  folderPath: string;
+  plan: RefinedPlan;
+};
+
+export type AdviseResult =
+  | { kind: 'ok'; review: AdvisorReview }
+  | { kind: 'error'; message: string };
+
 export type StoryStatus =
   | 'pending'
   | 'blocked'
@@ -71,6 +88,7 @@ export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
   refine: (req: RefineRequest) => Promise<RefineResult>;
+  advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   cancelRun: (runId: string) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
