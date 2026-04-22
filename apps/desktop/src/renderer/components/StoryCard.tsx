@@ -8,11 +8,7 @@ export type StoryRuntime = {
   branch?: string;
 };
 
-export function emptyRuntime(): StoryRuntime {
-  return { status: 'pending', logs: [] };
-}
-
-export const STATUS_STYLE: Record<StoryStatus, string> = {
+const STATUS_STYLE: Record<StoryStatus, string> = {
   pending: 'bg-neutral-700 text-neutral-300',
   blocked: 'bg-neutral-700 text-neutral-400',
   running: 'bg-indigo-500/20 text-indigo-300',
