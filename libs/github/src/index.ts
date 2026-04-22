@@ -75,6 +75,28 @@ export async function ghCreatePr(args: CreatePrArgs): Promise<string> {
   return match[0];
 }
 
+export async function deleteStoryBranch(args: {
+  repoPath: string;
+  branch: string;
+}): Promise<{ warning?: string }> {
+  const { repoPath, branch } = args;
+  const warnings: string[] = [];
+
+  try {
+    await execFileP('git', ['branch', '-D', branch], { cwd: repoPath, ...OPTS });
+  } catch (err) {
+    warnings.push(`local: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await execFileP('git', ['push', 'origin', '--delete', branch], { cwd: repoPath, ...OPTS });
+  } catch (err) {
+    warnings.push(`remote: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  return warnings.length > 0 ? { warning: warnings.join('; ') } : {};
+}
+
 export async function ghAuthStatus(): Promise<{ ok: boolean; stdout: string }> {
   try {
     const { stdout } = await execFileP('gh', ['auth', 'status'], OPTS);
