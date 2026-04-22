@@ -1,0 +1,24 @@
+appId: app.zibby.two
+productName: Zibby 2.0
+electronVersion: 33.4.11
+directories:
+  output: release
+asar: true
+extraMetadata:
+  dependencies: {}
+  description: AI-assisted batch task runner
+  author: Karel Zibar
+files:
+  - dist-main/**
+  - dist-renderer/**
+  - package.json
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  identity: null
+  hardenedRuntime: false
+dmg:
+  title: Zibby 2.0
