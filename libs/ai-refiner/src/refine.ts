@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { z } from 'zod';
 import { RefinedPlanSchema } from '@zibby/shared-types/schemas';
 import type { RefinedPlan } from '@zibby/shared-types/ipc';
@@ -42,7 +42,7 @@ function runClaudeCli(args: {
   timeoutMs: number;
 }): Promise<string> {
   return new Promise((resolve, reject) => {
-    const proc = execFile(
+    const proc = spawn(
       args.bin,
       [
         '-p',
@@ -62,20 +62,46 @@ function runClaudeCli(args: {
       ],
       {
         cwd: args.cwd,
-        maxBuffer: 16 * 1024 * 1024,
-        timeout: args.timeoutMs,
+        stdio: ['ignore', 'pipe', 'pipe'],
         env: process.env,
-      },
-      (err, stdout, stderr) => {
-        if (err) {
-          const msg = stderr?.toString().trim() || err.message;
-          reject(new Error(`claude CLI failed: ${msg}`));
-          return;
-        }
-        resolve(stdout.toString());
       }
     );
-    proc.on('error', (e) => reject(e));
+
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      proc.kill('SIGTERM');
+      reject(new Error(`claude CLI timed out after ${args.timeoutMs}ms`));
+    }, args.timeoutMs);
+
+    proc.stdout.on('data', (chunk) => (stdout += chunk.toString()));
+    proc.stderr.on('data', (chunk) => (stderr += chunk.toString()));
+
+    proc.on('error', (e) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(e);
+    });
+
+    proc.on('close', (code, signal) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (code !== 0) {
+        reject(
+          new Error(
+            `claude CLI exited with code ${code}${signal ? ` (signal ${signal})` : ''}: ${stderr.trim() || '<empty stderr>'}`
+          )
+        );
+        return;
+      }
+      resolve(stdout);
+    });
   });
 }
 
