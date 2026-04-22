@@ -32,6 +32,21 @@ export default function App() {
   const [runtime, setRuntime] = useState<Record<number, StoryRuntime>>({});
   const [runDone, setRunDone] = useState<boolean | null>(null);
 
+  const updateStory = (index: number, patch: Partial<Story>) =>
+    setPlan((cur) =>
+      cur
+        ? {
+            ...cur,
+            stories: cur.stories.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+          }
+        : cur
+    );
+
+  const removeDependency = (depIndex: number) =>
+    setPlan((cur) =>
+      cur ? { ...cur, dependencies: cur.dependencies.filter((_, i) => i !== depIndex) } : cur
+    );
+
   useEffect(() => {
     const unsub = window.zibby.onRunEvent((event: RunEvent) => {
       if (event.kind === 'run-done') {
@@ -138,6 +153,8 @@ export default function App() {
             runDone={runDone}
             onRun={handleRun}
             onCancel={handleCancel}
+            onUpdateStory={updateStory}
+            onRemoveDependency={removeDependency}
           />
         )}
       </div>
@@ -227,6 +244,8 @@ function PlanView({
   runDone,
   onRun,
   onCancel,
+  onUpdateStory,
+  onRemoveDependency,
 }: {
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
@@ -235,6 +254,8 @@ function PlanView({
   runDone: boolean | null;
   onRun: () => void;
   onCancel: () => void;
+  onUpdateStory: (index: number, patch: Partial<Story>) => void;
+  onRemoveDependency: (depIndex: number) => void;
 }) {
   return (
     <section className="space-y-4">
@@ -278,11 +299,19 @@ function PlanView({
               story={story}
               runtime={runtime[i] ?? emptyRuntime()}
               waitsOn={waitsOn}
+              editable={!running}
+              onChange={(patch) => onUpdateStory(i, patch)}
             />
           );
         })}
       </div>
-      {plan.dependencies.length > 0 && <DependencyList deps={plan.dependencies} />}
+      {plan.dependencies.length > 0 && (
+        <DependencyList
+          deps={plan.dependencies}
+          editable={!running}
+          onRemove={onRemoveDependency}
+        />
+      )}
     </section>
   );
 }
@@ -302,18 +331,31 @@ function StoryCard({
   story,
   runtime,
   waitsOn,
+  editable,
+  onChange,
 }: {
   index: number;
   story: Story;
   runtime: StoryRuntime;
   waitsOn: number[];
+  editable: boolean;
+  onChange: (patch: Partial<Story>) => void;
 }) {
+  const [editing, setEditing] = useState(false);
   return (
     <article className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3">
       <header className="flex items-start gap-3">
         <span className="shrink-0 text-xs font-semibold text-neutral-500 mt-0.5">#{index}</span>
-        <h3 className="text-base font-semibold text-neutral-100 flex-1">{story.title}</h3>
-        {waitsOn.length > 0 && (
+        {editing ? (
+          <input
+            value={story.title}
+            onChange={(e) => onChange({ title: e.target.value })}
+            className="flex-1 bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-base font-semibold text-neutral-100"
+          />
+        ) : (
+          <h3 className="text-base font-semibold text-neutral-100 flex-1">{story.title}</h3>
+        )}
+        {waitsOn.length > 0 && !editing && (
           <span className="shrink-0 text-xs text-neutral-500">
             waits on {waitsOn.map((i) => `#${i}`).join(', ')}
           </span>
@@ -321,31 +363,93 @@ function StoryCard({
         <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLE[runtime.status]}`}>
           {runtime.status}
         </span>
+        {editable && (
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="shrink-0 text-xs text-neutral-400 hover:text-neutral-200 px-2 py-0.5 rounded border border-neutral-700"
+          >
+            {editing ? 'Done' : 'Edit'}
+          </button>
+        )}
       </header>
-      <p className="text-sm text-neutral-300">{story.description}</p>
-      <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">Acceptance criteria</h4>
-        <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
-          {story.acceptanceCriteria.map((c, i) => (
-            <li key={i}>{c}</li>
-          ))}
-        </ul>
-      </div>
-      {story.affectedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {story.affectedFiles.map((f, i) => (
-            <code key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-xs text-neutral-300">
-              {f}
-            </code>
-          ))}
-        </div>
+
+      {editing ? (
+        <textarea
+          value={story.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          rows={3}
+          className="w-full bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-200"
+        />
+      ) : (
+        <p className="text-sm text-neutral-300 whitespace-pre-wrap">{story.description}</p>
       )}
+
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
+          Acceptance criteria
+          {editing && <span className="ml-2 font-normal normal-case text-neutral-600">one per line</span>}
+        </h4>
+        {editing ? (
+          <textarea
+            value={story.acceptanceCriteria.join('\n')}
+            onChange={(e) =>
+              onChange({
+                acceptanceCriteria: e.target.value
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter((l) => l.length > 0),
+              })
+            }
+            rows={Math.max(3, story.acceptanceCriteria.length + 1)}
+            className="w-full bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-200 font-mono"
+          />
+        ) : (
+          <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
+            {story.acceptanceCriteria.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        {editing ? (
+          <label className="block">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
+              Affected files <span className="font-normal normal-case text-neutral-600">comma-separated</span>
+            </span>
+            <input
+              value={story.affectedFiles.join(', ')}
+              onChange={(e) =>
+                onChange({
+                  affectedFiles: e.target.value
+                    .split(',')
+                    .map((f) => f.trim())
+                    .filter((f) => f.length > 0),
+                })
+              }
+              className="w-full bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm font-mono text-neutral-300"
+            />
+          </label>
+        ) : (
+          story.affectedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {story.affectedFiles.map((f, i) => (
+                <code key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-xs text-neutral-300">
+                  {f}
+                </code>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+
       {runtime.prUrl && (
         <a
           href={runtime.prUrl}
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-sky-400 hover:text-sky-300 underline"
+          className="text-sm text-sky-400 hover:text-sky-300 underline break-all"
         >
           {runtime.prUrl}
         </a>
@@ -373,17 +477,34 @@ function LogTail({ logs }: { logs: StoryRuntime['logs'] }) {
   );
 }
 
-function DependencyList({ deps }: { deps: Dependency[] }) {
+function DependencyList({
+  deps,
+  editable,
+  onRemove,
+}: {
+  deps: Dependency[];
+  editable: boolean;
+  onRemove: (index: number) => void;
+}) {
   return (
     <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-2">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Dependencies</h4>
       <ul className="text-sm space-y-1">
         {deps.map((d, i) => (
-          <li key={i} className="text-neutral-300">
+          <li key={i} className="text-neutral-300 flex items-center gap-2">
             <span className="text-neutral-500">#{d.from}</span>
-            <span className="mx-2 text-neutral-600">→</span>
+            <span className="text-neutral-600">→</span>
             <span className="text-neutral-500">#{d.to}</span>
-            <span className="ml-3 text-neutral-400">{d.reason}</span>
+            <span className="text-neutral-400 flex-1">{d.reason}</span>
+            {editable && (
+              <button
+                onClick={() => onRemove(i)}
+                className="shrink-0 text-neutral-500 hover:text-rose-300 text-xs"
+                title="Remove dependency"
+              >
+                ✕
+              </button>
+            )}
           </li>
         ))}
       </ul>
