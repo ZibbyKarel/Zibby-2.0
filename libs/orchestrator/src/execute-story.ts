@@ -77,6 +77,11 @@ export async function executeStory(args: {
     });
     onEvent({ kind: 'log', stream: 'info', line: `worktree ${worktree.path} (branch ${worktree.branch})` });
 
+    const abort = new AbortController();
+    const cancelWatcher = setInterval(() => {
+      if (signal.cancelled && !abort.signal.aborted) abort.abort();
+    }, 250);
+
     const handle = runClaudeInWorktree(
       { cwd: worktree.path, prompt: buildPrompt(story), addDirs: [], model: story.model },
       {
@@ -88,38 +93,54 @@ export async function executeStory(args: {
       }
     );
 
-    const cancelWatcher = setInterval(() => {
+    const runnerCancelWatcher = setInterval(() => {
       if (signal.cancelled) handle.cancel();
-    }, 500);
+    }, 250);
 
     const result = await handle.result;
-    clearInterval(cancelWatcher);
+    clearInterval(runnerCancelWatcher);
 
     if (signal.cancelled) {
+      clearInterval(cancelWatcher);
       onEvent({ kind: 'status', status: 'cancelled' });
       return { success: false, error: 'cancelled' };
     }
     if (!result.success) {
+      clearInterval(cancelWatcher);
       onEvent({ kind: 'status', status: 'failed' });
       return { success: false, error: result.error ?? `stop_reason=${result.stopReason ?? '?'}` };
     }
 
-    onEvent({ kind: 'status', status: 'pushing' });
-    const madeCommit = await commitAllIfDirty(worktree.path, `chore(zibby): flush uncommitted changes for ${story.title}`);
-    if (madeCommit) onEvent({ kind: 'log', stream: 'info', line: 'flushed uncommitted changes into final commit' });
-    await gitPush(worktree.path, worktree.branch);
-    onEvent({ kind: 'log', stream: 'info', line: `pushed ${worktree.branch}` });
-    const prUrl = await ghCreatePr({
-      cwd: worktree.path,
-      title: story.title,
-      body: buildPrBody(story),
-      baseBranch,
-    });
-    onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
-    onEvent({ kind: 'status', status: 'done' });
-    return { success: true, prUrl, branch: worktree.branch };
+    try {
+      onEvent({ kind: 'status', status: 'pushing' });
+      const madeCommit = await commitAllIfDirty(
+        worktree.path,
+        `chore(zibby): flush uncommitted changes for ${story.title}`,
+        { signal: abort.signal }
+      );
+      if (madeCommit) onEvent({ kind: 'log', stream: 'info', line: 'flushed uncommitted changes into final commit' });
+      await gitPush(worktree.path, worktree.branch, { signal: abort.signal });
+      onEvent({ kind: 'log', stream: 'info', line: `pushed ${worktree.branch}` });
+      const prUrl = await ghCreatePr({
+        cwd: worktree.path,
+        title: story.title,
+        body: buildPrBody(story),
+        baseBranch,
+        signal: abort.signal,
+      });
+      onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
+      onEvent({ kind: 'status', status: 'done' });
+      return { success: true, prUrl, branch: worktree.branch };
+    } finally {
+      clearInterval(cancelWatcher);
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    if (signal.cancelled) {
+      onEvent({ kind: 'log', stream: 'info', line: 'cancelled during push/PR' });
+      onEvent({ kind: 'status', status: 'cancelled' });
+      return { success: false, error: 'cancelled' };
+    }
     onEvent({ kind: 'log', stream: 'stderr', line: message });
     onEvent({ kind: 'status', status: 'failed' });
     return { success: false, error: message };

@@ -2,7 +2,14 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFileP = promisify(execFile);
-const OPTS = { maxBuffer: 8 * 1024 * 1024 } as const;
+const BASE_ENV = {
+  ...process.env,
+  GIT_TERMINAL_PROMPT: '0',
+  GIT_ASKPASS: 'echo',
+};
+const OPTS = { maxBuffer: 8 * 1024 * 1024, env: BASE_ENV } as const;
+
+type CancelOpts = { signal?: AbortSignal };
 
 export async function hasAnyCommits(cwd: string): Promise<boolean> {
   try {
@@ -13,21 +20,33 @@ export async function hasAnyCommits(cwd: string): Promise<boolean> {
   }
 }
 
-export async function gitStatusIsClean(cwd: string): Promise<boolean> {
-  const { stdout } = await execFileP('git', ['status', '--porcelain'], { cwd, ...OPTS });
+export async function gitStatusIsClean(cwd: string, opts: CancelOpts = {}): Promise<boolean> {
+  const { stdout } = await execFileP('git', ['status', '--porcelain'], {
+    cwd,
+    ...OPTS,
+    signal: opts.signal,
+  });
   return stdout.trim().length === 0;
 }
 
-export async function commitAllIfDirty(cwd: string, message: string): Promise<boolean> {
-  const clean = await gitStatusIsClean(cwd);
+export async function commitAllIfDirty(
+  cwd: string,
+  message: string,
+  opts: CancelOpts = {}
+): Promise<boolean> {
+  const clean = await gitStatusIsClean(cwd, opts);
   if (clean) return false;
-  await execFileP('git', ['add', '-A'], { cwd, ...OPTS });
-  await execFileP('git', ['commit', '-m', message], { cwd, ...OPTS });
+  await execFileP('git', ['add', '-A'], { cwd, ...OPTS, signal: opts.signal });
+  await execFileP('git', ['commit', '-m', message], { cwd, ...OPTS, signal: opts.signal });
   return true;
 }
 
-export async function gitPush(cwd: string, branch: string): Promise<void> {
-  await execFileP('git', ['push', '-u', 'origin', branch], { cwd, ...OPTS });
+export async function gitPush(cwd: string, branch: string, opts: CancelOpts = {}): Promise<void> {
+  await execFileP('git', ['push', '-u', 'origin', branch], {
+    cwd,
+    ...OPTS,
+    signal: opts.signal,
+  });
 }
 
 export type CreatePrArgs = {
@@ -36,6 +55,7 @@ export type CreatePrArgs = {
   body: string;
   baseBranch: string;
   draft?: boolean;
+  signal?: AbortSignal;
 };
 
 const PR_URL_RE = /https:\/\/github\.com\/[^\s]+\/pull\/\d+/;
@@ -43,7 +63,11 @@ const PR_URL_RE = /https:\/\/github\.com\/[^\s]+\/pull\/\d+/;
 export async function ghCreatePr(args: CreatePrArgs): Promise<string> {
   const ghArgs = ['pr', 'create', '--title', args.title, '--body', args.body, '--base', args.baseBranch];
   if (args.draft) ghArgs.push('--draft');
-  const { stdout } = await execFileP('gh', ghArgs, { cwd: args.cwd, ...OPTS });
+  const { stdout } = await execFileP('gh', ghArgs, {
+    cwd: args.cwd,
+    ...OPTS,
+    signal: args.signal,
+  });
   const match = stdout.match(PR_URL_RE);
   if (!match) {
     throw new Error(`gh pr create did not return a PR URL. stdout: ${stdout.slice(0, 400)}`);
