@@ -7,6 +7,7 @@ export const IpcChannels = {
   CancelRun: 'zibby:cancelRun',
   LoadState: 'zibby:loadState',
   SaveState: 'zibby:saveState',
+  RemoveStory: 'zibby:removeStory',
 } as const;
 
 export const IpcEvents = {
@@ -100,6 +101,15 @@ export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'pr'; url: string; branch: string }
   | { runId: string; kind: 'run-done'; success: boolean };
 
+export type RemoveStoryPayload = {
+  storyIndex: number;
+};
+
+export type RemoveStoryResult = {
+  plan: RefinedPlan;
+  branchDeletionWarning?: string;
+};
+
 export type PersistedState = {
   folderPath?: string;
   brief?: string;
@@ -123,4 +133,5 @@ export type IpcApi = {
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
   loadState: () => Promise<LoadedAppState>;
   saveState: (state: PersistedState) => Promise<void>;
+  removeStory: (storyIndex: number) => Promise<RemoveStoryResult>;
 };
