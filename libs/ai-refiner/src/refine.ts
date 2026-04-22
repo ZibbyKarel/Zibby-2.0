@@ -5,7 +5,7 @@ import type { RefinedPlan } from '@zibby/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
 
 const DEFAULT_MODEL = process.env.CLAUDE_REFINE_MODEL ?? 'sonnet';
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_REFINE_TIMEOUT_MS ?? 300_000);
 const DEFAULT_CLAUDE_BIN = process.env.CLAUDE_CLI_PATH ?? 'claude';
 
 const SYSTEM_PROMPT = `You are a senior technical project manager. Given a rough brief from a developer and
@@ -70,12 +70,18 @@ function runClaudeCli(args: {
     let stdout = '';
     let stderr = '';
     let settled = false;
+    const start = Date.now();
+    const elapsed = () => `${Math.round((Date.now() - start) / 1000)}s`;
 
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
       proc.kill('SIGTERM');
-      reject(new Error(`claude CLI timed out after ${args.timeoutMs}ms`));
+      reject(
+        new Error(
+          `claude CLI timed out after ${args.timeoutMs}ms (stderr so far: ${stderr.trim().slice(-400) || '<empty>'})`
+        )
+      );
     }, args.timeoutMs);
 
     proc.stdout.on('data', (chunk) => (stdout += chunk.toString()));
@@ -95,7 +101,7 @@ function runClaudeCli(args: {
       if (code !== 0) {
         reject(
           new Error(
-            `claude CLI exited with code ${code}${signal ? ` (signal ${signal})` : ''}: ${stderr.trim() || '<empty stderr>'}`
+            `claude CLI exited with code ${code}${signal ? ` (signal ${signal})` : ''} after ${elapsed()}: ${stderr.trim() || '<empty stderr>'}`
           )
         );
         return;

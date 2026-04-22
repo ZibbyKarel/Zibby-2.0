@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, Story, Dependency } from '@zibby/shared-types/ipc';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
@@ -53,6 +53,8 @@ export default function App() {
             onRefine={handleRefine}
           />
         )}
+
+        {refining && <RefineProgress />}
 
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
@@ -187,6 +189,22 @@ function DependencyList({ deps }: { deps: Dependency[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function RefineProgress() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 500);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
+      <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+      <span>Running claude CLI refine session…</span>
+      <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
     </div>
   );
 }
