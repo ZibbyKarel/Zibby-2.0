@@ -9,11 +9,19 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "ESNext",
     "lib": ["ES2022"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@zibby/shared-types": ["libs/shared-types/src/index.ts"],
+      "@zibby/db": ["libs/db/src/index.ts"],
+      "@zibby/github": ["libs/github/src/index.ts"],
+      "@zibby/ai-refiner": ["libs/ai-refiner/src/index.ts"],
+      "@zibby/orchestrator": ["libs/orchestrator/src/index.ts"],
+      "@zibby/claude-runner": ["libs/claude-runner/src/index.ts"],
+      "@zibby/ui": ["libs/ui/src/index.ts"]
+    }
   }
 }

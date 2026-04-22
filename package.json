@@ -1,0 +1,43 @@
+{
+  "name": "zibby-2.0",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "concurrently -k -n vite,electron -c magenta,cyan \"pnpm --filter desktop dev:renderer\" \"wait-on http://localhost:5173 && pnpm --filter desktop dev:main\"",
+    "build": "pnpm --filter desktop build",
+    "dist:mac": "pnpm --filter desktop dist:mac",
+    "lint": "nx run-many -t lint",
+    "typecheck": "nx run-many -t typecheck"
+  },
+  "devDependencies": {
+    "@nx/eslint-plugin": "22.6.5",
+    "@nx/react": "22.6.5",
+    "@nx/vite": "22.6.5",
+    "@tailwindcss/vite": "4.2.2",
+    "@types/node": "^20.19.9",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.1.2",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "nx": "22.6.5",
+    "prettier": "^3.4.2",
+    "tailwindcss": "4.2.2",
+    "typescript": "^5.7.2",
+    "vite": "^8.0.9",
+    "wait-on": "^8.0.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.90.0",
+    "@prisma/client": "6.19.3",
+    "execa": "^9.6.1",
+    "prisma": "6.19.3",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "zod": "^4.3.6"
+  }
+}

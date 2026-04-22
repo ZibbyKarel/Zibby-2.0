@@ -1,0 +1,16 @@
+{
+  "name": "desktop",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist-main/main/index.cjs",
+  "scripts": {
+    "dev:renderer": "vite --config vite.renderer.config.ts",
+    "dev:main": "pnpm build:main && VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "build:main": "vite build --config vite.main.config.ts && vite build --config vite.preload.config.ts",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build": "pnpm build:main && pnpm build:renderer",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "dist:mac": "pnpm build && electron-builder --mac"
+  },
+  "dependencies": {}
+}
