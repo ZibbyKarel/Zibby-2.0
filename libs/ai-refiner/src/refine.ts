@@ -141,7 +141,7 @@ export async function refine(params: {
   let envelope: unknown;
   try {
     envelope = JSON.parse(stdout);
-  } catch (e) {
+  } catch {
     throw new Error(`claude CLI returned non-JSON output: ${stdout.slice(0, 300)}`);
   }
 
