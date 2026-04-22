@@ -3,6 +3,7 @@ export const IpcChannels = {
   Refine: 'zibby:refine',
   Advise: 'zibby:advise',
   StartRun: 'zibby:startRun',
+  RunStory: 'zibby:runStory',
   CancelRun: 'zibby:cancelRun',
   LoadState: 'zibby:loadState',
   SaveState: 'zibby:saveState',
@@ -81,6 +82,18 @@ export type RunStartResult =
   | { kind: 'started'; runId: string }
   | { kind: 'error'; message: string };
 
+export type RunStoryRequest = {
+  runId: string;
+  storyIndex: number;
+  folderPath: string;
+  plan: RefinedPlan;
+  baseBranch?: string;
+};
+
+export type RunStoryResult =
+  | { kind: 'ok' }
+  | { kind: 'error'; message: string };
+
 export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'status'; status: StoryStatus }
   | { runId: string; storyIndex: number; kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
@@ -105,6 +118,7 @@ export type IpcApi = {
   refine: (req: RefineRequest) => Promise<RefineResult>;
   advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
+  runStory: (req: RunStoryRequest) => Promise<RunStoryResult>;
   cancelRun: (runId: string) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
   loadState: () => Promise<LoadedAppState>;

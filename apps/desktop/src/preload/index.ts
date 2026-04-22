@@ -10,6 +10,8 @@ import {
   type AdviseResult,
   type RunStartRequest,
   type RunStartResult,
+  type RunStoryRequest,
+  type RunStoryResult,
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
@@ -24,6 +26,8 @@ const api: IpcApi = {
     ipcRenderer.invoke(IpcChannels.Advise, req),
   startRun: (req: RunStartRequest): Promise<RunStartResult> =>
     ipcRenderer.invoke(IpcChannels.StartRun, req),
+  runStory: (req: RunStoryRequest): Promise<RunStoryResult> =>
+    ipcRenderer.invoke(IpcChannels.RunStory, req),
   cancelRun: (runId: string): Promise<void> => ipcRenderer.invoke(IpcChannels.CancelRun, runId),
   onRunEvent: (handler: (event: RunEvent) => void) => {
     const listener = (_: unknown, event: RunEvent) => handler(event);
