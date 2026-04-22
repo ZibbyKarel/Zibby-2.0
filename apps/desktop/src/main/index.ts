@@ -1,19 +1,26 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron';
 import path from 'node:path';
 import { access } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
   IpcChannels,
+  IpcEvents,
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
+  type RunStartRequest,
+  type RunStartResult,
+  type RunEvent,
 } from '@zibby/shared-types/ipc';
 import { refine } from '@zibby/ai-refiner';
+import { startPlanRun, type PlanRunHandle } from '@zibby/orchestrator';
 
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
+
+const activeRuns = new Map<string, PlanRunHandle>();
 
 async function isGitRepo(folder: string): Promise<boolean> {
   try {
@@ -33,7 +40,11 @@ async function hasGitOrigin(folder: string): Promise<boolean> {
   }
 }
 
-function registerIpc() {
+function emitToRenderer(wc: WebContents, event: RunEvent) {
+  if (!wc.isDestroyed()) wc.send(IpcEvents.RunEvent, event);
+}
+
+function registerIpc(getWebContents: () => WebContents | null) {
   ipcMain.handle(IpcChannels.PickFolder, async (): Promise<PickFolderResult> => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory'],
@@ -57,10 +68,66 @@ function registerIpc() {
       }
     }
   );
+
+  ipcMain.handle(
+    IpcChannels.StartRun,
+    async (_event, req: RunStartRequest): Promise<RunStartResult> => {
+      try {
+        const handle = startPlanRun({
+          plan: req.plan,
+          repoPath: req.folderPath,
+          baseBranch: req.baseBranch,
+          onEvent: (e) => {
+            const wc = getWebContents();
+            if (!wc) return;
+            if ('storyIndex' in e) {
+              if (e.kind === 'status') {
+                emitToRenderer(wc, {
+                  runId: handle.runId,
+                  storyIndex: e.storyIndex,
+                  kind: 'status',
+                  status: e.status,
+                });
+              } else if (e.kind === 'log') {
+                emitToRenderer(wc, {
+                  runId: handle.runId,
+                  storyIndex: e.storyIndex,
+                  kind: 'log',
+                  stream: e.stream,
+                  line: e.line,
+                });
+              } else if (e.kind === 'pr') {
+                emitToRenderer(wc, {
+                  runId: handle.runId,
+                  storyIndex: e.storyIndex,
+                  kind: 'pr',
+                  url: e.url,
+                  branch: e.branch,
+                });
+              }
+            } else if (e.kind === 'run-done') {
+              emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
+              activeRuns.delete(handle.runId);
+            }
+          },
+        });
+        activeRuns.set(handle.runId, handle);
+        return { kind: 'started', runId: handle.runId };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    }
+  );
+
+  ipcMain.handle(IpcChannels.CancelRun, async (_event, runId: string): Promise<void> => {
+    activeRuns.get(runId)?.cancel();
+  });
 }
 
+let mainWindow: BrowserWindow | null = null;
+
 async function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     title: 'Zibby 2.0',
@@ -73,19 +140,21 @@ async function createWindow() {
   });
 
   if (isDev && DEV_URL) {
-    await win.loadURL(DEV_URL);
-    win.webContents.openDevTools({ mode: 'detach' });
+    await mainWindow.loadURL(DEV_URL);
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    await win.loadFile(path.join(__dirname, '..', '..', 'dist-renderer', 'index.html'));
+    await mainWindow.loadFile(path.join(__dirname, '..', '..', 'dist-renderer', 'index.html'));
   }
 }
 
 app.whenReady().then(() => {
-  registerIpc();
+  registerIpc(() => mainWindow?.webContents ?? null);
   createWindow();
 });
 
 app.on('window-all-closed', () => {
+  for (const handle of activeRuns.values()) handle.cancel();
+  activeRuns.clear();
   if (process.platform !== 'darwin') app.quit();
 });
 

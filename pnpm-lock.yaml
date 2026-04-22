@@ -93,6 +93,9 @@ importers:
       '@zibby/ai-refiner':
         specifier: workspace:*
         version: link:../../libs/ai-refiner
+      '@zibby/orchestrator':
+        specifier: workspace:*
+        version: link:../../libs/orchestrator
       '@zibby/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
@@ -105,6 +108,26 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
+
+  libs/claude-runner:
+    dependencies:
+      '@zibby/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  libs/github: {}
+
+  libs/orchestrator:
+    dependencies:
+      '@zibby/claude-runner':
+        specifier: workspace:*
+        version: link:../claude-runner
+      '@zibby/github':
+        specifier: workspace:*
+        version: link:../github
+      '@zibby/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
   libs/shared-types:
     dependencies:

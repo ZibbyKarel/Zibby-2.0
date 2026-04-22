@@ -1,7 +1,25 @@
-import { useEffect, useState } from 'react';
-import type { PickFolderResult, RefinedPlan, Story, Dependency } from '@zibby/shared-types/ipc';
+import { useEffect, useMemo, useState } from 'react';
+import type {
+  PickFolderResult,
+  RefinedPlan,
+  Story,
+  Dependency,
+  RunEvent,
+  StoryStatus,
+} from '@zibby/shared-types/ipc';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
+
+type StoryRuntime = {
+  status: StoryStatus;
+  logs: { stream: 'stdout' | 'stderr' | 'info'; line: string; ts: number }[];
+  prUrl?: string;
+  branch?: string;
+};
+
+function emptyRuntime(): StoryRuntime {
+  return { status: 'pending', logs: [] };
+}
 
 export default function App() {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
@@ -10,12 +28,42 @@ export default function App() {
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [runId, setRunId] = useState<string | null>(null);
+  const [runtime, setRuntime] = useState<Record<number, StoryRuntime>>({});
+  const [runDone, setRunDone] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const unsub = window.zibby.onRunEvent((event: RunEvent) => {
+      if (event.kind === 'run-done') {
+        setRunDone(event.success);
+        setRunId(null);
+        return;
+      }
+      setRuntime((prev) => {
+        const idx = event.storyIndex;
+        const cur = prev[idx] ?? emptyRuntime();
+        const next: StoryRuntime = { ...cur };
+        if (event.kind === 'status') next.status = event.status;
+        else if (event.kind === 'log')
+          next.logs = [...cur.logs, { stream: event.stream, line: event.line, ts: Date.now() }].slice(-200);
+        else if (event.kind === 'pr') {
+          next.prUrl = event.url;
+          next.branch = event.branch;
+        }
+        return { ...prev, [idx]: next };
+      });
+    });
+    return unsub;
+  }, []);
+
   const handlePick = async () => {
     const result = await window.zibby.pickFolder();
     if (result.kind === 'selected') {
       setFolder(result);
       setPlan(null);
       setError(null);
+      setRuntime({});
+      setRunDone(null);
     } else {
       setFolder(null);
     }
@@ -26,19 +74,38 @@ export default function App() {
     setRefining(true);
     setError(null);
     setPlan(null);
+    setRuntime({});
+    setRunDone(null);
     const res = await window.zibby.refine({ folderPath: folder.path, brief });
     setRefining(false);
     if (res.kind === 'ok') setPlan(res.plan);
     else setError(res.message);
   };
 
+  const handleRun = async () => {
+    if (!folder || !plan) return;
+    setRunDone(null);
+    setRuntime(Object.fromEntries(plan.stories.map((_, i) => [i, emptyRuntime()])));
+    const res = await window.zibby.startRun({ folderPath: folder.path, plan });
+    if (res.kind === 'started') setRunId(res.runId);
+    else setError(res.message);
+  };
+
+  const handleCancel = async () => {
+    if (!runId) return;
+    await window.zibby.cancelRun(runId);
+  };
+
+  const running = runId !== null;
+  const canRun = plan !== null && folder?.isGitRepo === true && folder?.hasOrigin === true && !running;
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
           <p className="text-neutral-400 text-sm">
-            Pick a folder, describe what you want done, and AI will produce a refined plan.
+            Pick a folder, describe what you want done, and Claude Code executes the plan in isolated worktrees.
           </p>
         </header>
 
@@ -48,7 +115,7 @@ export default function App() {
           <BriefSection
             brief={brief}
             onBrief={setBrief}
-            disabled={refining || !brief.trim()}
+            disabled={refining || !brief.trim() || running}
             refining={refining}
             onRefine={handleRefine}
           />
@@ -58,11 +125,21 @@ export default function App() {
 
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
-            <strong className="font-semibold">Refine failed:</strong> {error}
+            <strong className="font-semibold">Error:</strong> {error}
           </div>
         )}
 
-        {plan && <PlanView plan={plan} />}
+        {plan && (
+          <PlanView
+            plan={plan}
+            runtime={runtime}
+            running={running}
+            canRun={canRun}
+            runDone={runDone}
+            onRun={handleRun}
+            onCancel={handleCancel}
+          />
+        )}
       </div>
     </div>
   );
@@ -78,9 +155,7 @@ function FolderSection({ folder, onPick }: { folder: SelectedFolder | null; onPi
         >
           {folder ? 'Change folder' : 'Select folder'}
         </button>
-        {folder && (
-          <span className="font-mono text-sm text-neutral-300 truncate">{folder.path}</span>
-        )}
+        {folder && <span className="font-mono text-sm text-neutral-300 truncate">{folder.path}</span>}
       </div>
       {folder && (
         <div className="flex gap-2 text-xs">
@@ -128,13 +203,74 @@ function BriefSection({
   );
 }
 
-function PlanView({ plan }: { plan: RefinedPlan }) {
+function RefineProgress() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 500);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
+      <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+      <span>Running claude CLI refine session…</span>
+      <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
+    </div>
+  );
+}
+
+function PlanView({
+  plan,
+  runtime,
+  running,
+  canRun,
+  runDone,
+  onRun,
+  onCancel,
+}: {
+  plan: RefinedPlan;
+  runtime: Record<number, StoryRuntime>;
+  running: boolean;
+  canRun: boolean;
+  runDone: boolean | null;
+  onRun: () => void;
+  onCancel: () => void;
+}) {
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
+        <div className="flex items-center gap-3">
+          {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
+          {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
+          {running ? (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-sm font-medium"
+            >
+              Cancel run
+            </button>
+          ) : (
+            <button
+              onClick={onRun}
+              disabled={!canRun}
+              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+            >
+              Run all
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!canRun && !running && (
+        <p className="text-xs text-amber-300">
+          The selected folder must be a git repo with an <code className="font-mono">origin</code> remote to run.
+        </p>
+      )}
+
       <div className="space-y-3">
         {plan.stories.map((story, i) => (
-          <StoryCard key={i} index={i} story={story} />
+          <StoryCard key={i} index={i} story={story} runtime={runtime[i] ?? emptyRuntime()} />
         ))}
       </div>
       {plan.dependencies.length > 0 && <DependencyList deps={plan.dependencies} />}
@@ -142,18 +278,28 @@ function PlanView({ plan }: { plan: RefinedPlan }) {
   );
 }
 
-function StoryCard({ index, story }: { index: number; story: Story }) {
+const STATUS_STYLE: Record<StoryStatus, string> = {
+  pending: 'bg-neutral-700 text-neutral-300',
+  running: 'bg-indigo-500/20 text-indigo-300',
+  pushing: 'bg-sky-500/20 text-sky-300',
+  done: 'bg-emerald-500/20 text-emerald-300',
+  failed: 'bg-rose-500/20 text-rose-300',
+  cancelled: 'bg-amber-500/20 text-amber-300',
+};
+
+function StoryCard({ index, story, runtime }: { index: number; story: Story; runtime: StoryRuntime }) {
   return (
     <article className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3">
       <header className="flex items-start gap-3">
         <span className="shrink-0 text-xs font-semibold text-neutral-500 mt-0.5">#{index}</span>
-        <h3 className="text-base font-semibold text-neutral-100">{story.title}</h3>
+        <h3 className="text-base font-semibold text-neutral-100 flex-1">{story.title}</h3>
+        <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLE[runtime.status]}`}>
+          {runtime.status}
+        </span>
       </header>
       <p className="text-sm text-neutral-300">{story.description}</p>
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">
-          Acceptance criteria
-        </h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-1">Acceptance criteria</h4>
         <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
           {story.acceptanceCriteria.map((c, i) => (
             <li key={i}>{c}</li>
@@ -169,16 +315,43 @@ function StoryCard({ index, story }: { index: number; story: Story }) {
           ))}
         </div>
       )}
+      {runtime.prUrl && (
+        <a
+          href={runtime.prUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm text-sky-400 hover:text-sky-300 underline"
+        >
+          {runtime.prUrl}
+        </a>
+      )}
+      {runtime.logs.length > 0 && <LogTail logs={runtime.logs} />}
     </article>
+  );
+}
+
+function LogTail({ logs }: { logs: StoryRuntime['logs'] }) {
+  const tail = useMemo(() => logs.slice(-12), [logs]);
+  return (
+    <pre className="text-[11px] leading-tight font-mono bg-neutral-950/60 border border-neutral-800 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+      {tail.map((l, i) => (
+        <div
+          key={i}
+          className={
+            l.stream === 'stderr' ? 'text-rose-300' : l.stream === 'info' ? 'text-sky-300' : 'text-neutral-300'
+          }
+        >
+          {l.line}
+        </div>
+      ))}
+    </pre>
   );
 }
 
 function DependencyList({ deps }: { deps: Dependency[] }) {
   return (
     <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-2">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        Dependencies
-      </h4>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Dependencies</h4>
       <ul className="text-sm space-y-1">
         {deps.map((d, i) => (
           <li key={i} className="text-neutral-300">
@@ -189,22 +362,6 @@ function DependencyList({ deps }: { deps: Dependency[] }) {
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-function RefineProgress() {
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    const start = Date.now();
-    const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 500);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
-      <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-      <span>Running claude CLI refine session…</span>
-      <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
     </div>
   );
 }
