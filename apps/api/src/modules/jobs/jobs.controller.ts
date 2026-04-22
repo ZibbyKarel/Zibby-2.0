@@ -21,7 +21,7 @@ export class JobsController {
     if (!result.success) {
       throw new BadRequestException(result.error.issues);
     }
-    const job = await this.jobs.createJob(result.data.prompt);
+    const job = await this.jobs.createJob(result.data.prompt, result.data.directory);
     // Fire-and-forget; orchestrator runs async
     this.orchestrator.submitJob(job.id).catch((err) =>
       this.logger.error('submitJob failed', err),

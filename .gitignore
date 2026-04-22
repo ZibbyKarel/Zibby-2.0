@@ -22,3 +22,4 @@ vite.config.*.timestamp*
 
 # Aperant data directory
 .auto-claude/
+.worktrees

@@ -11,6 +11,7 @@ datasource db {
 model Job {
   id         String    @id @default(cuid())
   prompt     String
+  directory  String
   status     String    @default("PENDING")
   error      String?
   createdAt  DateTime  @default(now())

@@ -7,9 +7,9 @@ import type { Job } from '@prisma/client';
 export class JobsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createJob(prompt: string): Promise<Job> {
+  async createJob(prompt: string, directory: string): Promise<Job> {
     return this.prisma.job.create({
-      data: { prompt, status: 'PENDING' },
+      data: { prompt, directory, status: 'PENDING' },
     });
   }
 

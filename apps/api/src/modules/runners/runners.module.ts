@@ -3,9 +3,10 @@ import { RunnersService } from './runners.service';
 import { SubtasksModule } from '../subtasks/subtasks.module';
 import { GitHubModule } from '../github/github.module';
 import { SseModule } from '../sse/sse.module';
+import { DbModule } from '../db/db.module';
 
 @Module({
-  imports: [SubtasksModule, GitHubModule, SseModule],
+  imports: [DbModule, SubtasksModule, GitHubModule, SseModule],
   providers: [RunnersService],
   exports: [RunnersService],
 })

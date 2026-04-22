@@ -66,7 +66,7 @@
       },
       {
         "file": ".gitignore",
-        "hash": "13022267073935693142"
+        "hash": "2705100415869839937"
       },
       {
         "file": ".prettierignore",
@@ -81,12 +81,20 @@
         "hash": "9143640032634807713"
       },
       {
+        "file": "CLAUDE.md",
+        "hash": "2446048504965044323"
+      },
+      {
         "file": "Dockerfile",
         "hash": "2957515574466108157"
       },
       {
         "file": "docker-compose.yml",
         "hash": "4396930548539281362"
+      },
+      {
+        "file": "docs/superpowers/plans/2026-04-20-agent-orchestration-app.md",
+        "hash": "5710375960215760199"
       },
       {
         "file": "eslint.config.mjs",
@@ -126,156 +134,161 @@
       }
     ],
     "projectFileMap": {
-      "web": [
+      "db": [
         {
-          "file": "apps/web/index.html",
-          "hash": "9107935511295996567"
+          "file": "libs/db/.swcrc",
+          "hash": "18266250562514360987"
         },
         {
-          "file": "apps/web/project.json",
-          "hash": "11402676737920401422"
+          "file": "libs/db/README.md",
+          "hash": "11528192393390499139"
         },
         {
-          "file": "apps/web/public/favicon.ico",
-          "hash": "9303420814833116677"
-        },
-        {
-          "file": "apps/web/src/App.tsx",
-          "hash": "9187343815382288400",
+          "file": "libs/db/eslint.config.mjs",
+          "hash": "4313095032450400554",
           "deps": [
-            "npm:react"
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
           ]
         },
         {
-          "file": "apps/web/src/api/client.ts",
-          "hash": "300359031608860620"
+          "file": "libs/db/jest.config.cts",
+          "hash": "3243528385865349671"
         },
         {
-          "file": "apps/web/src/assets/.gitkeep",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "apps/web/src/components/JobForm.tsx",
-          "hash": "4514767832975961322",
+          "file": "libs/db/package.json",
+          "hash": "987388146679289963",
           "deps": [
-            "npm:react"
+            "npm:@swc/helpers"
           ]
         },
         {
-          "file": "apps/web/src/components/LogTail.tsx",
-          "hash": "16059590192760635829",
+          "file": "libs/db/prisma/migrations/20260420104926_init/migration.sql",
+          "hash": "10918068046092904228"
+        },
+        {
+          "file": "libs/db/prisma/migrations/20260420143434_add_job_directory/migration.sql",
+          "hash": "12380748203348009437"
+        },
+        {
+          "file": "libs/db/prisma/migrations/migration_lock.toml",
+          "hash": "17507861707484682820"
+        },
+        {
+          "file": "libs/db/prisma/schema.prisma",
+          "hash": "9425370351378022445"
+        },
+        {
+          "file": "libs/db/project.json",
+          "hash": "6323854986486183457"
+        },
+        {
+          "file": "libs/db/src/index.ts",
+          "hash": "17603452456104232345",
           "deps": [
-            "npm:react"
+            "npm:@prisma/client"
           ]
         },
         {
-          "file": "apps/web/src/components/StatusBadge.tsx",
-          "hash": "7787113667270621990"
+          "file": "libs/db/src/lib/db.spec.ts",
+          "hash": "6598958740572670862"
         },
         {
-          "file": "apps/web/src/components/SubtaskCard.tsx",
-          "hash": "3969154254428922907",
-          "deps": [
-            "npm:react"
-          ]
+          "file": "libs/db/src/lib/db.ts",
+          "hash": "8754058650825764531"
         },
         {
-          "file": "apps/web/src/hooks/useJob.ts",
-          "hash": "11847374009872432775",
-          "deps": [
-            "npm:@tanstack/react-query"
-          ]
+          "file": "libs/db/tsconfig.json",
+          "hash": "12975668481162286788"
         },
         {
-          "file": "apps/web/src/hooks/useJobs.ts",
-          "hash": "7884201236554129946",
-          "deps": [
-            "npm:@tanstack/react-query"
-          ]
+          "file": "libs/db/tsconfig.lib.json",
+          "hash": "13731893420473560347"
         },
         {
-          "file": "apps/web/src/hooks/useSubtaskStream.ts",
-          "hash": "14143804432318989279",
-          "deps": [
-            "npm:react"
-          ]
-        },
-        {
-          "file": "apps/web/src/index.css",
-          "hash": "4645570607630753465"
-        },
-        {
-          "file": "apps/web/src/main.tsx",
-          "hash": "2487299435840789167",
-          "deps": [
-            "npm:react",
-            "npm:react-dom",
-            "npm:@tanstack/react-query"
-          ]
-        },
-        {
-          "file": "apps/web/tsconfig.app.json",
-          "hash": "901962632558163792"
-        },
-        {
-          "file": "apps/web/tsconfig.json",
-          "hash": "2843773793157498944"
-        },
-        {
-          "file": "apps/web/vite.config.mts",
-          "hash": "18101625945446827969",
-          "deps": [
-            "npm:vite",
-            "npm:@vitejs/plugin-react",
-            "npm:@tailwindcss/vite",
-            "npm:@nx/vite"
-          ]
+          "file": "libs/db/tsconfig.spec.json",
+          "hash": "11011431583980985399"
         }
       ],
-      "api-e2e": [
+      "runner": [
         {
-          "file": "apps/api-e2e/jest.config.cts",
-          "hash": "16237957319090451515"
+          "file": "libs/runner/.swcrc",
+          "hash": "18266250562514360987"
         },
         {
-          "file": "apps/api-e2e/project.json",
-          "hash": "9133279122052301863"
+          "file": "libs/runner/README.md",
+          "hash": "686967876273510441"
         },
         {
-          "file": "apps/api-e2e/src/api/api.spec.ts",
-          "hash": "110394728024017389",
+          "file": "libs/runner/eslint.config.mjs",
+          "hash": "4313095032450400554",
           "deps": [
-            "npm:axios"
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
           ]
         },
         {
-          "file": "apps/api-e2e/src/support/global-setup.ts",
-          "hash": "10817858795115919263",
+          "file": "libs/runner/jest.config.cts",
+          "hash": "12628185030331135111"
+        },
+        {
+          "file": "libs/runner/package.json",
+          "hash": "2365932079207027009",
           "deps": [
-            "npm:@nx/node"
+            "npm:@swc/helpers"
           ]
         },
         {
-          "file": "apps/api-e2e/src/support/global-teardown.ts",
-          "hash": "14210317125869451873",
-          "deps": [
-            "npm:@nx/node"
-          ]
+          "file": "libs/runner/project.json",
+          "hash": "7618717353096667306"
         },
         {
-          "file": "apps/api-e2e/src/support/test-setup.ts",
-          "hash": "15521797170623961900",
-          "deps": [
-            "npm:axios"
-          ]
+          "file": "libs/runner/src/index.ts",
+          "hash": "106556010182839227"
         },
         {
-          "file": "apps/api-e2e/tsconfig.json",
-          "hash": "15443990093475294480"
+          "file": "libs/runner/src/lib/claude-runner.spec.ts",
+          "hash": "417239154242110109"
         },
         {
-          "file": "apps/api-e2e/tsconfig.spec.json",
-          "hash": "14954872453723519891"
+          "file": "libs/runner/src/lib/claude-runner.ts",
+          "hash": "7386179365681993076"
+        },
+        {
+          "file": "libs/runner/src/lib/prompt-builder.ts",
+          "hash": "8841791065640757518"
+        },
+        {
+          "file": "libs/runner/src/lib/runner.spec.ts",
+          "hash": "1863079455956147113"
+        },
+        {
+          "file": "libs/runner/src/lib/types.ts",
+          "hash": "14806106591887868406"
+        },
+        {
+          "file": "libs/runner/src/lib/worktree.spec.ts",
+          "hash": "11216415648592949517"
+        },
+        {
+          "file": "libs/runner/src/lib/worktree.ts",
+          "hash": "8439076867583756860"
+        },
+        {
+          "file": "libs/runner/tsconfig.json",
+          "hash": "12975668481162286788"
+        },
+        {
+          "file": "libs/runner/tsconfig.lib.json",
+          "hash": "13731893420473560347"
+        },
+        {
+          "file": "libs/runner/tsconfig.spec.json",
+          "hash": "11011431583980985399"
         }
       ],
       "api": [
@@ -375,7 +388,7 @@
         },
         {
           "file": "apps/api/src/modules/jobs/jobs.controller.ts",
-          "hash": "9865670882793079972",
+          "hash": "7240752851846508967",
           "deps": [
             "npm:@nestjs/common",
             "npm:rxjs",
@@ -391,14 +404,14 @@
         },
         {
           "file": "apps/api/src/modules/jobs/jobs.service.spec.ts",
-          "hash": "15373734002860468488",
+          "hash": "8762896906424068391",
           "deps": [
             "npm:@nestjs/testing"
           ]
         },
         {
           "file": "apps/api/src/modules/jobs/jobs.service.ts",
-          "hash": "17734122306362296063",
+          "hash": "15701754741241060883",
           "deps": [
             "npm:@nestjs/common",
             "orchestration",
@@ -424,14 +437,14 @@
         },
         {
           "file": "apps/api/src/modules/runners/runners.module.ts",
-          "hash": "3664653814266243599",
+          "hash": "17282844082074035679",
           "deps": [
             "npm:@nestjs/common"
           ]
         },
         {
           "file": "apps/api/src/modules/runners/runners.service.ts",
-          "hash": "1904404909181048182",
+          "hash": "2917017190974960965",
           "deps": [
             "npm:@nestjs/common",
             "npm:@nestjs/config",
@@ -549,7 +562,7 @@
         },
         {
           "file": "libs/shared-types/src/lib/shared-types.spec.ts",
-          "hash": "8244248888955139343"
+          "hash": "3476043064930509433"
         },
         {
           "file": "libs/shared-types/src/lib/shared-types.ts",
@@ -557,7 +570,7 @@
         },
         {
           "file": "libs/shared-types/src/schemas.ts",
-          "hash": "10029626027189642924",
+          "hash": "12901859352450138180",
           "deps": [
             "npm:zod"
           ]
@@ -575,83 +588,160 @@
           "hash": "11011431583980985399"
         }
       ],
-      "runner": [
+      "api-e2e": [
         {
-          "file": "libs/runner/.swcrc",
-          "hash": "18266250562514360987"
+          "file": "apps/api-e2e/jest.config.cts",
+          "hash": "16237957319090451515"
         },
         {
-          "file": "libs/runner/README.md",
-          "hash": "686967876273510441"
+          "file": "apps/api-e2e/project.json",
+          "hash": "9133279122052301863"
         },
         {
-          "file": "libs/runner/eslint.config.mjs",
-          "hash": "4313095032450400554",
+          "file": "apps/api-e2e/src/api/api.spec.ts",
+          "hash": "110394728024017389",
           "deps": [
-            [
-              "npm:jsonc-eslint-parser",
-              "dynamic"
-            ]
+            "npm:axios"
           ]
         },
         {
-          "file": "libs/runner/jest.config.cts",
-          "hash": "12628185030331135111"
-        },
-        {
-          "file": "libs/runner/package.json",
-          "hash": "2365932079207027009",
+          "file": "apps/api-e2e/src/support/global-setup.ts",
+          "hash": "10817858795115919263",
           "deps": [
-            "npm:@swc/helpers"
+            "npm:@nx/node"
           ]
         },
         {
-          "file": "libs/runner/project.json",
-          "hash": "7618717353096667306"
+          "file": "apps/api-e2e/src/support/global-teardown.ts",
+          "hash": "14210317125869451873",
+          "deps": [
+            "npm:@nx/node"
+          ]
         },
         {
-          "file": "libs/runner/src/index.ts",
-          "hash": "106556010182839227"
+          "file": "apps/api-e2e/src/support/test-setup.ts",
+          "hash": "15521797170623961900",
+          "deps": [
+            "npm:axios"
+          ]
         },
         {
-          "file": "libs/runner/src/lib/claude-runner.spec.ts",
-          "hash": "417239154242110109"
+          "file": "apps/api-e2e/tsconfig.json",
+          "hash": "15443990093475294480"
         },
         {
-          "file": "libs/runner/src/lib/claude-runner.ts",
-          "hash": "7386179365681993076"
+          "file": "apps/api-e2e/tsconfig.spec.json",
+          "hash": "14954872453723519891"
+        }
+      ],
+      "web": [
+        {
+          "file": "apps/web/index.html",
+          "hash": "9107935511295996567"
         },
         {
-          "file": "libs/runner/src/lib/prompt-builder.ts",
-          "hash": "8841791065640757518"
+          "file": "apps/web/project.json",
+          "hash": "11402676737920401422"
         },
         {
-          "file": "libs/runner/src/lib/runner.spec.ts",
-          "hash": "1863079455956147113"
+          "file": "apps/web/public/favicon.ico",
+          "hash": "9303420814833116677"
         },
         {
-          "file": "libs/runner/src/lib/types.ts",
-          "hash": "14806106591887868406"
+          "file": "apps/web/src/App.tsx",
+          "hash": "9187343815382288400",
+          "deps": [
+            "npm:react"
+          ]
         },
         {
-          "file": "libs/runner/src/lib/worktree.spec.ts",
-          "hash": "11216415648592949517"
+          "file": "apps/web/src/api/client.ts",
+          "hash": "12399545201112217643",
+          "deps": [
+            "shared-types"
+          ]
         },
         {
-          "file": "libs/runner/src/lib/worktree.ts",
-          "hash": "8439076867583756860"
+          "file": "apps/web/src/assets/.gitkeep",
+          "hash": "3244421341483603138"
         },
         {
-          "file": "libs/runner/tsconfig.json",
-          "hash": "12975668481162286788"
+          "file": "apps/web/src/components/JobForm.tsx",
+          "hash": "13151592162977402977",
+          "deps": [
+            "npm:react"
+          ]
         },
         {
-          "file": "libs/runner/tsconfig.lib.json",
-          "hash": "13731893420473560347"
+          "file": "apps/web/src/components/LogTail.tsx",
+          "hash": "16059590192760635829",
+          "deps": [
+            "npm:react"
+          ]
         },
         {
-          "file": "libs/runner/tsconfig.spec.json",
-          "hash": "11011431583980985399"
+          "file": "apps/web/src/components/StatusBadge.tsx",
+          "hash": "7787113667270621990"
+        },
+        {
+          "file": "apps/web/src/components/SubtaskCard.tsx",
+          "hash": "3969154254428922907",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/web/src/hooks/useJob.ts",
+          "hash": "11847374009872432775",
+          "deps": [
+            "npm:@tanstack/react-query"
+          ]
+        },
+        {
+          "file": "apps/web/src/hooks/useJobs.ts",
+          "hash": "4832821476644726220",
+          "deps": [
+            "shared-types",
+            "npm:@tanstack/react-query"
+          ]
+        },
+        {
+          "file": "apps/web/src/hooks/useSubtaskStream.ts",
+          "hash": "14143804432318989279",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/web/src/index.css",
+          "hash": "4645570607630753465"
+        },
+        {
+          "file": "apps/web/src/main.tsx",
+          "hash": "2487299435840789167",
+          "deps": [
+            "npm:react",
+            "npm:react-dom",
+            "npm:@tanstack/react-query"
+          ]
+        },
+        {
+          "file": "apps/web/tsconfig.app.json",
+          "hash": "901962632558163792"
+        },
+        {
+          "file": "apps/web/tsconfig.json",
+          "hash": "2843773793157498944"
+        },
+        {
+          "file": "apps/web/vite.config.mts",
+          "hash": "18101625945446827969",
+          "deps": [
+            "npm:vite",
+            "npm:@vitejs/plugin-react",
+            "npm:@tailwindcss/vite",
+            "npm:@nx/vite"
+          ]
         }
       ],
       "orchestration": [
@@ -729,80 +819,6 @@
         },
         {
           "file": "libs/orchestration/tsconfig.spec.json",
-          "hash": "11011431583980985399"
-        }
-      ],
-      "db": [
-        {
-          "file": "libs/db/.swcrc",
-          "hash": "18266250562514360987"
-        },
-        {
-          "file": "libs/db/README.md",
-          "hash": "11528192393390499139"
-        },
-        {
-          "file": "libs/db/eslint.config.mjs",
-          "hash": "4313095032450400554",
-          "deps": [
-            [
-              "npm:jsonc-eslint-parser",
-              "dynamic"
-            ]
-          ]
-        },
-        {
-          "file": "libs/db/jest.config.cts",
-          "hash": "3243528385865349671"
-        },
-        {
-          "file": "libs/db/package.json",
-          "hash": "987388146679289963",
-          "deps": [
-            "npm:@swc/helpers"
-          ]
-        },
-        {
-          "file": "libs/db/prisma/migrations/20260420104926_init/migration.sql",
-          "hash": "10918068046092904228"
-        },
-        {
-          "file": "libs/db/prisma/migrations/migration_lock.toml",
-          "hash": "17507861707484682820"
-        },
-        {
-          "file": "libs/db/prisma/schema.prisma",
-          "hash": "15517286408337884422"
-        },
-        {
-          "file": "libs/db/project.json",
-          "hash": "6323854986486183457"
-        },
-        {
-          "file": "libs/db/src/index.ts",
-          "hash": "17603452456104232345",
-          "deps": [
-            "npm:@prisma/client"
-          ]
-        },
-        {
-          "file": "libs/db/src/lib/db.spec.ts",
-          "hash": "6598958740572670862"
-        },
-        {
-          "file": "libs/db/src/lib/db.ts",
-          "hash": "8754058650825764531"
-        },
-        {
-          "file": "libs/db/tsconfig.json",
-          "hash": "12975668481162286788"
-        },
-        {
-          "file": "libs/db/tsconfig.lib.json",
-          "hash": "13731893420473560347"
-        },
-        {
-          "file": "libs/db/tsconfig.spec.json",
           "hash": "11011431583980985399"
         }
       ]

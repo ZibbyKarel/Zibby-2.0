@@ -15539,6 +15539,11 @@
       },
       {
         "source": "web",
+        "target": "shared-types",
+        "type": "static"
+      },
+      {
+        "source": "web",
         "target": "npm:@tanstack/react-query",
         "type": "static"
       },
@@ -34208,5 +34213,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1776693799414
+  "computedAt": 1776695682891
 }

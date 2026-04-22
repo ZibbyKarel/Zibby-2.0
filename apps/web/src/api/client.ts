@@ -1,3 +1,5 @@
+import type { CreateJobDto } from 'shared-types';
+
 const BASE_URL = import.meta.env['VITE_API_URL'] ?? '';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -13,10 +15,10 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  createJob: (prompt: string) =>
-    apiFetch<{ id: string; status: string; prompt: string; createdAt: string }>('/jobs', {
+  createJob: (input: CreateJobDto) =>
+    apiFetch<{ id: string; status: string; prompt: string; directory: string; createdAt: string }>('/jobs', {
       method: 'POST',
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify(input),
     }),
   listJobs: () => apiFetch<unknown[]>('/jobs'),
   getJob: (id: string) => apiFetch<unknown>(`/jobs/${id}`),

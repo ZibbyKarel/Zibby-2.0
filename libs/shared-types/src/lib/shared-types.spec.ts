@@ -29,12 +29,22 @@ describe('shared-types', () => {
   });
 
   it('CreateJobSchema validates a valid payload', () => {
-    const result = CreateJobSchema.safeParse({ prompt: 'Add dark mode' });
+    const result = CreateJobSchema.safeParse({ prompt: 'Add dark mode', directory: 'apps/web' });
+    expect(result.success).toBe(true);
+  });
+
+  it('CreateJobSchema accepts an absolute directory path', () => {
+    const result = CreateJobSchema.safeParse({ prompt: 'Add dark mode', directory: '/Users/test/another-repo/apps/web' });
     expect(result.success).toBe(true);
   });
 
   it('CreateJobSchema rejects empty prompt', () => {
-    const result = CreateJobSchema.safeParse({ prompt: '' });
+    const result = CreateJobSchema.safeParse({ prompt: '', directory: 'apps/web' });
+    expect(result.success).toBe(false);
+  });
+
+  it('CreateJobSchema rejects unsafe directory traversal', () => {
+    const result = CreateJobSchema.safeParse({ prompt: 'Add dark mode', directory: '../secrets' });
     expect(result.success).toBe(false);
   });
 

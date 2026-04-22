@@ -12,6 +12,7 @@ import { RunnersService } from '../runners/runners.service';
 import { SseService } from '../sse/sse.service';
 import { AsyncQueue } from 'orchestration';
 import type { Subtask } from '@prisma/client';
+import { resolveJobPaths } from '../jobs/job-path-resolver';
 
 @Injectable()
 export class OrchestratorService implements OnApplicationBootstrap {
@@ -55,13 +56,14 @@ export class OrchestratorService implements OnApplicationBootstrap {
 
   async submitJob(jobId: string): Promise<void> {
     const job = await this.jobs.findOne(jobId);
-    const repoPath = this.config.get('REPO_PATH', '/workspace');
+    const defaultRepoPath = this.config.get('REPO_PATH', '/workspace');
 
     await this.jobs.updateStatus(jobId, 'DECOMPOSING');
     this.sse.emit(`job:${jobId}`, { type: 'status', status: 'DECOMPOSING' });
 
     let subtaskRows: Subtask[];
     try {
+      const { repoPath } = await resolveJobPaths(defaultRepoPath, job.directory);
       const repoContext = await this.decomposer.getRepoContext(repoPath);
       const decomposed = await this.decomposer.decompose(job.prompt, repoContext);
 

@@ -3,9 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { GitHubService } from '../github/github.service';
 import { SseService } from '../sse/sse.service';
+import { PrismaService } from '../db/db.module';
 import { addWorktree, removeWorktree, buildSubtaskPrompt, runSubtask } from 'runner';
 import type { Subtask } from '@prisma/client';
 import * as path from 'path';
+import { stat } from 'fs/promises';
+import { resolveJobPaths } from '../jobs/job-path-resolver';
 
 const LOG_BATCH_SIZE = 50;
 const LOG_FLUSH_INTERVAL_MS = 500;
@@ -19,20 +22,17 @@ export class RunnersService {
     private readonly github: GitHubService,
     private readonly sse: SseService,
     private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async runSubtask(subtask: Subtask): Promise<void> {
-    const repoPath = this.config.get('REPO_PATH', '/workspace');
+    const defaultRepoPath = this.config.get('REPO_PATH', '/workspace');
     const baseBranch = this.config.get('BASE_BRANCH', 'main');
     const maxTurns = Number(this.config.get('MAX_TURNS', '300'));
     const model = this.config.get('CLAUDE_MODEL', 'claude-sonnet-4-6');
-
     const branch = `task/${subtask.id}`;
-    const worktreePath = path.join(repoPath, '.worktrees', subtask.id);
-
-    await this.subtasks.updateStatus(subtask.id, 'RUNNING', { branch });
-    this.sse.emit(`subtask:${subtask.id}`, { type: 'status', status: 'RUNNING' });
-    this.sse.emit(`job:${subtask.jobId}`, { type: 'subtask_status', subtaskId: subtask.id, status: 'RUNNING' });
+    let repoPath = defaultRepoPath;
+    let worktreePath = path.join(repoPath, '.worktrees', subtask.id);
 
     let logBuffer: Array<{ stream: string; line: string }> = [];
     let flushTimer: ReturnType<typeof setInterval> | null = null;
@@ -64,7 +64,23 @@ export class RunnersService {
     }, LOG_FLUSH_INTERVAL_MS);
 
     try {
+      const job = await this.prisma.job.findUnique({
+        where: { id: subtask.jobId },
+        select: { directory: true },
+      });
+      if (!job) {
+        throw new Error(`Job ${subtask.jobId} not found for subtask ${subtask.id}`);
+      }
+      const resolvedPaths = await resolveJobPaths(defaultRepoPath, job.directory);
+      repoPath = resolvedPaths.repoPath;
+      worktreePath = path.join(repoPath, '.worktrees', subtask.id);
+
+      await this.subtasks.updateStatus(subtask.id, 'RUNNING', { branch });
+      this.sse.emit(`subtask:${subtask.id}`, { type: 'status', status: 'RUNNING' });
+      this.sse.emit(`job:${subtask.jobId}`, { type: 'subtask_status', subtaskId: subtask.id, status: 'RUNNING' });
+
       await addWorktree(repoPath, worktreePath, branch, baseBranch);
+      const executionPath = await this.resolveExecutionPath(worktreePath, resolvedPaths.executionSubpath);
 
       const prompt = buildSubtaskPrompt({
         title: subtask.title,
@@ -74,7 +90,7 @@ export class RunnersService {
 
       let success = false;
 
-      for await (const event of runSubtask({ worktreePath, prompt, config: { repoPath, maxTurns, model, baseBranch } })) {
+      for await (const event of runSubtask({ worktreePath: executionPath, prompt, config: { repoPath, maxTurns, model, baseBranch } })) {
         if (event.type === 'log') {
           queueLog(event.stream, event.line);
         } else if (event.type === 'system') {
@@ -133,5 +149,21 @@ export class RunnersService {
       if (flushTimer) clearInterval(flushTimer);
       await removeWorktree(repoPath, worktreePath).catch(() => void 0);
     }
+  }
+
+  private async resolveExecutionPath(worktreePath: string, executionSubpath: string): Promise<string> {
+    const executionPath = path.resolve(worktreePath, executionSubpath);
+    const relativePath = path.relative(worktreePath, executionPath);
+
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+      throw new Error(`Invalid execution directory: ${executionSubpath}`);
+    }
+
+    const info = await stat(executionPath).catch(() => null);
+    if (!info?.isDirectory()) {
+      throw new Error(`Execution directory does not exist in worktree: ${executionSubpath}`);
+    }
+
+    return executionPath;
   }
 }

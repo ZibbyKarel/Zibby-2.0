@@ -26,12 +26,12 @@ describe('JobsService', () => {
   });
 
   it('createJob creates a job with PENDING status', async () => {
-    const fakeJob = { id: 'job1', prompt: 'Add dark mode', status: 'PENDING', createdAt: new Date() };
+    const fakeJob = { id: 'job1', prompt: 'Add dark mode', directory: 'apps/web', status: 'PENDING', createdAt: new Date() };
     mockPrisma.job.create.mockResolvedValue(fakeJob);
 
-    const result = await service.createJob('Add dark mode');
+    const result = await service.createJob('Add dark mode', 'apps/web');
     expect(mockPrisma.job.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ prompt: 'Add dark mode', status: 'PENDING' }),
+      data: expect.objectContaining({ prompt: 'Add dark mode', directory: 'apps/web', status: 'PENDING' }),
     });
     expect(result.id).toBe('job1');
   });

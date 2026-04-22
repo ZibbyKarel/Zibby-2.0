@@ -1,7 +1,27 @@
 import { z } from 'zod';
 
+const WindowsAbsolutePathPattern = /^[A-Za-z]:[\\/]/;
+
+const DirectorySchema = z
+  .string()
+  .trim()
+  .min(1, 'Directory must not be empty')
+  .refine((value) => {
+    if (value.includes('\0')) return false;
+
+    const segments = value.split(/[\\/]+/).filter(Boolean);
+    const isAbsolute = value.startsWith('/') || WindowsAbsolutePathPattern.test(value);
+
+    if (isAbsolute) return true;
+
+    return value === '.' || !segments.includes('..');
+  }, {
+    message: 'Directory must be an absolute path or a safe relative path',
+  });
+
 export const CreateJobSchema = z.object({
   prompt: z.string().min(1, 'Prompt must not be empty'),
+  directory: DirectorySchema,
 });
 export type CreateJobDto = z.infer<typeof CreateJobSchema>;
 
@@ -25,6 +45,7 @@ export type SubtaskDto = z.infer<typeof SubtaskSchema>;
 export const JobSchema = z.object({
   id: z.string(),
   prompt: z.string(),
+  directory: DirectorySchema,
   status: z.string(),
   error: z.string().nullable(),
   createdAt: z.string(),
