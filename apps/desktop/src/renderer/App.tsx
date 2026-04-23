@@ -6,7 +6,6 @@ import type {
   Dependency,
   RunEvent,
   AdvisorReview,
-  RefineModel,
 } from '@zibby/shared-types/ipc';
 import { StoryCard } from './components/StoryCard';
 import type { StoryRuntime } from './components/StoryCard';
@@ -19,10 +18,8 @@ function emptyRuntime(): StoryRuntime {
 
 export default function App() {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
-  const [brief, setBrief] = useState('');
-  const [refineModel, setRefineModel] = useState<RefineModel>('sonnet');
-  const [refining, setRefining] = useState(false);
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
+  const [showAddTask, setShowAddTask] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [runId, setRunId] = useState<string | null>(null);
@@ -42,9 +39,7 @@ export default function App() {
       const restored = await window.zibby.loadState();
       if (cancelled) return;
       if (restored.folder && restored.folder.kind === 'selected') setFolder(restored.folder);
-      setBrief(restored.brief);
       setPlan(restored.plan);
-      if (restored.refineModel) setRefineModel(restored.refineModel);
       setLoadedState(true);
     })();
     return () => {
@@ -58,15 +53,13 @@ export default function App() {
     saveTimer.current = setTimeout(() => {
       void window.zibby.saveState({
         folderPath: folder?.path,
-        brief: brief || undefined,
         plan: plan ?? undefined,
-        refineModel,
       });
     }, 500);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [folder, brief, plan, refineModel, loadedState]);
+  }, [folder, plan, loadedState]);
 
   const updateStory = (index: number, patch: Partial<Story>) =>
     setPlan((cur) =>
@@ -115,6 +108,14 @@ export default function App() {
     return null;
   };
 
+  const handleAddTask = (story: Story) => {
+    setPlan((cur) =>
+      cur
+        ? { ...cur, stories: [...cur.stories, story] }
+        : { stories: [story], dependencies: [] }
+    );
+  };
+
   useEffect(() => {
     const unsub = window.zibby.onRunEvent((event: RunEvent) => {
       if (event.kind === 'run-done') {
@@ -152,19 +153,6 @@ export default function App() {
     } else {
       setFolder(null);
     }
-  };
-
-  const handleRefine = async () => {
-    if (!folder) return;
-    setRefining(true);
-    setError(null);
-    setPlan(null);
-    setRuntime({});
-    setRunDone(null);
-    const res = await window.zibby.refine({ folderPath: folder.path, brief, model: refineModel });
-    setRefining(false);
-    if (res.kind === 'ok') setPlan(res.plan);
-    else setError(res.message);
   };
 
   const handleRun = async () => {
@@ -264,23 +252,21 @@ export default function App() {
 
         <FolderSection folder={folder} onPick={handlePick} />
 
-        {folder && (
-          <BriefSection
-            brief={brief}
-            onBrief={setBrief}
-            disabled={refining || !brief.trim() || running}
-            refining={refining}
-            onRefine={handleRefine}
-            model={refineModel}
-            onModelChange={setRefineModel}
-          />
-        )}
-
-        {refining && <RefineProgress />}
-
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
             <strong className="font-semibold">Error:</strong> {error}
+          </div>
+        )}
+
+        {folder && !plan && (
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-neutral-500 text-sm">Žádné tasky. Přidej první task a spusť ho.</p>
+            <button
+              onClick={() => setShowAddTask(true)}
+              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium"
+            >
+              + Přidat task
+            </button>
           </div>
         )}
 
@@ -307,6 +293,19 @@ export default function App() {
             onAdvise={handleAdvise}
             onApplySuggestedDependency={applySuggestedDependency}
             onAddDependency={addDependency}
+            onAddTask={() => setShowAddTask(true)}
+          />
+        )}
+
+        {folder && (
+          <AddTaskDialog
+            folder={folder}
+            open={showAddTask}
+            onClose={() => setShowAddTask(false)}
+            onAdd={(story) => {
+              handleAddTask(story);
+              setShowAddTask(false);
+            }}
           />
         )}
       </div>
@@ -336,73 +335,6 @@ function FolderSection({ folder, onPick }: { folder: SelectedFolder | null; onPi
   );
 }
 
-function BriefSection({
-  brief,
-  onBrief,
-  disabled,
-  refining,
-  onRefine,
-  model,
-  onModelChange,
-}: {
-  brief: string;
-  onBrief: (v: string) => void;
-  disabled: boolean;
-  refining: boolean;
-  onRefine: () => void;
-  model: RefineModel;
-  onModelChange: (m: RefineModel) => void;
-}) {
-  const modelLabel = model.charAt(0).toUpperCase() + model.slice(1);
-  return (
-    <section className="space-y-3">
-      <label className="block text-sm font-medium text-neutral-300">Brief</label>
-      <textarea
-        value={brief}
-        onChange={(e) => onBrief(e.target.value)}
-        placeholder="Describe one or more tasks — Claude will expand them into user stories with acceptance criteria."
-        rows={6}
-        className="w-full rounded-lg bg-neutral-900 border border-neutral-800 focus:border-indigo-500 focus:outline-none p-3 text-sm font-mono text-neutral-100 placeholder:text-neutral-600"
-      />
-      <div className="flex justify-between items-center">
-        <select
-          value={model}
-          onChange={(e) => onModelChange(e.target.value as RefineModel)}
-          disabled={refining}
-          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
-        >
-          <option value="haiku">Haiku (rychlé)</option>
-          <option value="sonnet">Sonnet (výchozí)</option>
-          <option value="opus">Opus (přesné)</option>
-        </select>
-        <button
-          onClick={onRefine}
-          disabled={disabled}
-          className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
-        >
-          {refining ? 'Refining…' : `Refine with ${modelLabel}`}
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function RefineProgress() {
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    const start = Date.now();
-    const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 500);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
-      <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-      <span>Running claude CLI refine session…</span>
-      <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
-    </div>
-  );
-}
-
 function PlanView({
   plan,
   runtime,
@@ -425,6 +357,7 @@ function PlanView({
   onAdvise,
   onApplySuggestedDependency,
   onAddDependency,
+  onAddTask,
 }: {
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
@@ -447,6 +380,7 @@ function PlanView({
   onAdvise: () => void;
   onApplySuggestedDependency: (dep: Dependency) => void;
   onAddDependency: (dep: Dependency) => string | null;
+  onAddTask: () => void;
 }) {
   return (
     <section className="space-y-4">
@@ -455,6 +389,12 @@ function PlanView({
         <div className="flex items-center gap-3">
           {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
           {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
+          <button
+            onClick={onAddTask}
+            className="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium border border-neutral-700"
+          >
+            + Přidat task
+          </button>
           <button
             onClick={onAdvise}
             disabled={advising || running}
@@ -735,5 +675,179 @@ function Badge({ ok, label }: { ok: boolean; label: string }) {
     >
       {label}
     </span>
+  );
+}
+
+function AddTaskDialog({
+  folder,
+  open,
+  onClose,
+  onAdd,
+}: {
+  folder: SelectedFolder;
+  open: boolean;
+  onClose: () => void;
+  onAdd: (story: Story) => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [model, setModel] = useState('');
+  const [refining, setRefining] = useState(false);
+  const [refinedAC, setRefinedAC] = useState<string[] | null>(null);
+  const [refineError, setRefineError] = useState<string | null>(null);
+  const refineCounterRef = useRef(0);
+
+  useEffect(() => {
+    if (open) {
+      refineCounterRef.current++;  // invalidate any in-flight refine
+      setTitle('');
+      setDescription('');
+      setModel('');
+      setRefining(false);
+      setRefinedAC(null);
+      setRefineError(null);
+    }
+  }, [open]);
+
+  const handleRefine = async () => {
+    const token = ++refineCounterRef.current;
+    setRefining(true);
+    setRefineError(null);
+    setRefinedAC(null);
+    try {
+      const res = await window.zibby.refineStory({
+        folderPath: folder.path,
+        title,
+        description,
+      });
+      if (token !== refineCounterRef.current) return;
+      if (res.kind === 'ok') {
+        setTitle(res.story.title);
+        setDescription(res.story.description);
+        setRefinedAC(res.story.acceptanceCriteria);
+      } else {
+        setRefineError(res.message);
+      }
+    } catch (err) {
+      if (token !== refineCounterRef.current) return;
+      setRefineError(err instanceof Error ? err.message : 'Unexpected error');
+    } finally {
+      if (token === refineCounterRef.current) setRefining(false);
+    }
+  };
+
+  const handleAdd = () => {
+    onAdd({
+      title: title.trim(),
+      description: description.trim(),
+      acceptanceCriteria: refinedAC ?? [],
+      affectedFiles: [],
+      model: model || undefined,
+    });
+  };
+
+  if (!open) return null;
+
+  const canRefine = !refining && description.trim().length > 0;
+  const canAdd = title.trim().length >= 3 && description.trim().length > 0 && !refining;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+      onKeyDown={(e) => { if (e.key === 'Escape' && !refining) onClose(); }}
+      tabIndex={-1}
+    >
+      <div
+        className="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-full max-w-lg space-y-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-task-dialog-title"
+      >
+        <h2 id="add-task-dialog-title" className="text-lg font-semibold text-neutral-100">Přidat task</h2>
+
+        <div className="space-y-1">
+          <label htmlFor="add-task-title" className="block text-xs font-medium text-neutral-400">Název *</label>
+          <input
+            id="add-task-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Stručný název tasku"
+            autoFocus
+            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="add-task-description" className="block text-xs font-medium text-neutral-400">Popis / Brief *</label>
+          <textarea
+            id="add-task-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Popiš co má task udělat — Refine z toho udělá kompletní user story s AC"
+            rows={5}
+            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 resize-none"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="add-task-model" className="block text-xs font-medium text-neutral-400">Model (pro implementaci)</label>
+          <select
+            id="add-task-model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
+          >
+            <option value="">Výchozí (sonnet)</option>
+            <option value="sonnet">Sonnet</option>
+            <option value="opus">Opus</option>
+            <option value="haiku">Haiku</option>
+          </select>
+        </div>
+
+        {refinedAC && (
+          <div className="rounded-lg bg-neutral-950 border border-emerald-500/30 p-3 space-y-1">
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">
+              Acceptance criteria (z Refine)
+            </p>
+            <ul className="list-disc list-inside text-xs text-neutral-300 space-y-0.5">
+              {refinedAC.map((c, i) => (
+                <li key={i}>{c}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {refineError && <p className="text-xs text-rose-300">{refineError}</p>}
+
+        <div className="flex justify-between items-center pt-2">
+          <button
+            onClick={() => { void handleRefine(); }}
+            disabled={!canRefine}
+            className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-200 text-sm font-medium border border-neutral-700 flex items-center gap-2"
+          >
+            {refining && (
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
+            {refining ? 'Refining…' : 'Refine'}
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              disabled={refining}
+              className="px-3 py-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            >
+              Zrušit
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={!canAdd}
+              className="px-4 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+            >
+              Přidat task
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -8,6 +8,7 @@ export const IpcChannels = {
   LoadState: 'zibby:loadState',
   SaveState: 'zibby:saveState',
   RemoveStory: 'zibby:removeStory',
+  RefineStory: 'zibby:refineStory',
 } as const;
 
 export const IpcEvents = {
@@ -49,6 +50,16 @@ export type RefineRequest = {
 
 export type RefineResult =
   | { kind: 'ok'; plan: RefinedPlan }
+  | { kind: 'error'; message: string };
+
+export type RefineStoryRequest = {
+  folderPath: string;
+  title: string;
+  description: string;
+};
+
+export type RefineStoryResult =
+  | { kind: 'ok'; story: Story }
   | { kind: 'error'; message: string };
 
 export type AdvisorReview = {
@@ -131,6 +142,7 @@ export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
   refine: (req: RefineRequest) => Promise<RefineResult>;
+  refineStory: (req: RefineStoryRequest) => Promise<RefineStoryResult>;
   advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   runStory: (req: RunStoryRequest) => Promise<RunStoryResult>;
