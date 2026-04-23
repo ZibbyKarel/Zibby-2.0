@@ -242,7 +242,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-8">
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
           <p className="text-neutral-400 text-sm">
