@@ -67,11 +67,11 @@ export function AddTaskDialog({ open, onClose, onAdd }: Props) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label="Title" hint="optional">
-            <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)}
+            <input value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="What should the agent do?" style={inputStyle} />
           </Field>
           <Field label="Description / brief" required>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+            <textarea autoFocus value={description} onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the work. Refine will expand this into a user story."
               rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
           </Field>
