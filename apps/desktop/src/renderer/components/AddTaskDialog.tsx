@@ -44,7 +44,7 @@ export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
 
   if (!open) return null;
 
-  const canAdd = title.trim().length >= 2 && description.trim().length > 0 && !refining;
+  const canAdd = description.trim().length > 0 && !refining;
 
   const handleRefine = async () => {
     if (!description.trim()) return;
@@ -94,7 +94,7 @@ export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
         </header>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Field label="Title" required>
+          <Field label="Title" hint="optional">
             <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="What should the agent do?" style={inputStyle} />
           </Field>
@@ -130,7 +130,7 @@ export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
           <div style={{ display: 'flex', gap: 8 }}>
             <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
             <Btn variant="primary" icon="check" disabled={!canAdd} onClick={() => canAdd && onAdd({
-              title: title.trim(),
+              title: title.trim() || description.trim().split(' ').slice(0, 6).join(' '),
               description: description.trim(),
               acceptance: acceptance.split('\n').map((s) => s.trim()).filter(Boolean),
               model: model || undefined,
