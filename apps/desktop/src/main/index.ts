@@ -150,6 +150,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
           plan: req.plan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
+          completedIndices: req.completedIndices,
           onEvent: (e) => {
             const wc = getWebContents();
             if (!wc) return;

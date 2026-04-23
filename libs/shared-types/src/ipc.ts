@@ -94,6 +94,7 @@ export type RunStartRequest = {
   folderPath: string;
   plan: RefinedPlan;
   baseBranch?: string;
+  completedIndices?: number[];
 };
 
 export type RunStartResult =

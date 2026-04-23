@@ -202,8 +202,11 @@ export default function App() {
       return;
     }
     if (runId || runAllInFlight.current) return;
+    const completedIndices = Object.entries(runtime)
+      .filter(([, v]) => v.status === 'done' || v.status === 'review')
+      .map(([k]) => Number(k));
     const started = (async () => {
-      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
+      const res = await window.zibby.startRun({ folderPath: folder.path, plan, completedIndices });
       if (res.kind === 'error') {
         pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
         return;
@@ -213,7 +216,7 @@ export default function App() {
     })();
     runAllInFlight.current = started.finally(() => { runAllInFlight.current = null; });
     await runAllInFlight.current;
-  }, [plan, folder, runId, pushToast]);
+  }, [plan, folder, runtime, runId, pushToast]);
 
   const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
     const task = tasks.find((t) => t.id === taskId);

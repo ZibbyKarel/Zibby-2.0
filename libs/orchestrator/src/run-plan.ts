@@ -22,6 +22,7 @@ export function startPlanRun(args: {
   repoPath: string;
   baseBranch?: string;
   maxParallel?: number;
+  completedIndices?: readonly number[];
   onEvent: (event: PlanEvent) => void;
 }): PlanRunHandle {
   const runId = `run-${Date.now()}-${nextRunId++}`;
@@ -38,6 +39,9 @@ export function startPlanRun(args: {
     }
 
     const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked'> = dag.map(() => 'pending');
+    for (const idx of args.completedIndices ?? []) {
+      if (idx >= 0 && idx < status.length) status[idx] = 'done';
+    }
     let failed = false;
 
     const blockCascade = (fromIndex: number) => {
