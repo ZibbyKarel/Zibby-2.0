@@ -696,7 +696,7 @@ function AddTaskDialog({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
-  const [model, setModel] = useState('');
+  const [model, setModel] = useState('sonnet');
   const [refining, setRefining] = useState(false);
   const [refineError, setRefineError] = useState<string | null>(null);
   const refineCounterRef = useRef(0);
@@ -814,7 +814,6 @@ function AddTaskDialog({
             onChange={(e) => setModel(e.target.value)}
             className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
           >
-            <option value="">Výchozí (sonnet)</option>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>

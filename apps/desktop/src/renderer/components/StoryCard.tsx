@@ -178,11 +178,10 @@ export function StoryCard({
                 Model override
               </span>
               <select
-                value={story.model ?? ''}
+                value={story.model ?? 'sonnet'}
                 onChange={(e) => onChange({ model: e.target.value || undefined })}
                 className="w-48 bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-200"
               >
-                <option value="">Default (sonnet)</option>
                 <option value="sonnet">Sonnet</option>
                 <option value="opus">Opus</option>
                 <option value="haiku">Haiku</option>
