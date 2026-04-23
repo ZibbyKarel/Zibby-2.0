@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { RefinedPlanSchema } from '@zibby/shared-types/schemas';
 import type { RefinedPlan } from '@zibby/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
+import { optimizeContext } from './context-optimizer';
 
 const DEFAULT_MODEL = process.env.CLAUDE_REFINE_MODEL ?? 'sonnet';
 const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_REFINE_TIMEOUT_MS ?? 300_000);
@@ -125,7 +126,7 @@ export async function refine(params: {
   claudeBin?: string;
 }): Promise<RefinedPlan> {
   const ctx = await collectRepoContext(params.folderPath);
-  const contextBlock = renderContextForPrompt(ctx);
+  const contextBlock = renderContextForPrompt(optimizeContext(ctx));
   const userPrompt = `${contextBlock}\n\n---\n\n## Developer brief\n\n${params.brief}`;
 
   const stdout = await runClaudeCli({
