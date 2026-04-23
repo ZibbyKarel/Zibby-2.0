@@ -4,7 +4,7 @@ type IconName =
   | 'folder' | 'git' | 'play' | 'pause' | 'plus' | 'x' | 'check'
   | 'chevron' | 'chevronDown' | 'search' | 'clock' | 'bolt' | 'warn'
   | 'github' | 'terminal' | 'diff' | 'more' | 'link' | 'command'
-  | 'sun' | 'moon' | 'bell' | 'graph' | 'edit' | 'trash' | 'copy'
+  | 'sun' | 'moon' | 'bell' | 'edit' | 'trash' | 'copy'
   | 'arrowRight' | 'filter' | 'sparkle';
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -30,7 +30,6 @@ const paths: Record<IconName, React.ReactNode> = {
   sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,
   moon: <><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></>,
   bell: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8Z"/><path d="M10 21a2 2 0 0 0 4 0"/></>,
-  graph: <><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h8M8 18h8M6 8v8M18 8v8"/></>,
   edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></>,
   trash: <><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z"/></>,
   copy: <><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
