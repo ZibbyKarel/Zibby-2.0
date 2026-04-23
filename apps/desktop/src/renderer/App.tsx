@@ -228,6 +228,16 @@ export default function App() {
     setAddOpen(false);
   }, []);
 
+  const editTask = useCallback((idx: number, data: { title: string; description: string; acceptance: string[]; model?: string }) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const stories = prev.stories.map((s, i) =>
+        i === idx ? { ...s, title: data.title, description: data.description, acceptanceCriteria: data.acceptance, model: data.model } : s
+      );
+      return { ...prev, stories };
+    });
+  }, []);
+
   const deleteTask = useCallback((idx: number) => {
     setPlan((prev) => {
       if (!prev) return prev;
@@ -438,6 +448,7 @@ export default function App() {
         open={!!selected}
         onClose={() => setSelectedIndex(null)}
         onRun={() => selected && void runTask(selected.index)}
+        onSave={(data) => selected && editTask(selected.index, data)}
         tab={drawerTab}
         setTab={setDrawerTab}
         runtimeMs={selected ? runtimeMs(selected) : null}
