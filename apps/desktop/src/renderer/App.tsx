@@ -184,14 +184,42 @@ export default function App() {
     }
     let currentRunId = runId;
     if (!currentRunId) {
-      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
-      if (res.kind === 'error') { pushToast({ kind: 'failed', title: 'Run error', desc: res.message }); return; }
-      currentRunId = res.runId;
+      currentRunId = `session-${Date.now()}`;
       setRunId(currentRunId);
     }
-    pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
-    window.zibby.runStory({ runId: currentRunId, storyIndex: idx, folderPath: folder.path, plan }).catch(() => {});
+    try {
+      const res = await window.zibby.runStory({ runId: currentRunId, storyIndex: idx, folderPath: folder.path, plan });
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Task not started', desc: res.message });
+        return;
+      }
+      pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
+    } catch (err) {
+      pushToast({ kind: 'failed', title: 'Task error', desc: err instanceof Error ? err.message : String(err) });
+    }
   }, [plan, folder, runId, pushToast]);
+
+  const runAllPending = useCallback(async () => {
+    if (!plan || !folder) {
+      pushToast({ kind: 'failed', title: 'No folder selected' });
+      return;
+    }
+    if (plan.stories.length === 0) {
+      pushToast({ kind: 'info', title: 'No tasks to run' });
+      return;
+    }
+    try {
+      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
+        return;
+      }
+      setRunId(res.runId);
+      pushToast({ kind: 'info', title: 'Run started' });
+    } catch (err) {
+      pushToast({ kind: 'failed', title: 'Run error', desc: err instanceof Error ? err.message : String(err) });
+    }
+  }, [plan, folder, pushToast]);
 
   const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
     const task = tasks.find((t) => t.id === taskId);
@@ -264,7 +292,7 @@ export default function App() {
   const commands = useMemo<Command[]>(() => [
     {
       id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
-      run: () => { tasks.filter((t) => t.status === 'pending' || t.status === 'blocked').forEach((t) => void runTask(t.index)); },
+      run: () => void runAllPending(),
     },
     { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
     {
@@ -280,7 +308,7 @@ export default function App() {
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
     })),
-  ], [tasks, theme, folder, runTask]);
+  ], [tasks, theme, folder, runAllPending]);
 
   // ── Drag ───────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -372,7 +400,7 @@ export default function App() {
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
-          onClick={() => tasks.filter((t) => t.status === 'pending').forEach((t) => void runTask(t.index))}
+          onClick={() => void runAllPending()}
         >
           Run all
         </Btn>

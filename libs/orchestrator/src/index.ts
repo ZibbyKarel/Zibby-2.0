@@ -9,3 +9,4 @@ export type { WorktreeHandle } from './worktree';
 export { slugify, uniqueSlug } from './slug';
 export { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
 export type { DagNode } from './dag';
+export { ActiveStories } from './active-stories';

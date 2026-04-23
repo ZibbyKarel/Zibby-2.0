@@ -25,7 +25,8 @@ import {
 } from '@zibby/shared-types/ipc';
 import type { Usage } from '@zibby/shared-types/ipc';
 import { refine, advise, refineStory } from '@zibby/ai-refiner';
-import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
+import type { StoryStatus } from '@zibby/shared-types/ipc';
+import { ActiveStories, startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
 import { deleteStoryBranch } from '@zibby/github';
 import { fetchUsage } from '@zibby/usage';
 import { loadPersisted, savePersisted } from './state-store';
@@ -35,6 +36,15 @@ const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
 
 const activeRuns = new Map<string, PlanRunHandle>();
+const activeStories = new ActiveStories();
+
+const TERMINAL_STORY_STATUSES: ReadonlySet<StoryStatus> = new Set([
+  'review',
+  'done',
+  'failed',
+  'cancelled',
+  'blocked',
+]);
 
 const USAGE_POLL_INTERVAL_MS = 5 * 60 * 1000;
 let cachedUsage: Usage | null = null;
@@ -146,12 +156,31 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.StartRun,
     async (_event, req: RunStartRequest): Promise<RunStartResult> => {
       try {
+        if (activeRuns.size > 0) {
+          return { kind: 'error', message: 'A plan run is already in progress' };
+        }
+        for (let i = 0; i < req.plan.stories.length; i++) {
+          if (activeStories.isActive(req.folderPath, i)) {
+            return {
+              kind: 'error',
+              message: `Story ${i + 1} is already running; wait for it to finish before starting a plan run`,
+            };
+          }
+        }
+        const planStoryIndices = req.plan.stories.map((_, i) => i);
+        // Reserve every story up front so any concurrent RunStory call for this
+        // plan fails fast — otherwise a user click on a pending card could race
+        // the plan's own executeStory and open two PRs for the same story.
+        for (const idx of planStoryIndices) activeStories.tryAcquire(req.folderPath, idx);
         const handle = startPlanRun({
           plan: req.plan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
           onEvent: (e) => {
             const wc = getWebContents();
+            if ('storyIndex' in e && e.kind === 'status' && TERMINAL_STORY_STATUSES.has(e.status)) {
+              activeStories.release(req.folderPath, e.storyIndex);
+            }
             if (!wc) return;
             if ('storyIndex' in e) {
               if (e.kind === 'status') {
@@ -179,12 +208,17 @@ function registerIpc(getWebContents: () => WebContents | null) {
                 });
               }
             } else if (e.kind === 'run-done') {
+              activeStories.releaseAll(req.folderPath, planStoryIndices);
               emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
               activeRuns.delete(handle.runId);
             }
           },
         });
         activeRuns.set(handle.runId, handle);
+        void handle.result.finally(() => {
+          activeStories.releaseAll(req.folderPath, planStoryIndices);
+          activeRuns.delete(handle.runId);
+        });
         return { kind: 'started', runId: handle.runId };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
@@ -197,6 +231,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
     async (_event, req: RunStoryRequest): Promise<RunStoryResult> => {
       const story = req.plan.stories[req.storyIndex];
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
+      if (!activeStories.tryAcquire(req.folderPath, req.storyIndex)) {
+        return { kind: 'error', message: 'Story is already running' };
+      }
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
@@ -214,17 +251,21 @@ function registerIpc(getWebContents: () => WebContents | null) {
           }
         },
       });
-      void handle.result.catch((err) => {
-        const wc = getWebContents();
-        if (!wc) return;
-        emitToRenderer(wc, {
-          runId: req.runId,
-          storyIndex: req.storyIndex,
-          kind: 'log',
-          stream: 'stderr',
-          line: err instanceof Error ? err.message : String(err),
+      void handle.result
+        .catch((err) => {
+          const wc = getWebContents();
+          if (!wc) return;
+          emitToRenderer(wc, {
+            runId: req.runId,
+            storyIndex: req.storyIndex,
+            kind: 'log',
+            stream: 'stderr',
+            line: err instanceof Error ? err.message : String(err),
+          });
+        })
+        .finally(() => {
+          activeStories.release(req.folderPath, req.storyIndex);
         });
-      });
       return { kind: 'ok' };
     }
   );
