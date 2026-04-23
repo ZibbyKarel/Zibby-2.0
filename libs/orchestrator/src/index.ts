@@ -7,5 +7,5 @@ export type { SingleStoryHandle } from './runner';
 export { createWorktree, detectBaseBranch } from './worktree';
 export type { WorktreeHandle } from './worktree';
 export { slugify, uniqueSlug } from './slug';
-export { buildDag, collectTransitiveSuccessors } from './dag';
+export { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
 export type { DagNode } from './dag';

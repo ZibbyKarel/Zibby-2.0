@@ -15,6 +15,7 @@ import {
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
+  type RemoveStoryResult,
 } from '@zibby/shared-types/ipc';
 
 const api: IpcApi = {
@@ -38,6 +39,8 @@ const api: IpcApi = {
   },
   loadState: (): Promise<LoadedAppState> => ipcRenderer.invoke(IpcChannels.LoadState),
   saveState: (state: PersistedState): Promise<void> => ipcRenderer.invoke(IpcChannels.SaveState, state),
+  removeStory: (storyIndex: number): Promise<RemoveStoryResult> =>
+    ipcRenderer.invoke(IpcChannels.RemoveStory, { storyIndex }),
 };
 
 contextBridge.exposeInMainWorld('zibby', api);
