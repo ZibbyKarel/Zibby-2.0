@@ -129,7 +129,7 @@ export async function executeStory(args: {
         signal: abort.signal,
       });
       onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
-      onEvent({ kind: 'status', status: 'done' });
+      onEvent({ kind: 'status', status: 'review' });
       return { success: true, prUrl, branch: worktree.branch };
     } finally {
       clearInterval(cancelWatcher);

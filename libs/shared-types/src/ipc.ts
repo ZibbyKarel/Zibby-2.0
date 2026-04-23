@@ -85,6 +85,7 @@ export type StoryStatus =
   | 'blocked'
   | 'running'
   | 'pushing'
+  | 'review'
   | 'done'
   | 'failed'
   | 'cancelled';

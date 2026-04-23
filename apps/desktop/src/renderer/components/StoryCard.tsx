@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type DragEvent } from 'react';
 import type { Story, StoryStatus } from '@zibby/shared-types/ipc';
 
 export type StoryRuntime = {
@@ -13,6 +13,7 @@ const STATUS_STYLE: Record<StoryStatus, string> = {
   blocked: 'bg-neutral-700 text-neutral-400',
   running: 'bg-indigo-500/20 text-indigo-300',
   pushing: 'bg-sky-500/20 text-sky-300',
+  review: 'bg-violet-500/20 text-violet-300',
   done: 'bg-emerald-500/20 text-emerald-300',
   failed: 'bg-rose-500/20 text-rose-300',
   cancelled: 'bg-amber-500/20 text-amber-300',
@@ -34,6 +35,9 @@ export function StoryCard({
   hasDownstreamDependents,
   onRemove,
   removeError,
+  draggable = false,
+  onDragStart,
+  onDragEnd,
 }: {
   index: number;
   story: Story;
@@ -48,6 +52,9 @@ export function StoryCard({
   hasDownstreamDependents: boolean;
   onRemove: () => void;
   removeError?: string | null;
+  draggable?: boolean;
+  onDragStart?: (e: DragEvent<HTMLElement>) => void;
+  onDragEnd?: (e: DragEvent<HTMLElement>) => void;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -60,7 +67,14 @@ export function StoryCard({
       : undefined;
 
   return (
-    <article className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3">
+    <article
+      className={`rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-3 ${
+        draggable ? 'cursor-grab active:cursor-grabbing' : ''
+      }`}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
       <header className="flex items-start gap-3">
         <span className="shrink-0 text-xs font-semibold text-neutral-500 mt-0.5">#{index}</span>
         {editing ? (
