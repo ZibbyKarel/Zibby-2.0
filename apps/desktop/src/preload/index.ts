@@ -6,6 +6,8 @@ import {
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
+  type RefineStoryRequest,
+  type RefineStoryResult,
   type AdviseRequest,
   type AdviseResult,
   type RunStartRequest,
@@ -23,6 +25,8 @@ const api: IpcApi = {
   pickFolder: (): Promise<PickFolderResult> => ipcRenderer.invoke(IpcChannels.PickFolder),
   refine: (req: RefineRequest): Promise<RefineResult> =>
     ipcRenderer.invoke(IpcChannels.Refine, req),
+  refineStory: (req: RefineStoryRequest): Promise<RefineStoryResult> =>
+    ipcRenderer.invoke(IpcChannels.RefineStory, req),
   advise: (req: AdviseRequest): Promise<AdviseResult> =>
     ipcRenderer.invoke(IpcChannels.Advise, req),
   startRun: (req: RunStartRequest): Promise<RunStartResult> =>
