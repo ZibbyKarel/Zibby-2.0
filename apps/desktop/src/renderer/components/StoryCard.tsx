@@ -30,6 +30,10 @@ export function StoryCard({
   onRunStory,
   canRunIndividual,
   unmetDependencies,
+  runActive,
+  hasDownstreamDependents,
+  onRemove,
+  removeError,
 }: {
   index: number;
   story: Story;
@@ -40,6 +44,10 @@ export function StoryCard({
   onRunStory: () => void;
   canRunIndividual: boolean;
   unmetDependencies: { index: number; title: string }[];
+  runActive: boolean;
+  hasDownstreamDependents: boolean;
+  onRemove: () => void;
+  removeError?: string | null;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -90,7 +98,21 @@ export function StoryCard({
             {editing ? 'Done' : 'Edit'}
           </button>
         )}
+        {!runActive && (
+          <button
+            onClick={onRemove}
+            disabled={hasDownstreamDependents}
+            title={hasDownstreamDependents ? 'Remove dependents first' : 'Remove story'}
+            className="shrink-0 text-xs text-neutral-500 hover:text-rose-300 px-2 py-0.5 rounded border border-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ✕
+          </button>
+        )}
       </header>
+
+      {removeError && (
+        <p className="text-xs text-rose-300">{removeError}</p>
+      )}
 
       {editing ? (
         <textarea
