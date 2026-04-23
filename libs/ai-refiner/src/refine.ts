@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { RefinedPlanSchema } from '@zibby/shared-types/schemas';
 import type { RefinedPlan } from '@zibby/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
-import { runClaudeCli, ClaudeResultEnvelopeSchema } from './claude-cli';
+import { runClaudeCli, parseClaudeOutput } from './claude-cli';
 
 const DEFAULT_MODEL = process.env.CLAUDE_REFINE_MODEL ?? 'sonnet';
 const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_REFINE_TIMEOUT_MS ?? 300_000);
@@ -50,30 +50,5 @@ export async function refine(params: {
     timeoutMs: params.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   });
 
-  let envelope: unknown;
-  try {
-    envelope = JSON.parse(stdout);
-  } catch {
-    throw new Error(`claude CLI returned non-JSON output: ${stdout.slice(0, 300)}`);
-  }
-
-  const env = ClaudeResultEnvelopeSchema.safeParse(envelope);
-  if (!env.success) {
-    throw new Error(`Unexpected claude CLI envelope shape: ${env.error.message}`);
-  }
-  if (env.data.is_error) {
-    throw new Error(`claude reported error (${env.data.subtype}): ${env.data.result ?? '<no detail>'}`);
-  }
-  if (env.data.structured_output === undefined) {
-    throw new Error(
-      `claude did not produce structured_output. stop_reason=${env.data.stop_reason ?? '?'}, ` +
-        `result="${(env.data.result ?? '').slice(0, 200)}"`
-    );
-  }
-
-  const parsed = RefinedPlanSchema.safeParse(env.data.structured_output);
-  if (!parsed.success) {
-    throw new Error(`Plan failed schema validation: ${parsed.error.message}`);
-  }
-  return parsed.data;
+  return parseClaudeOutput(stdout, RefinedPlanSchema);
 }

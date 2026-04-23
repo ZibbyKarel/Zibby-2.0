@@ -10,6 +10,35 @@ export const ClaudeResultEnvelopeSchema = z.object({
   stop_reason: z.string().optional(),
 });
 
+export function parseClaudeOutput<T>(stdout: string, schema: z.ZodType<T>): T {
+  let envelope: unknown;
+  try {
+    envelope = JSON.parse(stdout);
+  } catch {
+    throw new Error(`claude CLI returned non-JSON output: ${stdout.slice(0, 300)}`);
+  }
+
+  const env = ClaudeResultEnvelopeSchema.safeParse(envelope);
+  if (!env.success) {
+    throw new Error(`Unexpected claude CLI envelope shape: ${env.error.message}`);
+  }
+  if (env.data.is_error) {
+    throw new Error(`claude reported error (${env.data.subtype}): ${env.data.result ?? '<no detail>'}`);
+  }
+  if (env.data.structured_output === undefined) {
+    throw new Error(
+      `claude did not produce structured_output. stop_reason=${env.data.stop_reason ?? '?'}, ` +
+        `result="${(env.data.result ?? '').slice(0, 200)}"`
+    );
+  }
+
+  const parsed = schema.safeParse(env.data.structured_output);
+  if (!parsed.success) {
+    throw new Error(`Schema validation failed: ${parsed.error.message}`);
+  }
+  return parsed.data;
+}
+
 export function runClaudeCli(args: {
   bin: string;
   prompt: string;
