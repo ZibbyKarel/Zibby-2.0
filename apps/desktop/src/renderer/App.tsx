@@ -47,6 +47,7 @@ export default function App() {
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrated = useRef(false);
+  const runAllInFlight = useRef<Promise<void> | null>(null);
 
   // ── Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
@@ -110,6 +111,7 @@ export default function App() {
   useEffect(() => {
     const unsub = window.zibby.onRunEvent((ev) => {
       if (ev.kind === 'run-done') {
+        setRunId((current) => (current === ev.runId ? null : current));
         pushToast({ kind: ev.success ? 'done' : 'failed', title: ev.success ? 'Run finished' : 'Run failed' });
         return;
       }
@@ -182,15 +184,35 @@ export default function App() {
       pushToast({ kind: 'failed', title: 'No folder selected' });
       return;
     }
-    let currentRunId = runId;
-    if (!currentRunId) {
-      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
-      if (res.kind === 'error') { pushToast({ kind: 'failed', title: 'Run error', desc: res.message }); return; }
-      currentRunId = res.runId;
-      setRunId(currentRunId);
+    const current = runtime[idx]?.status;
+    if (current === 'running' || current === 'pushing' || current === 'review' || current === 'done') {
+      return;
     }
+    const storyRunId = `story-${Date.now()}-${idx}`;
     pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
-    window.zibby.runStory({ runId: currentRunId, storyIndex: idx, folderPath: folder.path, plan }).catch(() => {});
+    const res = await window.zibby.runStory({ runId: storyRunId, storyIndex: idx, folderPath: folder.path, plan });
+    if (res.kind === 'error') {
+      pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
+    }
+  }, [plan, folder, runtime, pushToast]);
+
+  const runAll = useCallback(async () => {
+    if (!plan || !folder) {
+      pushToast({ kind: 'failed', title: 'No folder selected' });
+      return;
+    }
+    if (runId || runAllInFlight.current) return;
+    const started = (async () => {
+      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
+        return;
+      }
+      setRunId(res.runId);
+      pushToast({ kind: 'info', title: 'Run started' });
+    })();
+    runAllInFlight.current = started.finally(() => { runAllInFlight.current = null; });
+    await runAllInFlight.current;
   }, [plan, folder, runId, pushToast]);
 
   const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
@@ -264,7 +286,7 @@ export default function App() {
   const commands = useMemo<Command[]>(() => [
     {
       id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
-      run: () => { tasks.filter((t) => t.status === 'pending' || t.status === 'blocked').forEach((t) => void runTask(t.index)); },
+      run: () => { void runAll(); },
     },
     { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
     {
@@ -280,7 +302,7 @@ export default function App() {
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
     })),
-  ], [tasks, theme, folder, runTask]);
+  ], [tasks, theme, folder, runAll]);
 
   // ── Drag ───────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -372,7 +394,7 @@ export default function App() {
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
-          onClick={() => tasks.filter((t) => t.status === 'pending').forEach((t) => void runTask(t.index))}
+          onClick={() => void runAll()}
         >
           Run all
         </Btn>

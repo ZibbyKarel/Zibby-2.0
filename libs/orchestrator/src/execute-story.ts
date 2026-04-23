@@ -3,6 +3,7 @@ import { runClaudeInWorktree } from '@zibby/claude-runner';
 import { commitAllIfDirty, gitPush, ghCreatePr } from '@zibby/github';
 import { createWorktree, type WorktreeHandle } from './worktree';
 import { slugify, uniqueSlug } from './slug';
+import { tryClaimStory } from './active-stories';
 
 export type StoryExecutionEvent =
   | { kind: 'status'; status: StoryStatus }
@@ -14,6 +15,7 @@ export type StoryExecutionResult = {
   prUrl?: string;
   branch?: string;
   error?: string;
+  duplicate?: boolean;
 };
 
 function buildPrompt(story: Story): string {
@@ -62,6 +64,17 @@ export async function executeStory(args: {
 }): Promise<StoryExecutionResult> {
   const { story, repoPath, baseBranch, usedSlugs, onEvent, signal } = args;
   const slugBase = slugify(`${args.storyIndex + 1}-${story.title}`);
+
+  const release = tryClaimStory(repoPath, slugBase);
+  if (!release) {
+    onEvent({
+      kind: 'log',
+      stream: 'info',
+      line: `story "${story.title}" is already being executed — skipping duplicate start`,
+    });
+    return { success: false, error: 'already running', duplicate: true };
+  }
+
   const slug = uniqueSlug(slugBase, usedSlugs);
   usedSlugs.add(slug);
 
@@ -150,5 +163,6 @@ export async function executeStory(args: {
         onEvent({ kind: 'log', stream: 'stderr', line: `worktree cleanup failed: ${e instanceof Error ? e.message : String(e)}` });
       });
     }
+    release();
   }
 }

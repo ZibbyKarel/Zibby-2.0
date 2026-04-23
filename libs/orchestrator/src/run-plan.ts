@@ -72,6 +72,11 @@ export function startPlanRun(args: {
       });
       if (res.success) {
         status[index] = 'done';
+      } else if (res.duplicate) {
+        // Another concurrent execution owns this story. Treat it as done from
+        // this run's perspective so downstream tasks don't stall, and don't
+        // cascade failure — the other execution will drive the real events.
+        status[index] = 'done';
       } else {
         status[index] = 'failed';
         failed = true;
