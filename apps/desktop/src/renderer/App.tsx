@@ -283,6 +283,7 @@ export default function App() {
             plan={plan}
             runtime={runtime}
             running={running}
+            runActive={runActive}
             canRun={canRun}
             canRunIndividual={canRunIndividual}
             runDone={runDone}
@@ -291,6 +292,10 @@ export default function App() {
             onRunStory={handleRunStory}
             onUpdateStory={updateStory}
             onRemoveDependency={removeDependency}
+            onRemoveStory={handleRemoveStory}
+            storyRemoveErrors={storyRemoveErrors}
+            branchDeletionNotice={branchDeletionNotice}
+            onDismissBranchNotice={() => setBranchDeletionNotice(null)}
             review={review}
             advising={advising}
             onAdvise={handleAdvise}
@@ -381,6 +386,7 @@ function PlanView({
   plan,
   runtime,
   running,
+  runActive,
   canRun,
   canRunIndividual,
   runDone,
@@ -389,6 +395,10 @@ function PlanView({
   onRunStory,
   onUpdateStory,
   onRemoveDependency,
+  onRemoveStory,
+  storyRemoveErrors,
+  branchDeletionNotice,
+  onDismissBranchNotice,
   review,
   advising,
   onAdvise,
@@ -398,6 +408,7 @@ function PlanView({
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
   running: boolean;
+  runActive: boolean;
   canRun: boolean;
   canRunIndividual: boolean;
   runDone: boolean | null;
@@ -406,6 +417,10 @@ function PlanView({
   onRunStory: (storyIndex: number) => void;
   onUpdateStory: (index: number, patch: Partial<Story>) => void;
   onRemoveDependency: (depIndex: number) => void;
+  onRemoveStory: (index: number) => void;
+  storyRemoveErrors: Record<number, string>;
+  branchDeletionNotice: string | null;
+  onDismissBranchNotice: () => void;
   review: AdvisorReview | null;
   advising: boolean;
   onAdvise: () => void;
@@ -462,6 +477,18 @@ function PlanView({
         </p>
       )}
 
+      {branchDeletionNotice && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-200 text-xs p-3 flex items-center justify-between">
+          <span>Branch warning: {branchDeletionNotice}</span>
+          <button
+            onClick={onDismissBranchNotice}
+            className="ml-4 text-neutral-500 hover:text-neutral-300"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="space-y-3">
         {plan.stories.map((story, i) => {
           const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
@@ -480,6 +507,10 @@ function PlanView({
               onRunStory={() => onRunStory(i)}
               canRunIndividual={canRunIndividual}
               unmetDependencies={unmetDependencies}
+              runActive={runActive}
+              hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
+              onRemove={() => onRemoveStory(i)}
+              removeError={storyRemoveErrors[i] ?? null}
             />
           );
         })}
