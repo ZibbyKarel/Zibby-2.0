@@ -96,6 +96,9 @@ importers:
       '@zibby/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
+      '@zibby/usage':
+        specifier: workspace:*
+        version: link:../../libs/usage
 
   libs/ai-refiner:
     dependencies:
@@ -131,6 +134,8 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
+
+  libs/usage: {}
 
 packages:
 

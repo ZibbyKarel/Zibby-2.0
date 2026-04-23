@@ -23,9 +23,11 @@ import {
   type RemoveStoryPayload,
   type RemoveStoryResult,
 } from '@zibby/shared-types/ipc';
+import type { Usage } from '@zibby/shared-types/ipc';
 import { refine, advise, refineStory } from '@zibby/ai-refiner';
 import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
 import { deleteStoryBranch } from '@zibby/github';
+import { fetchUsage } from '@zibby/usage';
 import { loadPersisted, savePersisted } from './state-store';
 
 const execFileP = promisify(execFile);
@@ -33,6 +35,37 @@ const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
 
 const activeRuns = new Map<string, PlanRunHandle>();
+
+const USAGE_POLL_INTERVAL_MS = 5 * 60 * 1000;
+let cachedUsage: Usage | null = null;
+let usagePollTimer: ReturnType<typeof setInterval> | null = null;
+let usageInFlight: Promise<Usage | null> | null = null;
+
+async function refreshUsage(getWebContents: () => WebContents | null): Promise<Usage | null> {
+  if (usageInFlight) return usageInFlight;
+  usageInFlight = (async () => {
+    try {
+      const usage = await fetchUsage();
+      cachedUsage = usage;
+      const wc = getWebContents();
+      if (wc && !wc.isDestroyed()) wc.send(IpcEvents.UsageUpdate, usage);
+      return usage;
+    } catch {
+      return cachedUsage;
+    } finally {
+      usageInFlight = null;
+    }
+  })();
+  return usageInFlight;
+}
+
+function startUsagePolling(getWebContents: () => WebContents | null) {
+  if (usagePollTimer) return;
+  void refreshUsage(getWebContents);
+  usagePollTimer = setInterval(() => {
+    void refreshUsage(getWebContents);
+  }, USAGE_POLL_INTERVAL_MS);
+}
 
 async function isGitRepo(folder: string): Promise<boolean> {
   try {
@@ -220,6 +253,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
     await savePersisted(app.getPath('userData'), state);
   });
 
+  ipcMain.handle(IpcChannels.GetUsage, async (): Promise<Usage | null> => {
+    return refreshUsage(getWebContents);
+  });
+
   ipcMain.handle(
     IpcChannels.RemoveStory,
     async (_event, payload: RemoveStoryPayload): Promise<RemoveStoryResult> => {
@@ -283,13 +320,19 @@ async function createWindow() {
 }
 
 app.whenReady().then(() => {
-  registerIpc(() => mainWindow?.webContents ?? null);
+  const getWebContents = () => mainWindow?.webContents ?? null;
+  registerIpc(getWebContents);
   createWindow();
+  startUsagePolling(getWebContents);
 });
 
 app.on('window-all-closed', () => {
   for (const handle of activeRuns.values()) handle.cancel();
   activeRuns.clear();
+  if (usagePollTimer) {
+    clearInterval(usagePollTimer);
+    usagePollTimer = null;
+  }
   if (process.platform !== 'darwin') app.quit();
 });
 
