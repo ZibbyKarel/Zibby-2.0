@@ -28,8 +28,8 @@ export function UsageBar() {
       className="flex flex-col gap-1 min-w-[10rem] max-w-[14rem]"
       aria-label="Claude Code usage"
     >
-      <UsageRow label="5h session" window={pickWindow(state, 'fiveHour')} pending={state.kind === 'loading'} />
-      <UsageRow label="Týdenní" window={pickWindow(state, 'sevenDay')} pending={state.kind === 'loading'} />
+      <UsageRow label="5h" window={pickWindow(state, 'fiveHour')} pending={state.kind === 'loading'} />
+      <UsageRow label="Week" window={pickWindow(state, 'sevenDay')} pending={state.kind === 'loading'} />
     </div>
   );
 }
