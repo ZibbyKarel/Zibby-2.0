@@ -95,12 +95,16 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // ── ⌘K ────────────────────────────────────────────────────
+  // ── ⌘K / ⌘N ───────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((o) => !o);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setAddOpen(true);
       }
     };
     window.addEventListener('keydown', onKey);
