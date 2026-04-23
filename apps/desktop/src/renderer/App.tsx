@@ -392,7 +392,6 @@ export default function App() {
           {showGraph ? 'Hide graph' : 'Show graph'}
         </Btn>
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
-        <Btn icon="sparkle" variant="outline" size="sm">Ask Opus</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
           onClick={() => tasks.filter((t) => t.status === 'pending').forEach((t) => void runTask(t.index))}
