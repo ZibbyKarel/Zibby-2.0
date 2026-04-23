@@ -695,9 +695,11 @@ function AddTaskDialog({
   const [refining, setRefining] = useState(false);
   const [refinedAC, setRefinedAC] = useState<string[] | null>(null);
   const [refineError, setRefineError] = useState<string | null>(null);
+  const refineCounterRef = useRef(0);
 
   useEffect(() => {
     if (open) {
+      refineCounterRef.current++;  // invalidate any in-flight refine
       setTitle('');
       setDescription('');
       setModel('');
@@ -708,21 +710,29 @@ function AddTaskDialog({
   }, [open]);
 
   const handleRefine = async () => {
+    const token = ++refineCounterRef.current;
     setRefining(true);
     setRefineError(null);
     setRefinedAC(null);
-    const res = await window.zibby.refineStory({
-      folderPath: folder.path,
-      title,
-      description,
-    });
-    setRefining(false);
-    if (res.kind === 'ok') {
-      setTitle(res.story.title);
-      setDescription(res.story.description);
-      setRefinedAC(res.story.acceptanceCriteria);
-    } else {
-      setRefineError(res.message);
+    try {
+      const res = await window.zibby.refineStory({
+        folderPath: folder.path,
+        title,
+        description,
+      });
+      if (token !== refineCounterRef.current) return;
+      if (res.kind === 'ok') {
+        setTitle(res.story.title);
+        setDescription(res.story.description);
+        setRefinedAC(res.story.acceptanceCriteria);
+      } else {
+        setRefineError(res.message);
+      }
+    } catch (err) {
+      if (token !== refineCounterRef.current) return;
+      setRefineError(err instanceof Error ? err.message : 'Unexpected error');
+    } finally {
+      if (token === refineCounterRef.current) setRefining(false);
     }
   };
 
@@ -742,23 +752,35 @@ function AddTaskDialog({
   const canAdd = title.trim().length >= 3 && description.trim().length > 0 && !refining;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-full max-w-lg space-y-4">
-        <h2 className="text-lg font-semibold text-neutral-100">Přidat task</h2>
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+      onKeyDown={(e) => { if (e.key === 'Escape' && !refining) onClose(); }}
+      tabIndex={-1}
+    >
+      <div
+        className="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-full max-w-lg space-y-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-task-dialog-title"
+      >
+        <h2 id="add-task-dialog-title" className="text-lg font-semibold text-neutral-100">Přidat task</h2>
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-neutral-400">Název *</label>
+          <label htmlFor="add-task-title" className="block text-xs font-medium text-neutral-400">Název *</label>
           <input
+            id="add-task-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Stručný název tasku"
+            autoFocus
             className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-neutral-400">Popis / Brief *</label>
+          <label htmlFor="add-task-description" className="block text-xs font-medium text-neutral-400">Popis / Brief *</label>
           <textarea
+            id="add-task-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Popiš co má task udělat — Refine z toho udělá kompletní user story s AC"
@@ -768,8 +790,9 @@ function AddTaskDialog({
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-neutral-400">Model (pro implementaci)</label>
+          <label htmlFor="add-task-model" className="block text-xs font-medium text-neutral-400">Model (pro implementaci)</label>
           <select
+            id="add-task-model"
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
@@ -810,7 +833,8 @@ function AddTaskDialog({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 text-sm"
+              disabled={refining}
+              className="px-3 py-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
             >
               Zrušit
             </button>
