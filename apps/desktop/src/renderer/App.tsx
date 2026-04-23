@@ -426,7 +426,7 @@ function PlanView({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
         <div className="flex items-center gap-3">
-          {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
+          {runDone === true && <span className="text-violet-300 text-sm">All PRs ready for review ✓</span>}
           {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
           <button
             onClick={onAddTask}
