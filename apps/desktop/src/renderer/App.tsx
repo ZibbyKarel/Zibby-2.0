@@ -21,7 +21,6 @@ import {
 import type { StoryRuntime, LogLine, TaskVM } from './viewModel';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
-type FilterStatus = 'all' | 'pending' | 'running' | 'review' | 'done' | 'failed';
 
 const COLS = [
   { id: 'queue'   as const, title: 'Queued',  accent: 'var(--amber)' },
@@ -43,7 +42,6 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [showGraph, setShowGraph] = useState(true);
   const [tick, setTick] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -164,10 +162,9 @@ export default function App() {
   const visible = useMemo(() => {
     const q = search.toLowerCase();
     return tasks.filter((t) =>
-      (!q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) &&
-      (filterStatus === 'all' || t.status === filterStatus)
+      !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
     );
-  }, [tasks, search, filterStatus]);
+  }, [tasks, search]);
 
   const grouped = useMemo(() => {
     const out = { queue: [] as TaskVM[], running: [] as TaskVM[], review: [] as TaskVM[], done: [] as TaskVM[] };
@@ -375,18 +372,6 @@ export default function App() {
         <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
           {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
         </span>
-        <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
-        {(['all', 'pending', 'running', 'review', 'done', 'failed'] as FilterStatus[]).map((s) => (
-          <button key={s} onClick={() => setFilterStatus(s)} style={{
-            padding: '3px 10px', fontSize: 11, borderRadius: 5, cursor: 'pointer',
-            fontFamily: 'var(--mono)', border: '1px solid',
-            background: filterStatus === s ? 'var(--bg-3)' : 'transparent',
-            borderColor: filterStatus === s ? 'var(--border-2)' : 'transparent',
-            color: filterStatus === s ? 'var(--text-0)' : 'var(--text-2)',
-          }}>
-            {s}
-          </button>
-        ))}
         <div style={{ flex: 1 }} />
         <Btn icon="graph" variant="ghost" size="sm" onClick={() => setShowGraph((s) => !s)}>
           {showGraph ? 'Hide graph' : 'Show graph'}
