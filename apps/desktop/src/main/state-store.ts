@@ -25,9 +25,6 @@ export async function loadPersisted(userDataDir: string): Promise<PersistedState
       const validated = PersistedRuntimeSchema.safeParse(parsed['runtime']);
       if (validated.success) out.runtime = validated.data;
     }
-    if (parsed['refineModel'] === 'opus' || parsed['refineModel'] === 'sonnet' || parsed['refineModel'] === 'haiku') {
-      out.refineModel = parsed['refineModel'];
-    }
     return out;
   } catch {
     return {};

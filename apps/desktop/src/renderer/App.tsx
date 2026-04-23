@@ -433,7 +433,7 @@ export default function App() {
         runtimeMs={selected ? runtimeMs(selected) : null}
       />
 
-      <AddTaskDialog open={addOpen} folderPath={folder?.path ?? null} onClose={() => setAddOpen(false)} onAdd={addTask} />
+      <AddTaskDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addTask} />
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
 

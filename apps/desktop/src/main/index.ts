@@ -11,8 +11,6 @@ import {
   type RefineResult,
   type AdviseRequest,
   type AdviseResult,
-  type RefineStoryRequest,
-  type RefineStoryResult,
   type RunStartRequest,
   type RunStartResult,
   type RunStoryRequest,
@@ -24,7 +22,7 @@ import {
   type RemoveStoryResult,
 } from '@zibby/shared-types/ipc';
 import type { Usage } from '@zibby/shared-types/ipc';
-import { refine, advise, refineStory } from '@zibby/ai-refiner';
+import { refine, advise } from '@zibby/ai-refiner';
 import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
 import { deleteStoryBranch } from '@zibby/github';
 import { fetchUsage } from '@zibby/usage';
@@ -106,7 +104,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.Refine,
     async (_event, req: RefineRequest): Promise<RefineResult> => {
       try {
-        const plan = await refine({ folderPath: req.folderPath, brief: req.brief, model: req.model });
+        const plan = await refine({ folderPath: req.folderPath, brief: req.brief });
         return { kind: 'ok', plan };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
@@ -120,22 +118,6 @@ function registerIpc(getWebContents: () => WebContents | null) {
       try {
         const review = await advise({ folderPath: req.folderPath, plan: req.plan });
         return { kind: 'ok', review };
-      } catch (err) {
-        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
-      }
-    }
-  );
-
-  ipcMain.handle(
-    IpcChannels.RefineStory,
-    async (_event, req: RefineStoryRequest): Promise<RefineStoryResult> => {
-      try {
-        const story = await refineStory({
-          folderPath: req.folderPath,
-          title: req.title,
-          description: req.description,
-        });
-        return { kind: 'ok', story };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
@@ -246,7 +228,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         folder = null;
       }
     }
-    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, refineModel: state.refineModel, runtime: state.runtime ?? null };
+    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, runtime: state.runtime ?? null };
   });
 
   ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
