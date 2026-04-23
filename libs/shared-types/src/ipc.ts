@@ -127,11 +127,20 @@ export type RemoveStoryResult = {
   branchDeletionWarning?: string;
 };
 
+export type PersistedStoryRuntime = {
+  status: StoryStatus;
+  branch: string | null;
+  prUrl: string | null;
+  startedAt: number | null;
+  endedAt: number | null;
+};
+
 export type PersistedState = {
   folderPath?: string;
   brief?: string;
   plan?: RefinedPlan;
   refineModel?: RefineModel;
+  runtime?: Record<number, PersistedStoryRuntime>;
 };
 
 export type LoadedAppState = {
@@ -139,6 +148,7 @@ export type LoadedAppState = {
   brief: string;
   plan: RefinedPlan | null;
   refineModel?: RefineModel;
+  runtime: Record<number, PersistedStoryRuntime> | null;
 };
 
 export type UsageWindow = {

@@ -1,1026 +1,446 @@
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
-import type {
-  PickFolderResult,
-  RefinedPlan,
-  Story,
-  StoryStatus,
-  Dependency,
-  RunEvent,
-  AdvisorReview,
-} from '@zibby/shared-types/ipc';
-import { StoryCard } from './components/StoryCard';
-import type { StoryRuntime } from './components/StoryCard';
-import { UsageBar } from './components/UsageBar';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@zibby/shared-types/ipc';
 
-type ColumnId = 'pending' | 'running' | 'review' | 'done';
+import { Icon } from './components/icons';
+import { Btn, Chip } from './components/primitives';
+import { TaskCard } from './components/TaskCard';
+import { Column } from './components/Column';
+import { TaskDrawer } from './components/TaskDrawer';
+import type { DrawerTab } from './components/TaskDrawer';
+import { AddTaskDialog } from './components/AddTaskDialog';
+import { CommandPalette } from './components/CommandPalette';
+import type { Command } from './components/CommandPalette';
+import { Toasts } from './components/Toasts';
+import type { Toast } from './components/Toasts';
+import { UsagePanel } from './components/UsagePanel';
+import { DependencyGraph } from './components/DependencyGraph';
 
-const COLUMN_TITLES: Record<ColumnId, string> = {
-  pending: 'PENDING',
-  running: 'RUNNING',
-  review: 'REVIEW',
-  done: 'DONE',
-};
-
-function columnFor(status: StoryStatus): ColumnId {
-  switch (status) {
-    case 'running':
-    case 'pushing':
-      return 'running';
-    case 'review':
-      return 'review';
-    case 'done':
-      return 'done';
-    default:
-      return 'pending';
-  }
-}
+import {
+  toTasks, statusToCol, emptyRuntime, isTerminal,
+} from './viewModel';
+import type { StoryRuntime, LogLine, TaskVM } from './viewModel';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
+type FilterStatus = 'all' | 'pending' | 'running' | 'done' | 'failed';
 
-function emptyRuntime(): StoryRuntime {
-  return { status: 'pending', logs: [] };
-}
+const COLS = [
+  { id: 'queue'   as const, title: 'Queued',  accent: 'var(--amber)' },
+  { id: 'running' as const, title: 'Running', accent: 'var(--emerald)' },
+  { id: 'done'    as const, title: 'Done',    accent: 'var(--sky)' },
+];
 
 export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
-  const [showAddTask, setShowAddTask] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [runId, setRunId] = useState<string | null>(null);
   const [runtime, setRuntime] = useState<Record<number, StoryRuntime>>({});
-  const [runDone, setRunDone] = useState<boolean | null>(null);
 
-  const [advising, setAdvising] = useState(false);
-  const [review, setReview] = useState<AdvisorReview | null>(null);
-  const [loadedState, setLoadedState] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [drawerTab, setDrawerTab] = useState<DrawerTab>('logs');
+  const [addOpen, setAddOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [showGraph, setShowGraph] = useState(true);
+  const [tick, setTick] = useState(0);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [storyRemoveErrors, setStoryRemoveErrors] = useState<Record<number, string>>({});
-  const [branchDeletionNotice, setBranchDeletionNotice] = useState<string | null>(null);
+  const hydrated = useRef(false);
 
+  // ── Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const restored = await window.zibby.loadState();
+    window.zibby.loadState().then((state) => {
       if (cancelled) return;
-      if (restored.folder && restored.folder.kind === 'selected') setFolder(restored.folder);
-      setPlan(restored.plan);
-      setLoadedState(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
+      if (state.folder?.kind === 'selected') setFolder(state.folder);
+      setPlan(state.plan ?? { stories: [], dependencies: [] });
+      if (state.runtime) {
+        setRuntime((prev) => {
+          const next = { ...prev };
+          for (const [k, v] of Object.entries(state.runtime!)) {
+            const idx = Number(k);
+            next[idx] = { ...v, logs: prev[idx]?.logs ?? [] };
+          }
+          return next;
+        });
+      }
+      hydrated.current = true;
+    }).catch(() => { hydrated.current = true; });
+    return () => { cancelled = true; };
   }, []);
 
+  // ── Persist plan + runtime ─────────────────────────────────
   useEffect(() => {
-    if (!loadedState) return;
+    if (!hydrated.current) return;
+    const persistedRuntime: Record<number, PersistedStoryRuntime> = {};
+    for (const [k, v] of Object.entries(runtime)) {
+      const idx = Number(k);
+      persistedRuntime[idx] = { status: v.status, branch: v.branch, prUrl: v.prUrl, startedAt: v.startedAt, endedAt: v.endedAt };
+    }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      void window.zibby.saveState({
-        folderPath: folder?.path,
-        plan: plan ?? undefined,
-      });
+      window.zibby.saveState({ folderPath: folder?.path, plan: plan ?? undefined, runtime: persistedRuntime }).catch(() => {});
     }, 500);
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
-  }, [folder, plan, loadedState]);
+  }, [folder, plan, runtime]);
 
-  const updateStory = (index: number, patch: Partial<Story>) =>
-    setPlan((cur) =>
-      cur
-        ? {
-            ...cur,
-            stories: cur.stories.map((s, i) => (i === index ? { ...s, ...patch } : s)),
-          }
-        : cur
-    );
-
-  const removeDependency = (depIndex: number) =>
-    setPlan((cur) =>
-      cur ? { ...cur, dependencies: cur.dependencies.filter((_, i) => i !== depIndex) } : cur
-    );
-
-  const applySuggestedDependency = (dep: Dependency) => {
-    setPlan((cur) => {
-      if (!cur) return cur;
-      const exists = cur.dependencies.some((d) => d.from === dep.from && d.to === dep.to);
-      if (exists) return cur;
-      return { ...cur, dependencies: [...cur.dependencies, dep] };
-    });
-    setReview((cur) =>
-      cur
-        ? {
-            ...cur,
-            suggestedDependencies: cur.suggestedDependencies.filter(
-              (d) => !(d.from === dep.from && d.to === dep.to)
-            ),
-          }
-        : cur
-    );
-  };
-
-  const addDependency = (dep: Dependency): string | null => {
-    if (!plan) return 'no plan';
-    if (dep.from === dep.to) return 'from and to must differ';
-    if (dep.from < 0 || dep.to < 0 || dep.from >= plan.stories.length || dep.to >= plan.stories.length) {
-      return 'story index out of range';
-    }
-    if (plan.dependencies.some((d) => d.from === dep.from && d.to === dep.to)) {
-      return 'dependency already exists';
-    }
-    setPlan((cur) => (cur ? { ...cur, dependencies: [...cur.dependencies, dep] } : cur));
-    return null;
-  };
-
-  const handleAddTask = (story: Story) => {
-    setPlan((cur) =>
-      cur
-        ? { ...cur, stories: [...cur.stories, story] }
-        : { stories: [story], dependencies: [] }
-    );
-  };
-
+  // ── Tick ───────────────────────────────────────────────────
   useEffect(() => {
-    const unsub = window.zibby.onRunEvent((event: RunEvent) => {
-      if (event.kind === 'run-done') {
-        if (event.runId === runId) {
-          setRunDone(event.success);
-          setRunId(null);
-        }
+    const id = setInterval(() => setTick((t) => t + 1000), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ── ⌘K ────────────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // ── RunEvent subscription ──────────────────────────────────
+  useEffect(() => {
+    const unsub = window.zibby.onRunEvent((ev) => {
+      if (ev.kind === 'run-done') {
+        pushToast({ kind: ev.success ? 'done' : 'failed', title: ev.success ? 'Run finished' : 'Run failed' });
         return;
       }
+      const idx = ev.storyIndex;
       setRuntime((prev) => {
-        const idx = event.storyIndex;
         const cur = prev[idx] ?? emptyRuntime();
-        const next: StoryRuntime = { ...cur };
-        if (event.kind === 'status') next.status = event.status;
-        else if (event.kind === 'log')
-          next.logs = [...cur.logs, { stream: event.stream, line: event.line, ts: Date.now() }].slice(-2000);
-        else if (event.kind === 'pr') {
-          next.prUrl = event.url;
-          next.branch = event.branch;
+        switch (ev.kind) {
+          case 'status': {
+            const next: StoryRuntime = {
+              ...cur,
+              status: ev.status,
+              startedAt: ev.status === 'running' && !cur.startedAt ? Date.now() : cur.startedAt,
+              endedAt: isTerminal(ev.status) ? (cur.endedAt ?? Date.now()) : cur.endedAt,
+            };
+            if (ev.status === 'done') {
+              pushToast({ kind: 'done', title: 'Task done', desc: plan?.stories[idx]?.title });
+            } else if (ev.status === 'failed') {
+              pushToast({ kind: 'failed', title: 'Task failed', desc: plan?.stories[idx]?.title });
+            }
+            return { ...prev, [idx]: next };
+          }
+          case 'log': {
+            const stream = ev.stream === 'stderr' ? 'err' : ev.stream === 'info' ? 'info' : 'out';
+            const line: LogLine = { s: stream, l: ev.line };
+            const logs = cur.logs.length >= 2000 ? [...cur.logs.slice(1), line] : [...cur.logs, line];
+            return { ...prev, [idx]: { ...cur, logs } };
+          }
+          case 'pr': {
+            pushToast({ kind: 'done', title: 'PR opened', desc: ev.url });
+            return { ...prev, [idx]: { ...cur, branch: ev.branch, prUrl: ev.url } };
+          }
         }
-        return { ...prev, [idx]: next };
       });
     });
     return unsub;
-  }, [runId]);
+  }, [plan]);
 
-  const handlePick = async () => {
+  // ── Helpers ────────────────────────────────────────────────
+  const pushToast = useCallback((t: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((arr) => [...arr, { id, ...t }]);
+    setTimeout(() => setToasts((arr) => arr.filter((x) => x.id !== id)), 5000);
+  }, []);
+
+  const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime), [plan, runtime]);
+
+  const visible = useMemo(() => {
+    const q = search.toLowerCase();
+    return tasks.filter((t) =>
+      (!q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) &&
+      (filterStatus === 'all' || t.status === filterStatus)
+    );
+  }, [tasks, search, filterStatus]);
+
+  const grouped = useMemo(() => {
+    const out = { queue: [] as TaskVM[], running: [] as TaskVM[], done: [] as TaskVM[] };
+    visible.forEach((t) => out[statusToCol(t.status)].push(t));
+    return out;
+  }, [visible]);
+
+  const selected = tasks.find((t) => t.index === selectedIndex) ?? null;
+
+  // ── Actions ────────────────────────────────────────────────
+  const pickFolder = async () => {
     const result = await window.zibby.pickFolder();
-    if (result.kind === 'selected') {
-      setFolder(result);
-      setPlan(null);
-      setError(null);
-      setRuntime({});
-      setRunDone(null);
-    } else {
-      setFolder(null);
-    }
+    if (result.kind === 'selected') setFolder(result);
   };
 
-  const handleRun = async () => {
-    if (!folder || !plan) return;
-    setRunDone(null);
-    setRuntime(Object.fromEntries(plan.stories.map((_, i) => [i, emptyRuntime()])));
-    const res = await window.zibby.startRun({ folderPath: folder.path, plan });
-    if (res.kind === 'started') setRunId(res.runId);
-    else setError(res.message);
-  };
-
-  const handleRunStory = async (storyIndex: number) => {
-    if (!folder || !plan) return;
-    const storyRunId = `story-${Date.now()}-${storyIndex}`;
-    setRuntime((prev) => ({ ...prev, [storyIndex]: emptyRuntime() }));
-    const res = await window.zibby.runStory({
-      runId: storyRunId,
-      storyIndex,
-      folderPath: folder.path,
-      plan,
-    });
-    if (res.kind === 'error') setError(res.message);
-  };
-
-  const handleAdvise = async () => {
-    if (!folder || !plan) return;
-    setAdvising(true);
-    setError(null);
-    setReview(null);
-    const res = await window.zibby.advise({ folderPath: folder.path, plan });
-    setAdvising(false);
-    if (res.kind === 'ok') setReview(res.review);
-    else setError(res.message);
-  };
-
-  const handleCancel = async () => {
-    if (!runId) return;
-    await window.zibby.cancelRun(runId);
-  };
-
-  const handleMoveToDone = (storyIndex: number) => {
-    setRuntime((prev) => {
-      const cur = prev[storyIndex];
-      if (!cur || cur.status !== 'review') return prev;
-      return { ...prev, [storyIndex]: { ...cur, status: 'done' } };
-    });
-  };
-
-  const handleRemoveStory = async (storyIndex: number) => {
-    if (!plan) return;
-    const prevPlan = plan;
-    const optimisticPlan: RefinedPlan = {
-      stories: plan.stories.filter((_, i) => i !== storyIndex),
-      dependencies: plan.dependencies
-        .filter((d) => d.from !== storyIndex && d.to !== storyIndex)
-        .map((d) => ({
-          ...d,
-          from: d.from > storyIndex ? d.from - 1 : d.from,
-          to: d.to > storyIndex ? d.to - 1 : d.to,
-        })),
-    };
-    setPlan(optimisticPlan);
-    setStoryRemoveErrors((prev) => {
-      const next = { ...prev };
-      delete next[storyIndex];
-      return next;
-    });
-    try {
-      const result = await window.zibby.removeStory(storyIndex);
-      setPlan(result.plan);
-      if (result.branchDeletionWarning) {
-        setBranchDeletionNotice(result.branchDeletionWarning);
-      }
-    } catch (err) {
-      setPlan(prevPlan);
-      setStoryRemoveErrors((prev) => ({
-        ...prev,
-        [storyIndex]: err instanceof Error ? err.message : 'Failed to remove story',
-      }));
-    }
-  };
-
-  const running = runId !== null;
-  const runActive =
-    running || Object.values(runtime).some((r) => r.status === 'running' || r.status === 'pushing');
-  const canRun =
-    plan !== null &&
-    folder?.isGitRepo === true &&
-    folder?.hasOrigin === true &&
-    !running &&
-    !advising;
-
-  const canRunIndividual =
-    folder?.isGitRepo === true && folder?.hasOrigin === true && !running;
-
-  return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
-      <div className="space-y-8">
-        <header className="flex items-start justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
-            <p className="text-neutral-400 text-sm">
-              Pick a folder, describe what you want done, and Claude Code executes the plan in isolated worktrees.
-            </p>
-          </div>
-          <UsageBar />
-        </header>
-
-        <FolderSection folder={folder} onPick={handlePick} />
-
-        {error && (
-          <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
-            <strong className="font-semibold">Error:</strong> {error}
-          </div>
-        )}
-
-        {folder && !plan && (
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <p className="text-neutral-500 text-sm">Žádné tasky. Přidej první task a spusť ho.</p>
-            <button
-              onClick={() => setShowAddTask(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium"
-            >
-              + Přidat task
-            </button>
-          </div>
-        )}
-
-        {plan && (
-          <PlanView
-            plan={plan}
-            runtime={runtime}
-            running={running}
-            runActive={runActive}
-            canRun={canRun}
-            canRunIndividual={canRunIndividual}
-            runDone={runDone}
-            onRun={handleRun}
-            onCancel={handleCancel}
-            onRunStory={handleRunStory}
-            onUpdateStory={updateStory}
-            onRemoveDependency={removeDependency}
-            onRemoveStory={handleRemoveStory}
-            storyRemoveErrors={storyRemoveErrors}
-            branchDeletionNotice={branchDeletionNotice}
-            onDismissBranchNotice={() => setBranchDeletionNotice(null)}
-            review={review}
-            advising={advising}
-            onAdvise={handleAdvise}
-            onApplySuggestedDependency={applySuggestedDependency}
-            onAddDependency={addDependency}
-            onAddTask={() => setShowAddTask(true)}
-            onMoveToDone={handleMoveToDone}
-          />
-        )}
-
-        {folder && (
-          <AddTaskDialog
-            folder={folder}
-            open={showAddTask}
-            onClose={() => setShowAddTask(false)}
-            onAdd={(story) => {
-              handleAddTask(story);
-              setShowAddTask(false);
-            }}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function FolderSection({ folder, onPick }: { folder: SelectedFolder | null; onPick: () => void }) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onPick}
-          className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium"
-        >
-          {folder ? 'Change folder' : 'Select folder'}
-        </button>
-        {folder && <span className="font-mono text-sm text-neutral-300 truncate">{folder.path}</span>}
-      </div>
-      {folder && (
-        <div className="flex gap-2 text-xs">
-          <Badge ok={folder.isGitRepo} label={folder.isGitRepo ? 'Git repo' : 'Not a git repo'} />
-          <Badge ok={folder.hasOrigin} label={folder.hasOrigin ? 'origin remote' : 'no origin'} />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function PlanView({
-  plan,
-  runtime,
-  running,
-  runActive,
-  canRun,
-  canRunIndividual,
-  runDone,
-  onRun,
-  onCancel,
-  onRunStory,
-  onUpdateStory,
-  onRemoveDependency,
-  onRemoveStory,
-  storyRemoveErrors,
-  branchDeletionNotice,
-  onDismissBranchNotice,
-  review,
-  advising,
-  onAdvise,
-  onApplySuggestedDependency,
-  onAddDependency,
-  onAddTask,
-  onMoveToDone,
-}: {
-  plan: RefinedPlan;
-  runtime: Record<number, StoryRuntime>;
-  running: boolean;
-  runActive: boolean;
-  canRun: boolean;
-  canRunIndividual: boolean;
-  runDone: boolean | null;
-  onRun: () => void;
-  onCancel: () => void;
-  onRunStory: (storyIndex: number) => void;
-  onUpdateStory: (index: number, patch: Partial<Story>) => void;
-  onRemoveDependency: (depIndex: number) => void;
-  onRemoveStory: (index: number) => void;
-  storyRemoveErrors: Record<number, string>;
-  branchDeletionNotice: string | null;
-  onDismissBranchNotice: () => void;
-  review: AdvisorReview | null;
-  advising: boolean;
-  onAdvise: () => void;
-  onApplySuggestedDependency: (dep: Dependency) => void;
-  onAddDependency: (dep: Dependency) => string | null;
-  onAddTask: () => void;
-  onMoveToDone: (storyIndex: number) => void;
-}) {
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
-        <div className="flex items-center gap-3">
-          {runDone === true && <span className="text-violet-300 text-sm">All PRs ready for review ✓</span>}
-          {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
-          <button
-            onClick={onAddTask}
-            className="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium border border-neutral-700"
-          >
-            + Přidat task
-          </button>
-          <button
-            onClick={onAdvise}
-            disabled={advising || running}
-            className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-200 text-sm font-medium border border-neutral-700"
-          >
-            {advising ? 'Asking Opus…' : 'Ask Opus'}
-          </button>
-          {running ? (
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-sm font-medium"
-            >
-              Cancel run
-            </button>
-          ) : (
-            <button
-              onClick={onRun}
-              disabled={!canRun}
-              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
-            >
-              Run all
-            </button>
-          )}
-        </div>
-      </div>
-
-      {advising && (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
-          <span className="inline-block h-2 w-2 rounded-full bg-fuchsia-400 animate-pulse" />
-          Opus is reviewing the plan…
-        </div>
-      )}
-
-      {review && (
-        <AdvisorPanel review={review} onApplySuggestedDependency={onApplySuggestedDependency} />
-      )}
-
-      {!canRun && !running && (
-        <p className="text-xs text-amber-300">
-          The selected folder must be a git repo with an <code className="font-mono">origin</code> remote to run.
-        </p>
-      )}
-
-      {branchDeletionNotice && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-200 text-xs p-3 flex items-center justify-between">
-          <span>Branch warning: {branchDeletionNotice}</span>
-          <button
-            onClick={onDismissBranchNotice}
-            className="ml-4 text-neutral-500 hover:text-neutral-300"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      <KanbanBoard
-        plan={plan}
-        runtime={runtime}
-        running={running}
-        runActive={runActive}
-        canRunIndividual={canRunIndividual}
-        onRunStory={onRunStory}
-        onUpdateStory={onUpdateStory}
-        onRemoveStory={onRemoveStory}
-        storyRemoveErrors={storyRemoveErrors}
-        onMoveToDone={onMoveToDone}
-      />
-      {plan.dependencies.length > 0 && (
-        <DependencyList
-          deps={plan.dependencies}
-          editable={!running}
-          onRemove={onRemoveDependency}
-        />
-      )}
-      {!running && plan.stories.length > 1 && (
-        <AddDependencyForm stories={plan.stories} onAdd={onAddDependency} />
-      )}
-    </section>
-  );
-}
-
-const COLUMN_ORDER: ColumnId[] = ['pending', 'running', 'review', 'done'];
-const DRAG_MIME = 'application/x-zibby-story-index';
-
-function KanbanBoard({
-  plan,
-  runtime,
-  running,
-  runActive,
-  canRunIndividual,
-  onRunStory,
-  onUpdateStory,
-  onRemoveStory,
-  storyRemoveErrors,
-  onMoveToDone,
-}: {
-  plan: RefinedPlan;
-  runtime: Record<number, StoryRuntime>;
-  running: boolean;
-  runActive: boolean;
-  canRunIndividual: boolean;
-  onRunStory: (storyIndex: number) => void;
-  onUpdateStory: (index: number, patch: Partial<Story>) => void;
-  onRemoveStory: (index: number) => void;
-  storyRemoveErrors: Record<number, string>;
-  onMoveToDone: (storyIndex: number) => void;
-}) {
-  const byColumn: Record<ColumnId, number[]> = {
-    pending: [],
-    running: [],
-    review: [],
-    done: [],
-  };
-  plan.stories.forEach((_, i) => {
-    const status = runtime[i]?.status ?? 'pending';
-    byColumn[columnFor(status)].push(i);
-  });
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      {COLUMN_ORDER.map((col) => (
-        <KanbanColumn
-          key={col}
-          id={col}
-          title={COLUMN_TITLES[col]}
-          count={byColumn[col].length}
-          onMoveToDone={onMoveToDone}
-        >
-          {byColumn[col].map((i) => {
-            const story = plan.stories[i];
-            const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
-            const unmetDependencies = waitsOn
-              .filter((depIdx) => {
-                const s = runtime[depIdx]?.status ?? 'pending';
-                return s !== 'done' && s !== 'review';
-              })
-              .map((depIdx) => ({ index: depIdx, title: plan.stories[depIdx]?.title ?? `#${depIdx}` }));
-            const rt = runtime[i] ?? emptyRuntime();
-            const isReview = rt.status === 'review';
-            return (
-              <StoryCard
-                key={i}
-                index={i}
-                story={story}
-                runtime={rt}
-                waitsOn={waitsOn}
-                editable={!running}
-                onChange={(patch) => onUpdateStory(i, patch)}
-                onRunStory={() => onRunStory(i)}
-                canRunIndividual={canRunIndividual}
-                unmetDependencies={unmetDependencies}
-                runActive={runActive}
-                hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
-                onRemove={() => onRemoveStory(i)}
-                removeError={storyRemoveErrors[i] ?? null}
-                draggable={isReview}
-                onDragStart={(e) => {
-                  e.dataTransfer.effectAllowed = 'move';
-                  e.dataTransfer.setData(DRAG_MIME, String(i));
-                  e.dataTransfer.setData('text/plain', String(i));
-                }}
-              />
-            );
-          })}
-        </KanbanColumn>
-      ))}
-    </div>
-  );
-}
-
-function KanbanColumn({
-  id,
-  title,
-  count,
-  children,
-  onMoveToDone,
-}: {
-  id: ColumnId;
-  title: string;
-  count: number;
-  children: ReactNode;
-  onMoveToDone: (storyIndex: number) => void;
-}) {
-  const [dragOver, setDragOver] = useState(false);
-  const isDropTarget = id === 'done';
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    if (!isDropTarget) return;
-    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (!dragOver) setDragOver(true);
-  };
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    if (!isDropTarget) return;
-    e.preventDefault();
-    setDragOver(false);
-    const raw = e.dataTransfer.getData(DRAG_MIME);
-    const idx = Number(raw);
-    if (Number.isFinite(idx)) onMoveToDone(idx);
-  };
-
-  return (
-    <div
-      data-column={id}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragOver}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={handleDrop}
-      className={`rounded-lg border bg-neutral-950/40 p-3 space-y-3 min-h-[8rem] transition-colors ${
-        dragOver && isDropTarget
-          ? 'border-emerald-400/60 bg-emerald-500/5'
-          : 'border-neutral-800'
-      }`}
-    >
-      <header className="flex items-center justify-between px-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{title}</h3>
-        <span className="text-xs text-neutral-500">{count}</span>
-      </header>
-      {count === 0 ? (
-        <p className="text-xs text-neutral-600 italic px-1">
-          {isDropTarget ? 'Drop reviewed tasks here' : 'No tasks'}
-        </p>
-      ) : (
-        <div className="space-y-3">{children}</div>
-      )}
-    </div>
-  );
-}
-
-function AdvisorPanel({
-  review,
-  onApplySuggestedDependency,
-}: {
-  review: AdvisorReview;
-  onApplySuggestedDependency: (dep: Dependency) => void;
-}) {
-  return (
-    <div className="rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-4 space-y-4">
-      <header className="flex items-start gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-fuchsia-300">Opus advisor</span>
-      </header>
-      <p className="text-sm text-neutral-200">{review.overall}</p>
-
-      {review.concerns.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">Concerns</h4>
-          <ul className="list-disc list-inside text-sm text-neutral-200 space-y-0.5">
-            {review.concerns.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {review.perStoryNotes.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
-            Per-story notes
-          </h4>
-          <ul className="text-sm space-y-1">
-            {review.perStoryNotes.map((n, i) => (
-              <li key={i} className="text-neutral-200">
-                <span className="text-neutral-500 font-mono mr-2">#{n.storyIndex}</span>
-                {n.note}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {review.suggestedDependencies.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
-            Suggested dependencies
-          </h4>
-          <ul className="text-sm space-y-1">
-            {review.suggestedDependencies.map((d, i) => (
-              <li key={i} className="flex items-center gap-2 text-neutral-200">
-                <span className="text-neutral-500">#{d.from}</span>
-                <span className="text-neutral-600">→</span>
-                <span className="text-neutral-500">#{d.to}</span>
-                <span className="flex-1 text-neutral-300">{d.reason}</span>
-                <button
-                  onClick={() => onApplySuggestedDependency(d)}
-                  className="shrink-0 px-2 py-0.5 rounded text-xs font-medium bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-200"
-                >
-                  Apply
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DependencyList({
-  deps,
-  editable,
-  onRemove,
-}: {
-  deps: Dependency[];
-  editable: boolean;
-  onRemove: (index: number) => void;
-}) {
-  return (
-    <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-2">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Dependencies</h4>
-      <ul className="text-sm space-y-1">
-        {deps.map((d, i) => (
-          <li key={i} className="text-neutral-300 flex items-center gap-2">
-            <span className="text-neutral-500">#{d.from}</span>
-            <span className="text-neutral-600">→</span>
-            <span className="text-neutral-500">#{d.to}</span>
-            <span className="text-neutral-400 flex-1">{d.reason}</span>
-            {editable && (
-              <button
-                onClick={() => onRemove(i)}
-                className="shrink-0 text-neutral-500 hover:text-rose-300 text-xs"
-                title="Remove dependency"
-              >
-                ✕
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function AddDependencyForm({
-  stories,
-  onAdd,
-}: {
-  stories: Story[];
-  onAdd: (dep: Dependency) => string | null;
-}) {
-  const [from, setFrom] = useState(0);
-  const [to, setTo] = useState(1);
-  const [reason, setReason] = useState('');
-  const [err, setErr] = useState<string | null>(null);
-
-  const submit = () => {
-    setErr(null);
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      setErr('Reason must be at least 3 characters');
+  const runTask = useCallback(async (idx: number) => {
+    if (!plan || !folder) {
+      pushToast({ kind: 'failed', title: 'No folder selected' });
       return;
     }
-    const e = onAdd({ from, to, reason: trimmed });
-    if (e) setErr(e);
-    else setReason('');
-  };
-
-  return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-neutral-500">Add dependency:</span>
-        <select
-          value={from}
-          onChange={(e) => setFrom(Number(e.target.value))}
-          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
-        >
-          {stories.map((s, i) => (
-            <option key={i} value={i}>
-              #{i} — {truncate(s.title, 40)}
-            </option>
-          ))}
-        </select>
-        <span className="text-neutral-600">→</span>
-        <select
-          value={to}
-          onChange={(e) => setTo(Number(e.target.value))}
-          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
-        >
-          {stories.map((s, i) => (
-            <option key={i} value={i}>
-              #{i} — {truncate(s.title, 40)}
-            </option>
-          ))}
-        </select>
-        <input
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="reason (required)"
-          className="flex-1 min-w-[12rem] bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
-        />
-        <button
-          onClick={submit}
-          className="px-3 py-1 rounded text-xs font-medium bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200"
-        >
-          Add
-        </button>
-      </div>
-      {err && <p className="text-xs text-rose-300">{err}</p>}
-    </div>
-  );
-}
-
-function truncate(s: string, max: number): string {
-  return s.length <= max ? s : s.slice(0, max - 1) + '…';
-}
-
-function Badge({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <span
-      className={`px-2 py-0.5 rounded text-xs font-medium ${
-        ok ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'
-      }`}
-    >
-      {label}
-    </span>
-  );
-}
-
-function AddTaskDialog({
-  folder,
-  open,
-  onClose,
-  onAdd,
-}: {
-  folder: SelectedFolder;
-  open: boolean;
-  onClose: () => void;
-  onAdd: (story: Story) => void;
-}) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
-  const [model, setModel] = useState('sonnet');
-  const [refining, setRefining] = useState(false);
-  const [refineError, setRefineError] = useState<string | null>(null);
-  const refineCounterRef = useRef(0);
-
-  useEffect(() => {
-    if (open) {
-      refineCounterRef.current++;  // invalidate any in-flight refine
-      setTitle('');
-      setDescription('');
-      setAcceptanceCriteria('');
-      setModel('sonnet');
-      setRefining(false);
-      setRefineError(null);
+    let currentRunId = runId;
+    if (!currentRunId) {
+      const res = await window.zibby.startRun({ folderPath: folder.path, plan });
+      if (res.kind === 'error') { pushToast({ kind: 'failed', title: 'Run error', desc: res.message }); return; }
+      currentRunId = res.runId;
+      setRunId(currentRunId);
     }
-  }, [open]);
+    pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
+    window.zibby.runStory({ runId: currentRunId, storyIndex: idx, folderPath: folder.path, plan }).catch(() => {});
+  }, [plan, folder, runId, pushToast]);
 
-  const handleRefine = async () => {
-    const token = ++refineCounterRef.current;
-    setRefining(true);
-    setRefineError(null);
-    try {
-      const res = await window.zibby.refineStory({
-        folderPath: folder.path,
-        title,
-        description,
-      });
-      if (token !== refineCounterRef.current) return;
-      if (res.kind === 'ok') {
-        setTitle(res.story.title);
-        setDescription(res.story.description);
-        setAcceptanceCriteria(res.story.acceptanceCriteria.join('\n'));
-      } else {
-        setRefineError(res.message);
-      }
-    } catch (err) {
-      if (token !== refineCounterRef.current) return;
-      setRefineError(err instanceof Error ? err.message : 'Unexpected error');
-    } finally {
-      if (token === refineCounterRef.current) setRefining(false);
+  const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'done') => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    if (colId === 'running' && (task.status === 'pending' || task.status === 'failed' || task.status === 'blocked')) {
+      await runTask(task.index);
+    } else if (colId !== statusToCol(task.status)) {
+      pushToast({ kind: 'info', title: 'Move not supported', desc: 'Use the Run button to start a task.' });
     }
-  };
+  }, [tasks, runTask, pushToast]);
 
-  const handleAdd = () => {
-    onAdd({
-      title: title.trim(),
-      description: description.trim(),
-      acceptanceCriteria: acceptanceCriteria.trim()
-        ? acceptanceCriteria.split('\n').map((s) => s.trim()).filter(Boolean)
-        : [],
-      affectedFiles: [],
-      model: model || undefined,
+  const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string }) => {
+    setPlan((prev) => {
+      const stories = prev?.stories ?? [];
+      return {
+        stories: [...stories, {
+          title: data.title,
+          description: data.description,
+          acceptanceCriteria: data.acceptance,
+          affectedFiles: [],
+          model: data.model,
+        }],
+        dependencies: prev?.dependencies ?? [],
+      };
     });
+    setAddOpen(false);
+  }, []);
+
+  const deleteTask = useCallback((idx: number) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const stories = prev.stories.filter((_, i) => i !== idx);
+      const dependencies = prev.dependencies
+        .filter((d) => d.from !== idx && d.to !== idx)
+        .map((d) => ({
+          ...d,
+          from: d.from > idx ? d.from - 1 : d.from,
+          to: d.to > idx ? d.to - 1 : d.to,
+        }));
+      return { stories, dependencies };
+    });
+    setRuntime((prev) => {
+      const next: Record<number, StoryRuntime> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const n = Number(k);
+        if (n !== idx) next[n > idx ? n - 1 : n] = v;
+      });
+      return next;
+    });
+    if (selectedIndex === idx) setSelectedIndex(null);
+  }, [selectedIndex]);
+
+  // ── Commands ───────────────────────────────────────────────
+  const commands = useMemo<Command[]>(() => [
+    {
+      id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
+      run: () => { tasks.filter((t) => t.status === 'pending' || t.status === 'blocked').forEach((t) => void runTask(t.index)); },
+    },
+    { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
+    {
+      id: 'theme', icon: theme === 'dark' ? 'sun' : 'moon',
+      label: `Toggle theme (→ ${theme === 'dark' ? 'light' : 'dark'})`,
+      run: () => setTheme((t) => t === 'dark' ? 'light' : 'dark'),
+    },
+    { id: 'folder', icon: 'folder', label: 'Pick folder…', hint: folder?.path, run: () => void pickFolder() },
+    { id: 'graph', icon: 'graph', label: showGraph ? 'Hide dependency graph' : 'Show dependency graph', run: () => setShowGraph((s) => !s) },
+    ...tasks.map((t) => ({
+      id: 'task-' + t.id,
+      icon: 'arrowRight' as const,
+      label: `Go to: ${t.title}`,
+      hint: `#${t.index} · ${t.status}`,
+      run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
+    })),
+  ], [tasks, theme, showGraph, folder, runTask]);
+
+  // ── Drag ───────────────────────────────────────────────────
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('text/task-id', id);
+    e.dataTransfer.effectAllowed = 'move';
+    setDragId(id);
   };
+  const handleDragEnd = () => setDragId(null);
 
-  if (!open) return null;
-
-  const canRefine = !refining && description.trim().length > 0;
-  const canAdd = title.trim().length >= 3 && description.trim().length > 0 && !refining;
+  // ── Render ─────────────────────────────────────────────────
+  const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? tick + (Date.now() - t.startedAt) : null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-      onKeyDown={(e) => { if (e.key === 'Escape' && !refining) onClose(); }}
-      tabIndex={-1}
-    >
-      <div
-        className="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-full max-w-lg space-y-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-task-dialog-title"
-      >
-        <h2 id="add-task-dialog-title" className="text-lg font-semibold text-neutral-100">Přidat task</h2>
-
-        <div className="space-y-1">
-          <label htmlFor="add-task-title" className="block text-xs font-medium text-neutral-400">Název *</label>
-          <input
-            id="add-task-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Stručný název tasku"
-            autoFocus
-            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="add-task-description" className="block text-xs font-medium text-neutral-400">Popis / Brief *</label>
-          <textarea
-            id="add-task-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Popiš co má task udělat — Refine z toho udělá kompletní user story"
-            rows={5}
-            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 resize-none"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="add-task-ac" className="block text-xs font-medium text-neutral-400">Akceptační kritéria</label>
-          <textarea
-            id="add-task-ac"
-            value={acceptanceCriteria}
-            onChange={(e) => setAcceptanceCriteria(e.target.value)}
-            placeholder="Každé kritérium na nový řádek (nepovinné)"
-            rows={4}
-            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 resize-none"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="add-task-model" className="block text-xs font-medium text-neutral-400">Model (pro implementaci)</label>
-          <select
-            id="add-task-model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
-          >
-            <option value="sonnet">Sonnet</option>
-            <option value="opus">Opus</option>
-            <option value="haiku">Haiku</option>
-          </select>
-        </div>
-
-        {refineError && <p className="text-xs text-rose-300">{refineError}</p>}
-
-        <div className="flex justify-between items-center pt-2">
-          <button
-            onClick={() => { void handleRefine(); }}
-            disabled={!canRefine}
-            className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-200 text-sm font-medium border border-neutral-700 flex items-center gap-2"
-          >
-            {refining && (
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-            {refining ? 'Refining…' : 'Refine'}
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              disabled={refining}
-              className="px-3 py-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
-            >
-              Zrušit
-            </button>
-            <button
-              onClick={handleAdd}
-              disabled={!canAdd}
-              className="px-4 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
-            >
-              Přidat task
-            </button>
+    <div className={`zb${theme === 'light' ? ' theme-light' : ''}`} style={{
+      minHeight: '100%', background: 'var(--bg-0)', color: 'var(--text-0)',
+      display: 'flex', flexDirection: 'column', fontSize: 13,
+    }}>
+      {/* Top bar */}
+      <header style={{
+        padding: '14px 20px', borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-1)', display: 'flex', alignItems: 'center', gap: 16,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: 'linear-gradient(135deg, var(--emerald), #059669)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#04140d', fontWeight: 700, fontSize: 14,
+            boxShadow: '0 0 0 1px rgba(16,185,129,.3), 0 0 20px rgba(16,185,129,.15)',
+          }}>Z</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>Zibby 2.0</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>multi-agent coding workflow</div>
           </div>
         </div>
+
+        {/* Folder chip */}
+        {folder && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8 }}>
+            <Icon name="folder" size={13} />
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-1)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {folder.path}
+            </span>
+            <div style={{ width: 1, height: 14, background: 'var(--border)', margin: '0 4px' }} />
+            <Chip icon="git" tone="accent" style={{ height: 20 }}>main</Chip>
+            <button
+              onClick={() => void pickFolder()}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, display: 'flex', marginLeft: 2 }}
+            >
+              <Icon name="chevronDown" size={12} />
+            </button>
+          </div>
+        )}
+        {!folder && (
+          <Btn icon="folder" variant="secondary" size="sm" onClick={() => void pickFolder()}>Pick folder</Btn>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        {/* Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, minWidth: 220 }}>
+          <Icon name="search" size={13} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search tasks"
+            style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-0)', fontSize: 12, outline: 'none' }}
+          />
+          <kbd style={{ fontFamily: 'var(--mono)', fontSize: 10, padding: '1px 5px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-3)' }}>⌘K</kbd>
+        </div>
+
+        <UsagePanel tick={tick} />
+
+        <button
+          onClick={() => setTheme((t) => t === 'dark' ? 'light' : 'dark')}
+          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: 'var(--text-1)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          title="Toggle theme"
+        >
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />
+        </button>
+      </header>
+
+      {/* Sub-bar */}
+      <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-0)', borderBottom: '1px solid var(--border)' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
+          {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
+        </span>
+        <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
+        {(['all', 'pending', 'running', 'done', 'failed'] as FilterStatus[]).map((s) => (
+          <button key={s} onClick={() => setFilterStatus(s)} style={{
+            padding: '3px 10px', fontSize: 11, borderRadius: 5, cursor: 'pointer',
+            fontFamily: 'var(--mono)', border: '1px solid',
+            background: filterStatus === s ? 'var(--bg-3)' : 'transparent',
+            borderColor: filterStatus === s ? 'var(--border-2)' : 'transparent',
+            color: filterStatus === s ? 'var(--text-0)' : 'var(--text-2)',
+          }}>
+            {s}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <Btn icon="graph" variant="ghost" size="sm" onClick={() => setShowGraph((s) => !s)}>
+          {showGraph ? 'Hide graph' : 'Show graph'}
+        </Btn>
+        <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
+        <Btn icon="sparkle" variant="outline" size="sm">Ask Opus</Btn>
+        <Btn
+          icon="play" variant="primary" size="sm"
+          onClick={() => tasks.filter((t) => t.status === 'pending').forEach((t) => void runTask(t.index))}
+        >
+          Run all
+        </Btn>
       </div>
+
+      {error && (
+        <div style={{ padding: '10px 20px', background: 'rgba(244,63,94,.08)', borderBottom: '1px solid rgba(244,63,94,.2)', color: 'var(--rose)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="warn" size={14} /> {error}
+          <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer' }}>
+            <Icon name="x" size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Main body */}
+      <main style={{ flex: 1, padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+        {showGraph && plan && <DependencyGraph tasks={tasks} onClickTask={(t) => { setSelectedIndex(t.index); setDrawerTab('logs'); }} />}
+
+        <div style={{ display: 'flex', gap: 14, flex: 1 }}>
+          {COLS.map((col) => (
+            <Column
+              key={col.id}
+              id={col.id}
+              title={col.title}
+              accent={col.accent}
+              count={grouped[col.id].length}
+              isEmpty={grouped[col.id].length === 0}
+              onDropTask={(id) => void handleDrop(id, col.id)}
+            >
+              {grouped[col.id].map((t) => (
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  runtimeMs={runtimeMs(t)}
+                  isDragging={dragId === t.id}
+                  dragHandlers={{
+                    draggable: true,
+                    onDragStart: (e: React.DragEvent) => handleDragStart(e, t.id),
+                    onDragEnd: handleDragEnd,
+                  }}
+                  onOpen={() => { setSelectedIndex(t.index); setDrawerTab('logs'); }}
+                  onEdit={() => { setSelectedIndex(t.index); setDrawerTab('details'); }}
+                  onRun={() => void runTask(t.index)}
+                  onDelete={() => deleteTask(t.index)}
+                />
+              ))}
+            </Column>
+          ))}
+        </div>
+      </main>
+
+      <TaskDrawer
+        task={selected}
+        open={!!selected}
+        onClose={() => setSelectedIndex(null)}
+        onRun={() => selected && void runTask(selected.index)}
+        tab={drawerTab}
+        setTab={setDrawerTab}
+        runtimeMs={selected ? runtimeMs(selected) : null}
+      />
+
+      <AddTaskDialog open={addOpen} folderPath={folder?.path ?? null} onClose={() => setAddOpen(false)} onAdd={addTask} />
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
+
+      <Toasts toasts={toasts} onDismiss={(id) => setToasts((arr) => arr.filter((t) => t.id !== id))} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { RefinedPlanSchema } from '@zibby/shared-types/schemas';
+import { PersistedPlanSchema, PersistedRuntimeSchema } from '@zibby/shared-types/schemas';
 import type { PersistedState } from '@zibby/shared-types/ipc';
 
 const FILE_NAME = 'zibby-state.json';
@@ -18,8 +18,12 @@ export async function loadPersisted(userDataDir: string): Promise<PersistedState
     if (typeof parsed['folderPath'] === 'string') out.folderPath = parsed['folderPath'];
     if (typeof parsed['brief'] === 'string') out.brief = parsed['brief'];
     if (parsed['plan'] !== undefined) {
-      const validated = RefinedPlanSchema.safeParse(parsed['plan']);
+      const validated = PersistedPlanSchema.safeParse(parsed['plan']);
       if (validated.success) out.plan = validated.data;
+    }
+    if (parsed['runtime'] !== undefined) {
+      const validated = PersistedRuntimeSchema.safeParse(parsed['runtime']);
+      if (validated.success) out.runtime = validated.data;
     }
     if (parsed['refineModel'] === 'opus' || parsed['refineModel'] === 'sonnet' || parsed['refineModel'] === 'haiku') {
       out.refineModel = parsed['refineModel'];

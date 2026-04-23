@@ -1,5 +1,131 @@
 @import "tailwindcss";
 
+/* ---- Zibby 2.0 redesign ---- */
+:root {
+  --accent: #10b981;
+  --accent-2: #6366f1;
+  --accent-soft: rgba(16, 185, 129, 0.12);
+  --accent-ring: rgba(16, 185, 129, 0.35);
+
+  /* dark */
+  --bg-0: #0a0b0d;
+  --bg-1: #0f1114;
+  --bg-2: #151820;
+  --bg-3: #1b1f28;
+  --bg-hover: #1e222c;
+  --border: #22262f;
+  --border-2: #2d323d;
+  --text-0: #e6e8ec;
+  --text-1: #b4b8c2;
+  --text-2: #7a8090;
+  --text-3: #555a66;
+
+  --rose: #f43f5e;
+  --amber: #f59e0b;
+  --sky: #38bdf8;
+  --violet: #a78bfa;
+  --emerald: #10b981;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.35);
+  --shadow-2: 0 8px 24px rgba(0,0,0,.45);
+
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.theme-light {
+  --bg-0: #f6f6f4;
+  --bg-1: #ffffff;
+  --bg-2: #fafaf8;
+  --bg-3: #f0f0ec;
+  --bg-hover: #ececea;
+  --border: #e6e6e2;
+  --border-2: #d4d4d0;
+  --text-0: #0e0f12;
+  --text-1: #3a3e48;
+  --text-2: #6b7280;
+  --text-3: #9aa0ac;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.06);
+  --shadow-2: 0 12px 28px rgba(0,0,0,.10);
+}
+
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* scrollbar */
+.zb *::-webkit-scrollbar { width: 10px; height: 10px; }
+.zb *::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+.zb *::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; border: 2px solid transparent; }
+
+/* focus */
+.zb button:focus-visible, .zb input:focus-visible, .zb textarea:focus-visible, .zb select:focus-visible, .zb [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* typography helpers */
+.mono { font-family: var(--mono); }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+.dot-running {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 0 0 var(--accent-ring);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--border-2); border-top-color: var(--emerald);
+  animation: spin .8s linear infinite;
+}
+
+.shimmer-bar {
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,.25), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.caret::after { content: '▊'; color: var(--emerald); margin-left: 2px; animation: caret 1s steps(1) infinite; }
+
+.col-drop-hint {
+  border: 1.5px dashed var(--accent-ring) !important;
+  background: var(--accent-soft) !important;
 }

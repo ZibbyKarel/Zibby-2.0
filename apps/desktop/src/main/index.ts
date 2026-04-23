@@ -246,7 +246,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         folder = null;
       }
     }
-    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, refineModel: state.refineModel };
+    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, refineModel: state.refineModel, runtime: state.runtime ?? null };
   });
 
   ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
