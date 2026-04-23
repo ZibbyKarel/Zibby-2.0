@@ -1,8 +1,10 @@
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type {
   PickFolderResult,
   RefinedPlan,
   Story,
+  StoryStatus,
   Dependency,
   RunEvent,
   AdvisorReview,
@@ -10,6 +12,28 @@ import type {
 import { StoryCard } from './components/StoryCard';
 import type { StoryRuntime } from './components/StoryCard';
 import { UsageBar } from './components/UsageBar';
+
+type ColumnId = 'todo' | 'in-progress' | 'review' | 'done';
+
+const COLUMNS: { id: ColumnId; title: string }[] = [
+  { id: 'todo', title: 'TODO' },
+  { id: 'in-progress', title: 'IN PROGRESS' },
+  { id: 'review', title: 'REVIEW' },
+  { id: 'done', title: 'DONE' },
+];
+
+const COLUMN_FOR_STATUS: Record<StoryStatus, ColumnId> = {
+  pending: 'todo',
+  blocked: 'todo',
+  failed: 'todo',
+  cancelled: 'todo',
+  running: 'in-progress',
+  pushing: 'in-progress',
+  review: 'review',
+  done: 'done',
+};
+
+const DRAG_MIME = 'application/x-zibby-story-index';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
@@ -194,6 +218,14 @@ export default function App() {
     await window.zibby.cancelRun(runId);
   };
 
+  const markStoryDone = (storyIndex: number) => {
+    setRuntime((prev) => {
+      const cur = prev[storyIndex] ?? emptyRuntime();
+      if (cur.status === 'done') return prev;
+      return { ...prev, [storyIndex]: { ...cur, status: 'done' } };
+    });
+  };
+
   const handleRemoveStory = async (storyIndex: number) => {
     if (!plan) return;
     const prevPlan = plan;
@@ -289,6 +321,7 @@ export default function App() {
             onUpdateStory={updateStory}
             onRemoveDependency={removeDependency}
             onRemoveStory={handleRemoveStory}
+            onMarkDone={markStoryDone}
             storyRemoveErrors={storyRemoveErrors}
             branchDeletionNotice={branchDeletionNotice}
             onDismissBranchNotice={() => setBranchDeletionNotice(null)}
@@ -353,6 +386,7 @@ function PlanView({
   onUpdateStory,
   onRemoveDependency,
   onRemoveStory,
+  onMarkDone,
   storyRemoveErrors,
   branchDeletionNotice,
   onDismissBranchNotice,
@@ -376,6 +410,7 @@ function PlanView({
   onUpdateStory: (index: number, patch: Partial<Story>) => void;
   onRemoveDependency: (depIndex: number) => void;
   onRemoveStory: (index: number) => void;
+  onMarkDone: (index: number) => void;
   storyRemoveErrors: Record<number, string>;
   branchDeletionNotice: string | null;
   onDismissBranchNotice: () => void;
@@ -386,12 +421,23 @@ function PlanView({
   onAddDependency: (dep: Dependency) => string | null;
   onAddTask: () => void;
 }) {
+  const storiesByColumn: Record<ColumnId, number[]> = {
+    todo: [],
+    'in-progress': [],
+    review: [],
+    done: [],
+  };
+  plan.stories.forEach((_, i) => {
+    const status = runtime[i]?.status ?? 'pending';
+    storiesByColumn[COLUMN_FOR_STATUS[status]].push(i);
+  });
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
         <div className="flex items-center gap-3">
-          {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
+          {runDone === true && <span className="text-emerald-400 text-sm">All PRs ready for review ✓</span>}
           {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
           <button
             onClick={onAddTask}
@@ -454,31 +500,25 @@ function PlanView({
         </div>
       )}
 
-      <div className="space-y-3">
-        {plan.stories.map((story, i) => {
-          const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
-          const unmetDependencies = waitsOn
-            .filter((depIdx) => (runtime[depIdx]?.status ?? 'pending') !== 'done')
-            .map((depIdx) => ({ index: depIdx, title: plan.stories[depIdx]?.title ?? `#${depIdx}` }));
-          return (
-            <StoryCard
-              key={i}
-              index={i}
-              story={story}
-              runtime={runtime[i] ?? emptyRuntime()}
-              waitsOn={waitsOn}
-              editable={!running}
-              onChange={(patch) => onUpdateStory(i, patch)}
-              onRunStory={() => onRunStory(i)}
-              canRunIndividual={canRunIndividual}
-              unmetDependencies={unmetDependencies}
-              runActive={runActive}
-              hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
-              onRemove={() => onRemoveStory(i)}
-              removeError={storyRemoveErrors[i] ?? null}
-            />
-          );
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {COLUMNS.map((col) => (
+          <ColumnView
+            key={col.id}
+            columnId={col.id}
+            title={col.title}
+            indices={storiesByColumn[col.id]}
+            plan={plan}
+            runtime={runtime}
+            running={running}
+            runActive={runActive}
+            canRunIndividual={canRunIndividual}
+            onRunStory={onRunStory}
+            onUpdateStory={onUpdateStory}
+            onRemoveStory={onRemoveStory}
+            onMarkDone={onMarkDone}
+            storyRemoveErrors={storyRemoveErrors}
+          />
+        ))}
       </div>
       {plan.dependencies.length > 0 && (
         <DependencyList
@@ -491,6 +531,127 @@ function PlanView({
         <AddDependencyForm stories={plan.stories} onAdd={onAddDependency} />
       )}
     </section>
+  );
+}
+
+function ColumnView({
+  columnId,
+  title,
+  indices,
+  plan,
+  runtime,
+  running,
+  runActive,
+  canRunIndividual,
+  onRunStory,
+  onUpdateStory,
+  onRemoveStory,
+  onMarkDone,
+  storyRemoveErrors,
+}: {
+  columnId: ColumnId;
+  title: string;
+  indices: number[];
+  plan: RefinedPlan;
+  runtime: Record<number, StoryRuntime>;
+  running: boolean;
+  runActive: boolean;
+  canRunIndividual: boolean;
+  onRunStory: (storyIndex: number) => void;
+  onUpdateStory: (index: number, patch: Partial<Story>) => void;
+  onRemoveStory: (index: number) => void;
+  onMarkDone: (index: number) => void;
+  storyRemoveErrors: Record<number, string>;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const acceptsDrop = columnId === 'done';
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!acceptsDrop) return;
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!dragOver) setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    if (dragOver) setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!acceptsDrop) return;
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    setDragOver(false);
+    if (!raw) return;
+    e.preventDefault();
+    const idx = Number(raw);
+    if (!Number.isInteger(idx)) return;
+    const status = runtime[idx]?.status ?? 'pending';
+    if (COLUMN_FOR_STATUS[status] !== 'review') return;
+    onMarkDone(idx);
+  };
+
+  return (
+    <div
+      role="list"
+      aria-label={title}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`rounded-lg border p-3 space-y-3 min-h-[8rem] transition-colors ${
+        dragOver
+          ? 'border-emerald-500/60 bg-emerald-500/5'
+          : 'border-neutral-800 bg-neutral-950/40'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">{title}</h3>
+        <span className="text-xs text-neutral-500">{indices.length}</span>
+      </div>
+      {indices.length === 0 ? (
+        <p className="text-xs text-neutral-600 italic">
+          {acceptsDrop ? 'Drop reviewed tasks here' : '—'}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {indices.map((i) => {
+            const story = plan.stories[i];
+            const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
+            const unmetDependencies = waitsOn
+              .filter((depIdx) => {
+                const depStatus = runtime[depIdx]?.status ?? 'pending';
+                return depStatus !== 'done' && depStatus !== 'review';
+              })
+              .map((depIdx) => ({ index: depIdx, title: plan.stories[depIdx]?.title ?? `#${depIdx}` }));
+            const storyRuntime = runtime[i] ?? emptyRuntime();
+            const isReview = storyRuntime.status === 'review';
+            return (
+              <StoryCard
+                key={i}
+                index={i}
+                story={story}
+                runtime={storyRuntime}
+                waitsOn={waitsOn}
+                editable={!running}
+                onChange={(patch) => onUpdateStory(i, patch)}
+                onRunStory={() => onRunStory(i)}
+                canRunIndividual={canRunIndividual}
+                unmetDependencies={unmetDependencies}
+                runActive={runActive}
+                hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
+                onRemove={() => onRemoveStory(i)}
+                removeError={storyRemoveErrors[i] ?? null}
+                draggable={isReview}
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData(DRAG_MIME, String(i));
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
