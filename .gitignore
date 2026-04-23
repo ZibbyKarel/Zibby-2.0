@@ -31,3 +31,5 @@ vite.config.*.timestamp*
 .auto-claude/
 .worktrees/
 docs/superpowers/
+design.zip
+design/
