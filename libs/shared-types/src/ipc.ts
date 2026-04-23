@@ -12,6 +12,7 @@ export const IpcChannels = {
 
 export const IpcEvents = {
   RunEvent: 'zibby:runEvent',
+  RefineProgress: 'zibby:refineProgress',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -47,6 +48,10 @@ export type RefineRequest = {
 export type RefineResult =
   | { kind: 'ok'; plan: RefinedPlan }
   | { kind: 'error'; message: string };
+
+export type RefineProgressEvent = {
+  text: string;
+};
 
 export type AdvisorReview = {
   overall: string;
@@ -131,6 +136,7 @@ export type IpcApi = {
   runStory: (req: RunStoryRequest) => Promise<RunStoryResult>;
   cancelRun: (runId: string) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
+  onRefineProgress: (handler: (event: RefineProgressEvent) => void) => () => void;
   loadState: () => Promise<LoadedAppState>;
   saveState: (state: PersistedState) => Promise<void>;
   removeStory: (storyIndex: number) => Promise<RemoveStoryResult>;

@@ -20,6 +20,7 @@ export default function App() {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [brief, setBrief] = useState('');
   const [refining, setRefining] = useState(false);
+  const [refineOutput, setRefineOutput] = useState('');
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +113,13 @@ export default function App() {
   };
 
   useEffect(() => {
+    const unsub = window.zibby.onRefineProgress((event) => {
+      setRefineOutput((prev) => prev + event.text);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
     const unsub = window.zibby.onRunEvent((event: RunEvent) => {
       if (event.kind === 'run-done') {
         if (event.runId === runId) {
@@ -153,6 +161,7 @@ export default function App() {
   const handleRefine = async () => {
     if (!folder) return;
     setRefining(true);
+    setRefineOutput('');
     setError(null);
     setPlan(null);
     setRuntime({});
@@ -270,7 +279,7 @@ export default function App() {
           />
         )}
 
-        {refining && <RefineProgress />}
+        {refining && <RefineProgress output={refineOutput} />}
 
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-200 text-sm p-4">
@@ -366,18 +375,33 @@ function BriefSection({
   );
 }
 
-function RefineProgress() {
+function RefineProgress({ output }: { output: string }) {
   const [elapsed, setElapsed] = useState(0);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const start = Date.now();
     const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [output]);
+
   return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 flex items-center gap-3 text-sm text-neutral-300">
-      <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-      <span>Running claude CLI refine session…</span>
-      <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 text-sm text-neutral-300">
+      <div className="p-4 flex items-center gap-3">
+        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span>Running claude CLI refine session…</span>
+        <span className="ml-auto font-mono text-neutral-500">{elapsed}s</span>
+      </div>
+      {output && (
+        <div className="px-4 pb-4 max-h-48 overflow-y-auto border-t border-neutral-800/60">
+          <p className="pt-3 text-xs text-neutral-400 font-mono whitespace-pre-wrap leading-relaxed">{output}</p>
+          <div ref={bottomRef} />
+        </div>
+      )}
     </div>
   );
 }

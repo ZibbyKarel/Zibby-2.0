@@ -16,6 +16,7 @@ import {
   type RunStoryRequest,
   type RunStoryResult,
   type RunEvent,
+  type RefineProgressEvent,
   type PersistedState,
   type LoadedAppState,
   type RemoveStoryPayload,
@@ -71,7 +72,16 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.Refine,
     async (_event, req: RefineRequest): Promise<RefineResult> => {
       try {
-        const plan = await refine({ folderPath: req.folderPath, brief: req.brief });
+        const plan = await refine({
+          folderPath: req.folderPath,
+          brief: req.brief,
+          onProgress: (text) => {
+            const wc = getWebContents();
+            if (wc && !wc.isDestroyed()) {
+              wc.send(IpcEvents.RefineProgress, { text } satisfies RefineProgressEvent);
+            }
+          },
+        });
         return { kind: 'ok', plan };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };

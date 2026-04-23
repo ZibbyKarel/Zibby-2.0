@@ -6,6 +6,7 @@ import {
   type PickFolderResult,
   type RefineRequest,
   type RefineResult,
+  type RefineProgressEvent,
   type AdviseRequest,
   type AdviseResult,
   type RunStartRequest,
@@ -35,6 +36,13 @@ const api: IpcApi = {
     ipcRenderer.on(IpcEvents.RunEvent, listener);
     return () => {
       ipcRenderer.removeListener(IpcEvents.RunEvent, listener);
+    };
+  },
+  onRefineProgress: (handler: (event: RefineProgressEvent) => void) => {
+    const listener = (_: unknown, event: RefineProgressEvent) => handler(event);
+    ipcRenderer.on(IpcEvents.RefineProgress, listener);
+    return () => {
+      ipcRenderer.removeListener(IpcEvents.RefineProgress, listener);
     };
   },
   loadState: (): Promise<LoadedAppState> => ipcRenderer.invoke(IpcChannels.LoadState),

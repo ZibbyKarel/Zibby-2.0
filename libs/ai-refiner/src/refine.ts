@@ -32,7 +32,7 @@ const ClaudeResultEnvelopeSchema = z.object({
   stop_reason: z.string().optional(),
 });
 
-function runClaudeCli(args: {
+function runClaudeCliStream(args: {
   bin: string;
   prompt: string;
   systemPrompt: string;
@@ -40,7 +40,8 @@ function runClaudeCli(args: {
   model: string;
   cwd: string;
   timeoutMs: number;
-}): Promise<string> {
+  onProgress?: (text: string) => void;
+}): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const proc = spawn(
       args.bin,
@@ -48,7 +49,7 @@ function runClaudeCli(args: {
         '-p',
         args.prompt,
         '--output-format',
-        'json',
+        'stream-json',
         '--json-schema',
         JSON.stringify(args.jsonSchema),
         '--system-prompt',
@@ -67,8 +68,9 @@ function runClaudeCli(args: {
       }
     );
 
-    let stdout = '';
+    let lineBuffer = '';
     let stderr = '';
+    let resultEnvelope: unknown;
     let settled = false;
     const start = Date.now();
     const elapsed = () => `${Math.round((Date.now() - start) / 1000)}s`;
@@ -84,8 +86,37 @@ function runClaudeCli(args: {
       );
     }, args.timeoutMs);
 
-    proc.stdout.on('data', (chunk) => (stdout += chunk.toString()));
-    proc.stderr.on('data', (chunk) => (stderr += chunk.toString()));
+    proc.stdout.on('data', (chunk: Buffer) => {
+      lineBuffer += chunk.toString();
+      let idx: number;
+      while ((idx = lineBuffer.indexOf('\n')) !== -1) {
+        const line = lineBuffer.slice(0, idx).trim();
+        lineBuffer = lineBuffer.slice(idx + 1);
+        if (!line) continue;
+        let event: unknown;
+        try {
+          event = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (typeof event !== 'object' || event === null) continue;
+        const ev = event as Record<string, unknown>;
+        if (ev['type'] === 'assistant' && args.onProgress) {
+          const msg = ev['message'] as
+            | { content?: Array<{ type: string; text?: string }> }
+            | undefined;
+          for (const block of msg?.content ?? []) {
+            if (block.type === 'text' && typeof block.text === 'string' && block.text.trim()) {
+              args.onProgress(block.text);
+            }
+          }
+        } else if (ev['type'] === 'result') {
+          resultEnvelope = event;
+        }
+      }
+    });
+
+    proc.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
 
     proc.on('error', (e) => {
       if (settled) return;
@@ -106,7 +137,15 @@ function runClaudeCli(args: {
         );
         return;
       }
-      resolve(stdout);
+      if (!resultEnvelope) {
+        reject(
+          new Error(
+            `claude CLI stream ended without a result event after ${elapsed()}. stderr: ${stderr.trim().slice(-400) || '<empty>'}`
+          )
+        );
+        return;
+      }
+      resolve(resultEnvelope);
     });
   });
 }
@@ -123,12 +162,13 @@ export async function refine(params: {
   model?: string;
   timeoutMs?: number;
   claudeBin?: string;
+  onProgress?: (text: string) => void;
 }): Promise<RefinedPlan> {
   const ctx = await collectRepoContext(params.folderPath);
   const contextBlock = renderContextForPrompt(ctx);
   const userPrompt = `${contextBlock}\n\n---\n\n## Developer brief\n\n${params.brief}`;
 
-  const stdout = await runClaudeCli({
+  const envelope = await runClaudeCliStream({
     bin: params.claudeBin ?? DEFAULT_CLAUDE_BIN,
     prompt: userPrompt,
     systemPrompt: SYSTEM_PROMPT,
@@ -136,14 +176,8 @@ export async function refine(params: {
     model: params.model ?? DEFAULT_MODEL,
     cwd: params.folderPath,
     timeoutMs: params.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    onProgress: params.onProgress,
   });
-
-  let envelope: unknown;
-  try {
-    envelope = JSON.parse(stdout);
-  } catch {
-    throw new Error(`claude CLI returned non-JSON output: ${stdout.slice(0, 300)}`);
-  }
 
   const env = ClaudeResultEnvelopeSchema.safeParse(envelope);
   if (!env.success) {

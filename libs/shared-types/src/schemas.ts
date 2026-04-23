@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Story, Dependency, RefinedPlan, AdvisorReview, RemoveStoryPayload } from './ipc';
+import type { Story, Dependency, RefinedPlan, AdvisorReview, RemoveStoryPayload, RefineProgressEvent } from './ipc';
 
 export const StorySchema = z.object({
   title: z.string().min(3).max(120),
@@ -23,6 +23,10 @@ export const RefinedPlanSchema = z.object({
 export const RemoveStoryPayloadSchema = z.object({
   storyIndex: z.number().int().min(0),
 }) satisfies z.ZodType<RemoveStoryPayload>;
+
+export const RefineProgressEventSchema = z.object({
+  text: z.string(),
+}) satisfies z.ZodType<RefineProgressEvent>;
 
 export const AdvisorReviewSchema = z.object({
   overall: z.string().min(1),
