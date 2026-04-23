@@ -11,6 +11,8 @@ import {
   type RefineResult,
   type AdviseRequest,
   type AdviseResult,
+  type RefineStoryRequest,
+  type RefineStoryResult,
   type RunStartRequest,
   type RunStartResult,
   type RunStoryRequest,
@@ -21,7 +23,7 @@ import {
   type RemoveStoryPayload,
   type RemoveStoryResult,
 } from '@zibby/shared-types/ipc';
-import { refine, advise } from '@zibby/ai-refiner';
+import { refine, advise, refineStory } from '@zibby/ai-refiner';
 import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
 import { deleteStoryBranch } from '@zibby/github';
 import { loadPersisted, savePersisted } from './state-store';
@@ -85,6 +87,22 @@ function registerIpc(getWebContents: () => WebContents | null) {
       try {
         const review = await advise({ folderPath: req.folderPath, plan: req.plan });
         return { kind: 'ok', review };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IpcChannels.RefineStory,
+    async (_event, req: RefineStoryRequest): Promise<RefineStoryResult> => {
+      try {
+        const story = await refineStory({
+          folderPath: req.folderPath,
+          title: req.title,
+          description: req.description,
+        });
+        return { kind: 'ok', story };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
