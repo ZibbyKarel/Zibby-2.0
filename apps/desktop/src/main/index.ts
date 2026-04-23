@@ -32,6 +32,29 @@ const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
 
+const MAX_PARALLEL_RUNNERS = Math.max(1, Number(process.env.MAX_PARALLEL_RUNNERS ?? 3));
+let activeRunnerCount = 0;
+const runnerQueue: Array<() => void> = [];
+
+function acquireRunner(): Promise<void> {
+  if (activeRunnerCount < MAX_PARALLEL_RUNNERS) {
+    activeRunnerCount++;
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => {
+    runnerQueue.push(() => {
+      activeRunnerCount++;
+      resolve();
+    });
+  });
+}
+
+function releaseRunner(): void {
+  activeRunnerCount--;
+  const next = runnerQueue.shift();
+  if (next) next();
+}
+
 const activeRuns = new Map<string, PlanRunHandle>();
 
 const USAGE_POLL_INTERVAL_MS = 5 * 60 * 1000;
@@ -179,6 +202,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
     async (_event, req: RunStoryRequest): Promise<RunStoryResult> => {
       const story = req.plan.stories[req.storyIndex];
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
+      await acquireRunner();
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
@@ -196,17 +220,19 @@ function registerIpc(getWebContents: () => WebContents | null) {
           }
         },
       });
-      void handle.result.catch((err) => {
-        const wc = getWebContents();
-        if (!wc) return;
-        emitToRenderer(wc, {
-          runId: req.runId,
-          storyIndex: req.storyIndex,
-          kind: 'log',
-          stream: 'stderr',
-          line: err instanceof Error ? err.message : String(err),
-        });
-      });
+      void handle.result
+        .catch((err) => {
+          const wc = getWebContents();
+          if (!wc) return;
+          emitToRenderer(wc, {
+            runId: req.runId,
+            storyIndex: req.storyIndex,
+            kind: 'log',
+            stream: 'stderr',
+            line: err instanceof Error ? err.message : String(err),
+          });
+        })
+        .finally(() => releaseRunner());
       return { kind: 'ok' };
     }
   );
