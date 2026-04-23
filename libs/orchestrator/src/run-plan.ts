@@ -22,6 +22,7 @@ export function startPlanRun(args: {
   repoPath: string;
   baseBranch?: string;
   maxParallel?: number;
+  completedIndices?: readonly number[];
   onEvent: (event: PlanEvent) => void;
 }): PlanRunHandle {
   const runId = `run-${Date.now()}-${nextRunId++}`;
@@ -38,6 +39,9 @@ export function startPlanRun(args: {
     }
 
     const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked'> = dag.map(() => 'pending');
+    for (const idx of args.completedIndices ?? []) {
+      if (idx >= 0 && idx < status.length) status[idx] = 'done';
+    }
     let failed = false;
 
     const blockCascade = (fromIndex: number) => {
@@ -71,6 +75,11 @@ export function startPlanRun(args: {
         onEvent: (e) => args.onEvent({ storyIndex: index, ...e }),
       });
       if (res.success) {
+        status[index] = 'done';
+      } else if (res.duplicate) {
+        // Another concurrent execution owns this story. Treat it as done from
+        // this run's perspective so downstream tasks don't stall, and don't
+        // cascade failure — the other execution will drive the real events.
         status[index] = 'done';
       } else {
         status[index] = 'failed';
