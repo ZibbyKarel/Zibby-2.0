@@ -13,8 +13,6 @@ import type { Command } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
 import type { Toast } from './components/Toasts';
 import { UsagePanel } from './components/UsagePanel';
-import { DependencyGraph } from './components/DependencyGraph';
-
 import {
   toTasks, statusToCol, emptyRuntime, isTerminal,
 } from './viewModel';
@@ -42,7 +40,6 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [showGraph, setShowGraph] = useState(true);
   const [tick, setTick] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -276,7 +273,6 @@ export default function App() {
       run: () => setTheme((t) => t === 'dark' ? 'light' : 'dark'),
     },
     { id: 'folder', icon: 'folder', label: 'Pick folder…', hint: folder?.path, run: () => void pickFolder() },
-    { id: 'graph', icon: 'graph', label: showGraph ? 'Hide dependency graph' : 'Show dependency graph', run: () => setShowGraph((s) => !s) },
     ...tasks.map((t) => ({
       id: 'task-' + t.id,
       icon: 'arrowRight' as const,
@@ -284,7 +280,7 @@ export default function App() {
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
     })),
-  ], [tasks, theme, showGraph, folder, runTask]);
+  ], [tasks, theme, folder, runTask]);
 
   // ── Drag ───────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -373,9 +369,6 @@ export default function App() {
           {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
         </span>
         <div style={{ flex: 1 }} />
-        <Btn icon="graph" variant="ghost" size="sm" onClick={() => setShowGraph((s) => !s)}>
-          {showGraph ? 'Hide graph' : 'Show graph'}
-        </Btn>
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
@@ -396,8 +389,6 @@ export default function App() {
 
       {/* Main body */}
       <main style={{ flex: 1, padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
-        {showGraph && plan && <DependencyGraph tasks={tasks} onClickTask={(t) => { setSelectedIndex(t.index); setDrawerTab('logs'); }} />}
-
         <div style={{ display: 'flex', gap: 14, flex: 1 }}>
           {COLS.map((col) => (
             <Column
