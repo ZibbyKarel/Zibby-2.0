@@ -6,6 +6,7 @@ import type {
   Dependency,
   RunEvent,
   AdvisorReview,
+  RefineModel,
 } from '@zibby/shared-types/ipc';
 import { StoryCard } from './components/StoryCard';
 import type { StoryRuntime } from './components/StoryCard';
@@ -19,6 +20,7 @@ function emptyRuntime(): StoryRuntime {
 export default function App() {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [brief, setBrief] = useState('');
+  const [refineModel, setRefineModel] = useState<RefineModel>('sonnet');
   const [refining, setRefining] = useState(false);
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export default function App() {
       if (restored.folder && restored.folder.kind === 'selected') setFolder(restored.folder);
       setBrief(restored.brief);
       setPlan(restored.plan);
+      if (restored.refineModel) setRefineModel(restored.refineModel);
       setLoadedState(true);
     })();
     return () => {
@@ -57,12 +60,13 @@ export default function App() {
         folderPath: folder?.path,
         brief: brief || undefined,
         plan: plan ?? undefined,
+        refineModel,
       });
     }, 500);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [folder, brief, plan, loadedState]);
+  }, [folder, brief, plan, refineModel, loadedState]);
 
   const updateStory = (index: number, patch: Partial<Story>) =>
     setPlan((cur) =>
@@ -157,7 +161,7 @@ export default function App() {
     setPlan(null);
     setRuntime({});
     setRunDone(null);
-    const res = await window.zibby.refine({ folderPath: folder.path, brief });
+    const res = await window.zibby.refine({ folderPath: folder.path, brief, model: refineModel });
     setRefining(false);
     if (res.kind === 'ok') setPlan(res.plan);
     else setError(res.message);
@@ -267,6 +271,8 @@ export default function App() {
             disabled={refining || !brief.trim() || running}
             refining={refining}
             onRefine={handleRefine}
+            model={refineModel}
+            onModelChange={setRefineModel}
           />
         )}
 
@@ -336,30 +342,45 @@ function BriefSection({
   disabled,
   refining,
   onRefine,
+  model,
+  onModelChange,
 }: {
   brief: string;
   onBrief: (v: string) => void;
   disabled: boolean;
   refining: boolean;
   onRefine: () => void;
+  model: RefineModel;
+  onModelChange: (m: RefineModel) => void;
 }) {
+  const modelLabel = model.charAt(0).toUpperCase() + model.slice(1);
   return (
     <section className="space-y-3">
       <label className="block text-sm font-medium text-neutral-300">Brief</label>
       <textarea
         value={brief}
         onChange={(e) => onBrief(e.target.value)}
-        placeholder="Describe one or more tasks — Sonnet will expand them into user stories with acceptance criteria."
+        placeholder="Describe one or more tasks — Claude will expand them into user stories with acceptance criteria."
         rows={6}
         className="w-full rounded-lg bg-neutral-900 border border-neutral-800 focus:border-indigo-500 focus:outline-none p-3 text-sm font-mono text-neutral-100 placeholder:text-neutral-600"
       />
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <select
+          value={model}
+          onChange={(e) => onModelChange(e.target.value as RefineModel)}
+          disabled={refining}
+          className="bg-neutral-950 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-200"
+        >
+          <option value="haiku">Haiku (rychlé)</option>
+          <option value="sonnet">Sonnet (výchozí)</option>
+          <option value="opus">Opus (přesné)</option>
+        </select>
         <button
           onClick={onRefine}
           disabled={disabled}
           className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
         >
-          {refining ? 'Refining…' : 'Refine with Sonnet (Max)'}
+          {refining ? 'Refining…' : `Refine with ${modelLabel}`}
         </button>
       </div>
     </section>

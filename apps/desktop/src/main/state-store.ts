@@ -21,6 +21,9 @@ export async function loadPersisted(userDataDir: string): Promise<PersistedState
       const validated = RefinedPlanSchema.safeParse(parsed['plan']);
       if (validated.success) out.plan = validated.data;
     }
+    if (parsed['refineModel'] === 'opus' || parsed['refineModel'] === 'sonnet' || parsed['refineModel'] === 'haiku') {
+      out.refineModel = parsed['refineModel'];
+    }
     return out;
   } catch {
     return {};

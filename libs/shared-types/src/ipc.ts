@@ -39,9 +39,12 @@ export type RefinedPlan = {
   dependencies: Dependency[];
 };
 
+export type RefineModel = 'opus' | 'sonnet' | 'haiku';
+
 export type RefineRequest = {
   folderPath: string;
   brief: string;
+  model?: RefineModel;
 };
 
 export type RefineResult =
@@ -114,12 +117,14 @@ export type PersistedState = {
   folderPath?: string;
   brief?: string;
   plan?: RefinedPlan;
+  refineModel?: RefineModel;
 };
 
 export type LoadedAppState = {
   folder: PickFolderResult | null;
   brief: string;
   plan: RefinedPlan | null;
+  refineModel?: RefineModel;
 };
 
 export type IpcApi = {

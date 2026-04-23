@@ -71,7 +71,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.Refine,
     async (_event, req: RefineRequest): Promise<RefineResult> => {
       try {
-        const plan = await refine({ folderPath: req.folderPath, brief: req.brief });
+        const plan = await refine({ folderPath: req.folderPath, brief: req.brief, model: req.model });
         return { kind: 'ok', plan };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
@@ -195,7 +195,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         folder = null;
       }
     }
-    return { folder, brief: state.brief ?? '', plan: state.plan ?? null };
+    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, refineModel: state.refineModel };
   });
 
   ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
