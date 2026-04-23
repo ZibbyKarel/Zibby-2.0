@@ -55,3 +55,12 @@ The flow crosses every layer, so tracing a bug usually means reading all of thes
 - **External binaries required on PATH:** `claude`, `gh`, `git`. A missing `gh` will only surface at PR-creation time.
 - **Persisted state** lives in Electron's `userData` dir (`state-store.ts`) — `folderPath`, `brief`, and the last `plan`. Writes are debounced 500 ms in the renderer.
 - **Electron security posture:** `contextIsolation: true`, `nodeIntegration: false`, `sandbox: false`. The preload script is the only bridge — renderer code must not import Node APIs directly.
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
