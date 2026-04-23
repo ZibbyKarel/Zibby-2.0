@@ -21,11 +21,12 @@ import {
 import type { StoryRuntime, LogLine, TaskVM } from './viewModel';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
-type FilterStatus = 'all' | 'pending' | 'running' | 'done' | 'failed';
+type FilterStatus = 'all' | 'pending' | 'running' | 'review' | 'done' | 'failed';
 
 const COLS = [
   { id: 'queue'   as const, title: 'Queued',  accent: 'var(--amber)' },
   { id: 'running' as const, title: 'Running', accent: 'var(--emerald)' },
+  { id: 'review'  as const, title: 'Review',  accent: 'var(--violet)' },
   { id: 'done'    as const, title: 'Done',    accent: 'var(--sky)' },
 ];
 
@@ -165,7 +166,7 @@ export default function App() {
   }, [tasks, search, filterStatus]);
 
   const grouped = useMemo(() => {
-    const out = { queue: [] as TaskVM[], running: [] as TaskVM[], done: [] as TaskVM[] };
+    const out = { queue: [] as TaskVM[], running: [] as TaskVM[], review: [] as TaskVM[], done: [] as TaskVM[] };
     visible.forEach((t) => out[statusToCol(t.status)].push(t));
     return out;
   }, [visible]);
@@ -194,15 +195,21 @@ export default function App() {
     window.zibby.runStory({ runId: currentRunId, storyIndex: idx, folderPath: folder.path, plan }).catch(() => {});
   }, [plan, folder, runId, pushToast]);
 
-  const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'done') => {
+  const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
     if (colId === 'running' && (task.status === 'pending' || task.status === 'failed' || task.status === 'blocked')) {
       await runTask(task.index);
+    } else if (colId === 'done' && task.status === 'review') {
+      setRuntime((prev) => {
+        const cur = prev[task.index];
+        if (!cur || cur.status !== 'review') return prev;
+        return { ...prev, [task.index]: { ...cur, status: 'done' } };
+      });
     } else if (colId !== statusToCol(task.status)) {
       pushToast({ kind: 'info', title: 'Move not supported', desc: 'Use the Run button to start a task.' });
     }
-  }, [tasks, runTask, pushToast]);
+  }, [tasks, runTask, pushToast, setRuntime]);
 
   const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string }) => {
     setPlan((prev) => {
@@ -355,7 +362,7 @@ export default function App() {
           {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
         </span>
         <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
-        {(['all', 'pending', 'running', 'done', 'failed'] as FilterStatus[]).map((s) => (
+        {(['all', 'pending', 'running', 'review', 'done', 'failed'] as FilterStatus[]).map((s) => (
           <button key={s} onClick={() => setFilterStatus(s)} style={{
             padding: '3px 10px', fontSize: 11, borderRadius: 5, cursor: 'pointer',
             fontFamily: 'var(--mono)', border: '1px solid',

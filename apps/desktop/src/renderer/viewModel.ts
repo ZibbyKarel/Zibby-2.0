@@ -30,10 +30,11 @@ export type TaskVM = {
   waitsOn: number[];
 };
 
-export type TaskColumn = 'queue' | 'running' | 'done';
+export type TaskColumn = 'queue' | 'running' | 'review' | 'done';
 
 export function statusToCol(status: StoryStatus): TaskColumn {
   if (status === 'running' || status === 'pushing') return 'running';
+  if (status === 'review') return 'review';
   if (status === 'done' || status === 'failed' || status === 'cancelled') return 'done';
   return 'queue'; // pending | blocked
 }
