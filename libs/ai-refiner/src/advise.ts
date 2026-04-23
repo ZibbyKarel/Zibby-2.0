@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AdvisorReviewSchema } from '@zibby/shared-types/schemas';
 import type { AdvisorReview, RefinedPlan } from '@zibby/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
+import { optimizeContext } from './context-optimizer';
 
 const DEFAULT_MODEL = process.env.CLAUDE_ADVISE_MODEL ?? 'opus';
 const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_ADVISE_TIMEOUT_MS ?? 420_000);
@@ -138,7 +139,7 @@ export async function advise(params: {
   claudeBin?: string;
 }): Promise<AdvisorReview> {
   const ctx = await collectRepoContext(params.folderPath);
-  const contextBlock = renderContextForPrompt(ctx);
+  const contextBlock = renderContextForPrompt(optimizeContext(ctx));
   const planBlock = renderPlanForPrompt(params.plan);
   const userPrompt = `${contextBlock}\n\n---\n\n${planBlock}\n\n---\n\nReview the plan and return your structured assessment.`;
 

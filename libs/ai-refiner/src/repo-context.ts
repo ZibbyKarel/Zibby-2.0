@@ -54,7 +54,23 @@ async function readDirIfExists(folder: string, relDir: string): Promise<RepoFile
 }
 
 async function buildTree(folder: string, depth = 2): Promise<string> {
-  const skipDirs = new Set(['node_modules', '.git', 'dist', '.nx', '.worktrees', '.auto-claude']);
+  const skipDirs = new Set([
+    'node_modules',
+    '.git',
+    'dist',
+    'dist-main',
+    'dist-renderer',
+    'dist-preload',
+    'build',
+    'out',
+    'coverage',
+    '.next',
+    '.turbo',
+    '.cache',
+    '.nx',
+    '.worktrees',
+    '.auto-claude',
+  ]);
   const lines: string[] = [];
   async function walk(dir: string, prefix: string, remaining: number) {
     if (remaining < 0) return;
