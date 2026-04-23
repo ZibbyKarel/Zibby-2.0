@@ -11,7 +11,6 @@ type NewTask = {
 
 type Props = {
   open: boolean;
-  folderPath: string | null;
   onClose: () => void;
   onAdd: (data: NewTask) => void;
 };
@@ -23,16 +22,14 @@ const inputStyle: React.CSSProperties = {
   outline: 'none', transition: 'border-color .12s',
 };
 
-export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
+export function AddTaskDialog({ open, onClose, onAdd }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [acceptance, setAcceptance] = useState('');
   const [model, setModel] = useState('');
-  const [refining, setRefining] = useState(false);
-  const [refineError, setRefineError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) { setTitle(''); setDescription(''); setAcceptance(''); setModel(''); setRefining(false); setRefineError(null); }
+    if (open) { setTitle(''); setDescription(''); setAcceptance(''); setModel(''); }
   }, [open]);
 
   useEffect(() => {
@@ -44,32 +41,7 @@ export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
 
   if (!open) return null;
 
-  const canAdd = description.trim().length > 0 && !refining;
-
-  const handleRefine = async () => {
-    if (!description.trim()) return;
-    setRefining(true);
-    setRefineError(null);
-    try {
-      const result = await window.zibby.refineStory({
-        folderPath: folderPath ?? '.',
-        title: title.trim() || description.split(' ').slice(0, 6).join(' '),
-        description: description.trim(),
-      });
-      if (result.kind === 'ok') {
-        const s = result.story;
-        if (!title.trim()) setTitle(s.title);
-        setDescription(s.description);
-        setAcceptance(s.acceptanceCriteria.join('\n'));
-      } else {
-        setRefineError(result.message);
-      }
-    } catch (err) {
-      setRefineError(String(err));
-    } finally {
-      setRefining(false);
-    }
-  };
+  const canAdd = description.trim().length > 0;
 
   return (
     <div onClick={onClose} style={{
@@ -116,17 +88,9 @@ export function AddTaskDialog({ open, folderPath, onClose, onAdd }: Props) {
               <option value="haiku">Haiku</option>
             </select>
           </Field>
-          {refineError && (
-            <div style={{ fontSize: 12, color: 'var(--rose)', background: 'rgba(244,63,94,.08)', border: '1px solid rgba(244,63,94,.2)', borderRadius: 6, padding: '8px 10px' }}>
-              {refineError}
-            </div>
-          )}
         </div>
 
-        <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-          <Btn icon="sparkle" variant="outline" onClick={() => void handleRefine()} disabled={refining || !description.trim()}>
-            {refining ? 'Refining…' : 'Refine with Opus'}
-          </Btn>
+        <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
             <Btn variant="primary" icon="check" disabled={!canAdd} onClick={() => canAdd && onAdd({
