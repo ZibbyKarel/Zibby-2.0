@@ -16,6 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "@zibby/shared-types": ["libs/shared-types/src/index.ts"],
+      "@zibby/shared-types/ipc": ["libs/shared-types/src/ipc.ts"],
+      "@zibby/shared-types/schemas": ["libs/shared-types/src/schemas.ts"],
       "@zibby/db": ["libs/db/src/index.ts"],
       "@zibby/github": ["libs/github/src/index.ts"],
       "@zibby/ai-refiner": ["libs/ai-refiner/src/index.ts"],
