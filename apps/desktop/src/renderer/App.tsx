@@ -298,7 +298,7 @@ export default function App() {
   const handleDragEnd = () => setDragId(null);
 
   // ── Render ─────────────────────────────────────────────────
-  const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? tick + (Date.now() - t.startedAt) : null;
+  const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? Date.now() - t.startedAt : null;
 
   return (
     <div className={`zb${theme === 'light' ? ' theme-light' : ''}`} style={{
