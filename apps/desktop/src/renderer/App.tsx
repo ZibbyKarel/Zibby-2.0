@@ -31,6 +31,8 @@ export default function App() {
   const [review, setReview] = useState<AdvisorReview | null>(null);
   const [loadedState, setLoadedState] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [storyRemoveErrors, setStoryRemoveErrors] = useState<Record<number, string>>({});
+  const [branchDeletionNotice, setBranchDeletionNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -199,7 +201,43 @@ export default function App() {
     await window.zibby.cancelRun(runId);
   };
 
+  const handleRemoveStory = async (storyIndex: number) => {
+    if (!plan) return;
+    const prevPlan = plan;
+    const optimisticPlan: RefinedPlan = {
+      stories: plan.stories.filter((_, i) => i !== storyIndex),
+      dependencies: plan.dependencies
+        .filter((d) => d.from !== storyIndex && d.to !== storyIndex)
+        .map((d) => ({
+          ...d,
+          from: d.from > storyIndex ? d.from - 1 : d.from,
+          to: d.to > storyIndex ? d.to - 1 : d.to,
+        })),
+    };
+    setPlan(optimisticPlan);
+    setStoryRemoveErrors((prev) => {
+      const next = { ...prev };
+      delete next[storyIndex];
+      return next;
+    });
+    try {
+      const result = await window.zibby.removeStory(storyIndex);
+      setPlan(result.plan);
+      if (result.branchDeletionWarning) {
+        setBranchDeletionNotice(result.branchDeletionWarning);
+      }
+    } catch (err) {
+      setPlan(prevPlan);
+      setStoryRemoveErrors((prev) => ({
+        ...prev,
+        [storyIndex]: err instanceof Error ? err.message : 'Failed to remove story',
+      }));
+    }
+  };
+
   const running = runId !== null;
+  const runActive =
+    running || Object.values(runtime).some((r) => r.status === 'running' || r.status === 'pushing');
   const canRun =
     plan !== null &&
     folder?.isGitRepo === true &&
