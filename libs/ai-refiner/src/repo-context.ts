@@ -1,7 +1,26 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-const MAX_FILE_CHARS = 20_000;
+const DEFAULT_MAX_FILE_CHARS = 8_000;
+const DEFAULT_MAX_TOTAL_CHARS = 32_000;
+
+function getMaxFileChars(): number {
+  const v = process.env.REPO_CONTEXT_MAX_FILE_CHARS;
+  const n = v ? parseInt(v, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_FILE_CHARS;
+}
+
+function getMaxTotalChars(): number {
+  const v = process.env.REPO_CONTEXT_MAX_TOTAL_CHARS;
+  const n = v ? parseInt(v, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_TOTAL_CHARS;
+}
+
+export function truncateContent(content: string, limit: number): string {
+  if (content.length <= limit) return content;
+  const dropped = content.length - limit;
+  return content.slice(0, limit) + `[… truncated ${dropped} chars …]`;
+}
 
 const AI_CONVENTION_FILES = [
   'CLAUDE.md',
@@ -30,8 +49,7 @@ export type RepoContext = {
 async function readIfExists(folder: string, relPath: string): Promise<RepoFile | null> {
   try {
     const raw = await readFile(path.join(folder, relPath), 'utf8');
-    const content = raw.length > MAX_FILE_CHARS ? raw.slice(0, MAX_FILE_CHARS) + '\n…[truncated]' : raw;
-    return { relPath, content };
+    return { relPath, content: truncateContent(raw, getMaxFileChars()) };
   } catch {
     return null;
   }
@@ -104,7 +122,8 @@ export async function collectRepoContext(folderPath: string): Promise<RepoContex
   return { folderPath, aiConventions, projectInfo, tree };
 }
 
-export function renderContextForPrompt(ctx: RepoContext): string {
+export function renderContextForPrompt(ctx: RepoContext, opts?: { maxTotalChars?: number }): string {
+  const maxTotal = opts?.maxTotalChars ?? getMaxTotalChars();
   const parts: string[] = [];
 
   if (ctx.aiConventions.length > 0) {
@@ -127,5 +146,5 @@ export function renderContextForPrompt(ctx: RepoContext): string {
   parts.push('## Directory tree (depth 2)');
   parts.push('```\n' + (ctx.tree || '(empty)') + '\n```');
 
-  return parts.join('\n\n');
+  return truncateContent(parts.join('\n\n'), maxTotal);
 }
