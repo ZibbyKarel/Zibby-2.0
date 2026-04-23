@@ -121,9 +121,30 @@ export async function createWorktree(args: {
       { cwd: args.repoPath, ...OPTS }
     );
   } catch (err) {
-    throw new Error(
-      `git worktree add failed: ${(err as { stderr?: string; message: string }).stderr ?? (err as Error).message}`
-    );
+    const stderr = (err as { stderr?: string; message: string }).stderr ?? (err as Error).message;
+    if (stderr.includes('reference already exists')) {
+      // The branch slipped in between our refExists check and the worktree-add
+      // (race condition or stale ref from a prior run that was already pushed).
+      // Delete the local ref and retry once with the same name.
+      try {
+        await execFileP('git', ['branch', '-D', branch], { cwd: args.repoPath, ...OPTS });
+      } catch {
+        throw new Error(`git worktree add failed: ${stderr}`);
+      }
+      try {
+        await execFileP(
+          'git',
+          ['worktree', 'add', '-b', branch, worktreePath, args.baseBranch],
+          { cwd: args.repoPath, ...OPTS }
+        );
+      } catch (err2) {
+        throw new Error(
+          `git worktree add failed: ${(err2 as { stderr?: string; message: string }).stderr ?? (err2 as Error).message}`
+        );
+      }
+    } else {
+      throw new Error(`git worktree add failed: ${stderr}`);
+    }
   }
 
   const mirroredFiles = await mirrorLocalAiSettings(args.repoPath, worktreePath, args.onInfo);
