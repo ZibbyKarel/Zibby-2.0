@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import type {
   PickFolderResult,
   RefinedPlan,
   Story,
+  StoryStatus,
   Dependency,
   RunEvent,
   AdvisorReview,
@@ -10,6 +11,29 @@ import type {
 import { StoryCard } from './components/StoryCard';
 import type { StoryRuntime } from './components/StoryCard';
 import { UsageBar } from './components/UsageBar';
+
+type ColumnId = 'pending' | 'running' | 'review' | 'done';
+
+const COLUMN_TITLES: Record<ColumnId, string> = {
+  pending: 'PENDING',
+  running: 'RUNNING',
+  review: 'REVIEW',
+  done: 'DONE',
+};
+
+function columnFor(status: StoryStatus): ColumnId {
+  switch (status) {
+    case 'running':
+    case 'pushing':
+      return 'running';
+    case 'review':
+      return 'review';
+    case 'done':
+      return 'done';
+    default:
+      return 'pending';
+  }
+}
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
@@ -194,6 +218,14 @@ export default function App() {
     await window.zibby.cancelRun(runId);
   };
 
+  const handleMoveToDone = (storyIndex: number) => {
+    setRuntime((prev) => {
+      const cur = prev[storyIndex];
+      if (!cur || cur.status !== 'review') return prev;
+      return { ...prev, [storyIndex]: { ...cur, status: 'done' } };
+    });
+  };
+
   const handleRemoveStory = async (storyIndex: number) => {
     if (!plan) return;
     const prevPlan = plan;
@@ -298,6 +330,7 @@ export default function App() {
             onApplySuggestedDependency={applySuggestedDependency}
             onAddDependency={addDependency}
             onAddTask={() => setShowAddTask(true)}
+            onMoveToDone={handleMoveToDone}
           />
         )}
 
@@ -362,6 +395,7 @@ function PlanView({
   onApplySuggestedDependency,
   onAddDependency,
   onAddTask,
+  onMoveToDone,
 }: {
   plan: RefinedPlan;
   runtime: Record<number, StoryRuntime>;
@@ -385,13 +419,14 @@ function PlanView({
   onApplySuggestedDependency: (dep: Dependency) => void;
   onAddDependency: (dep: Dependency) => string | null;
   onAddTask: () => void;
+  onMoveToDone: (storyIndex: number) => void;
 }) {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-neutral-200">Refined plan</h2>
         <div className="flex items-center gap-3">
-          {runDone === true && <span className="text-emerald-400 text-sm">All done ✓</span>}
+          {runDone === true && <span className="text-violet-300 text-sm">All PRs ready for review ✓</span>}
           {runDone === false && <span className="text-rose-400 text-sm">Run failed</span>}
           <button
             onClick={onAddTask}
@@ -454,32 +489,18 @@ function PlanView({
         </div>
       )}
 
-      <div className="space-y-3">
-        {plan.stories.map((story, i) => {
-          const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
-          const unmetDependencies = waitsOn
-            .filter((depIdx) => (runtime[depIdx]?.status ?? 'pending') !== 'done')
-            .map((depIdx) => ({ index: depIdx, title: plan.stories[depIdx]?.title ?? `#${depIdx}` }));
-          return (
-            <StoryCard
-              key={i}
-              index={i}
-              story={story}
-              runtime={runtime[i] ?? emptyRuntime()}
-              waitsOn={waitsOn}
-              editable={!running}
-              onChange={(patch) => onUpdateStory(i, patch)}
-              onRunStory={() => onRunStory(i)}
-              canRunIndividual={canRunIndividual}
-              unmetDependencies={unmetDependencies}
-              runActive={runActive}
-              hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
-              onRemove={() => onRemoveStory(i)}
-              removeError={storyRemoveErrors[i] ?? null}
-            />
-          );
-        })}
-      </div>
+      <KanbanBoard
+        plan={plan}
+        runtime={runtime}
+        running={running}
+        runActive={runActive}
+        canRunIndividual={canRunIndividual}
+        onRunStory={onRunStory}
+        onUpdateStory={onUpdateStory}
+        onRemoveStory={onRemoveStory}
+        storyRemoveErrors={storyRemoveErrors}
+        onMoveToDone={onMoveToDone}
+      />
       {plan.dependencies.length > 0 && (
         <DependencyList
           deps={plan.dependencies}
@@ -491,6 +512,155 @@ function PlanView({
         <AddDependencyForm stories={plan.stories} onAdd={onAddDependency} />
       )}
     </section>
+  );
+}
+
+const COLUMN_ORDER: ColumnId[] = ['pending', 'running', 'review', 'done'];
+const DRAG_MIME = 'application/x-zibby-story-index';
+
+function KanbanBoard({
+  plan,
+  runtime,
+  running,
+  runActive,
+  canRunIndividual,
+  onRunStory,
+  onUpdateStory,
+  onRemoveStory,
+  storyRemoveErrors,
+  onMoveToDone,
+}: {
+  plan: RefinedPlan;
+  runtime: Record<number, StoryRuntime>;
+  running: boolean;
+  runActive: boolean;
+  canRunIndividual: boolean;
+  onRunStory: (storyIndex: number) => void;
+  onUpdateStory: (index: number, patch: Partial<Story>) => void;
+  onRemoveStory: (index: number) => void;
+  storyRemoveErrors: Record<number, string>;
+  onMoveToDone: (storyIndex: number) => void;
+}) {
+  const byColumn: Record<ColumnId, number[]> = {
+    pending: [],
+    running: [],
+    review: [],
+    done: [],
+  };
+  plan.stories.forEach((_, i) => {
+    const status = runtime[i]?.status ?? 'pending';
+    byColumn[columnFor(status)].push(i);
+  });
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {COLUMN_ORDER.map((col) => (
+        <KanbanColumn
+          key={col}
+          id={col}
+          title={COLUMN_TITLES[col]}
+          count={byColumn[col].length}
+          onMoveToDone={onMoveToDone}
+        >
+          {byColumn[col].map((i) => {
+            const story = plan.stories[i];
+            const waitsOn = plan.dependencies.filter((d) => d.to === i).map((d) => d.from);
+            const unmetDependencies = waitsOn
+              .filter((depIdx) => {
+                const s = runtime[depIdx]?.status ?? 'pending';
+                return s !== 'done' && s !== 'review';
+              })
+              .map((depIdx) => ({ index: depIdx, title: plan.stories[depIdx]?.title ?? `#${depIdx}` }));
+            const rt = runtime[i] ?? emptyRuntime();
+            const isReview = rt.status === 'review';
+            return (
+              <StoryCard
+                key={i}
+                index={i}
+                story={story}
+                runtime={rt}
+                waitsOn={waitsOn}
+                editable={!running}
+                onChange={(patch) => onUpdateStory(i, patch)}
+                onRunStory={() => onRunStory(i)}
+                canRunIndividual={canRunIndividual}
+                unmetDependencies={unmetDependencies}
+                runActive={runActive}
+                hasDownstreamDependents={plan.dependencies.some((d) => d.from === i)}
+                onRemove={() => onRemoveStory(i)}
+                removeError={storyRemoveErrors[i] ?? null}
+                draggable={isReview}
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData(DRAG_MIME, String(i));
+                  e.dataTransfer.setData('text/plain', String(i));
+                }}
+              />
+            );
+          })}
+        </KanbanColumn>
+      ))}
+    </div>
+  );
+}
+
+function KanbanColumn({
+  id,
+  title,
+  count,
+  children,
+  onMoveToDone,
+}: {
+  id: ColumnId;
+  title: string;
+  count: number;
+  children: ReactNode;
+  onMoveToDone: (storyIndex: number) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const isDropTarget = id === 'done';
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    if (!isDropTarget) return;
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!dragOver) setDragOver(true);
+  };
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    if (!isDropTarget) return;
+    e.preventDefault();
+    setDragOver(false);
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    const idx = Number(raw);
+    if (Number.isFinite(idx)) onMoveToDone(idx);
+  };
+
+  return (
+    <div
+      data-column={id}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragOver}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      className={`rounded-lg border bg-neutral-950/40 p-3 space-y-3 min-h-[8rem] transition-colors ${
+        dragOver && isDropTarget
+          ? 'border-emerald-400/60 bg-emerald-500/5'
+          : 'border-neutral-800'
+      }`}
+    >
+      <header className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{title}</h3>
+        <span className="text-xs text-neutral-500">{count}</span>
+      </header>
+      {count === 0 ? (
+        <p className="text-xs text-neutral-600 italic px-1">
+          {isDropTarget ? 'Drop reviewed tasks here' : 'No tasks'}
+        </p>
+      ) : (
+        <div className="space-y-3">{children}</div>
+      )}
+    </div>
   );
 }
 
