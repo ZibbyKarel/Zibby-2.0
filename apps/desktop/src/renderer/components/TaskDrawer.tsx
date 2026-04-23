@@ -1,21 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon } from './icons';
 import { Btn, StatusPill, Chip, fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
 
 export type DrawerTab = 'logs' | 'diff' | 'details';
 
+type SaveData = { title: string; description: string; acceptance: string[]; model?: string };
+
 type Props = {
   task: TaskVM | null;
   open: boolean;
   onClose: () => void;
   onRun: () => void;
+  onSave: (data: SaveData) => void;
   tab: DrawerTab;
   setTab: (t: DrawerTab) => void;
   runtimeMs: number | null;
 };
 
-export function TaskDrawer({ task, open, onClose, onRun, tab, setTab, runtimeMs }: Props) {
+export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, runtimeMs }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -104,7 +107,7 @@ export function TaskDrawer({ task, open, onClose, onRun, tab, setTab, runtimeMs 
         <div style={{ flex: 1, overflow: 'auto' }}>
           {tab === 'logs' && <LogsView task={task} />}
           {tab === 'diff' && <DiffView />}
-          {tab === 'details' && <DetailsView task={task} />}
+          {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
         </div>
       </aside>
     </>
@@ -158,9 +161,84 @@ function DiffView() {
   );
 }
 
-function DetailsView({ task }: { task: TaskVM }) {
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px',
+  background: 'var(--bg-2)', border: '1px solid var(--border)',
+  borderRadius: 8, color: 'var(--text-0)', fontSize: 13,
+  outline: 'none', transition: 'border-color .12s', boxSizing: 'border-box',
+};
+
+function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description);
+  const [acceptance, setAcceptance] = useState(task.acceptance.join('\n'));
+  const [model, setModel] = useState(task.model ?? '');
+
+  useEffect(() => {
+    setEditing(false);
+    setTitle(task.title);
+    setDescription(task.description);
+    setAcceptance(task.acceptance.join('\n'));
+    setModel(task.model ?? '');
+  }, [task.index]);
+
+  const handleSave = () => {
+    onSave({
+      title: title.trim(),
+      description: description.trim(),
+      acceptance: acceptance.split('\n').map((s) => s.trim()).filter(Boolean),
+      model: model || undefined,
+    });
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setTitle(task.title);
+    setDescription(task.description);
+    setAcceptance(task.acceptance.join('\n'));
+    setModel(task.model ?? '');
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <EditField label="Title">
+          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+        </EditField>
+        <EditField label="Description">
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+            rows={5} style={{ ...inputStyle, resize: 'vertical' }} />
+        </EditField>
+        <EditField label="Acceptance criteria" hint="one per line">
+          <textarea value={acceptance} onChange={(e) => setAcceptance(e.target.value)}
+            rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+        </EditField>
+        <EditField label="Model">
+          <select value={model} onChange={(e) => setModel(e.target.value)} style={{ ...inputStyle, height: 34 }}>
+            <option value="">Default (sonnet)</option>
+            <option value="sonnet">Sonnet</option>
+            <option value="opus">Opus</option>
+            <option value="haiku">Haiku</option>
+          </select>
+        </EditField>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+          <Btn variant="ghost" onClick={handleCancel}>Cancel</Btn>
+          <Btn variant="primary" icon="check" disabled={!title.trim() || !description.trim()} onClick={handleSave}>
+            Save
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Btn icon="edit" variant="outline" size="sm" onClick={() => setEditing(true)}>Edit</Btn>
+      </div>
+
       <Section label="Description">
         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
           {task.description}
@@ -208,6 +286,18 @@ function DetailsView({ task }: { task: TaskVM }) {
         <KV k="Tokens" v={task.tokens != null ? `↑${fmtNum((task.tokens as {in:number;out:number}).in)}  ↓${fmtNum((task.tokens as {in:number;out:number}).out)}` : '—'} mono />
       </div>
     </div>
+  );
+}
+
+function EditField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.04em', display: 'flex', gap: 6, alignItems: 'center' }}>
+        {label}
+        {hint && <span style={{ color: 'var(--text-3)', fontWeight: 400, fontStyle: 'italic' }}>· {hint}</span>}
+      </span>
+      {children}
+    </label>
   );
 }
 
