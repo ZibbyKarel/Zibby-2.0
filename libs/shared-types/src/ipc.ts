@@ -8,7 +8,6 @@ export const IpcChannels = {
   LoadState: 'zibby:loadState',
   SaveState: 'zibby:saveState',
   RemoveStory: 'zibby:removeStory',
-  RefineStory: 'zibby:refineStory',
   GetUsage: 'zibby:getUsage',
 } as const;
 
@@ -42,26 +41,13 @@ export type RefinedPlan = {
   dependencies: Dependency[];
 };
 
-export type RefineModel = 'opus' | 'sonnet' | 'haiku';
-
 export type RefineRequest = {
   folderPath: string;
   brief: string;
-  model?: RefineModel;
 };
 
 export type RefineResult =
   | { kind: 'ok'; plan: RefinedPlan }
-  | { kind: 'error'; message: string };
-
-export type RefineStoryRequest = {
-  folderPath: string;
-  title: string;
-  description: string;
-};
-
-export type RefineStoryResult =
-  | { kind: 'ok'; story: Story }
   | { kind: 'error'; message: string };
 
 export type AdvisorReview = {
@@ -139,7 +125,6 @@ export type PersistedState = {
   folderPath?: string;
   brief?: string;
   plan?: RefinedPlan;
-  refineModel?: RefineModel;
   runtime?: Record<number, PersistedStoryRuntime>;
 };
 
@@ -147,7 +132,6 @@ export type LoadedAppState = {
   folder: PickFolderResult | null;
   brief: string;
   plan: RefinedPlan | null;
-  refineModel?: RefineModel;
   runtime: Record<number, PersistedStoryRuntime> | null;
 };
 
@@ -166,7 +150,6 @@ export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
   refine: (req: RefineRequest) => Promise<RefineResult>;
-  refineStory: (req: RefineStoryRequest) => Promise<RefineStoryResult>;
   advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   runStory: (req: RunStoryRequest) => Promise<RunStoryResult>;
