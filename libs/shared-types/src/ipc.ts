@@ -9,10 +9,12 @@ export const IpcChannels = {
   SaveState: 'zibby:saveState',
   RemoveStory: 'zibby:removeStory',
   RefineStory: 'zibby:refineStory',
+  GetUsage: 'zibby:getUsage',
 } as const;
 
 export const IpcEvents = {
   RunEvent: 'zibby:runEvent',
+  UsageUpdate: 'zibby:usageUpdate',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -138,6 +140,17 @@ export type LoadedAppState = {
   refineModel?: RefineModel;
 };
 
+export type UsageWindow = {
+  usedPercentage: number;
+  resetsAt: number;
+};
+
+export type Usage = {
+  fiveHour: UsageWindow | null;
+  sevenDay: UsageWindow | null;
+  fetchedAt: number;
+};
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -151,4 +164,6 @@ export type IpcApi = {
   loadState: () => Promise<LoadedAppState>;
   saveState: (state: PersistedState) => Promise<void>;
   removeStory: (storyIndex: number) => Promise<RemoveStoryResult>;
+  getUsage: () => Promise<Usage | null>;
+  onUsageUpdate: (handler: (usage: Usage | null) => void) => () => void;
 };

@@ -15,6 +15,7 @@
   "dependencies": {
     "@zibby/shared-types": "workspace:*",
     "@zibby/ai-refiner": "workspace:*",
-    "@zibby/orchestrator": "workspace:*"
+    "@zibby/orchestrator": "workspace:*",
+    "@zibby/usage": "workspace:*"
   }
 }

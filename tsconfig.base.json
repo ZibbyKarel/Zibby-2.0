@@ -21,6 +21,7 @@
       "@zibby/ai-refiner": ["libs/ai-refiner/src/index.ts"],
       "@zibby/orchestrator": ["libs/orchestrator/src/index.ts"],
       "@zibby/claude-runner": ["libs/claude-runner/src/index.ts"],
+      "@zibby/usage": ["libs/usage/src/index.ts"],
       "@zibby/ui": ["libs/ui/src/index.ts"]
     }
   }

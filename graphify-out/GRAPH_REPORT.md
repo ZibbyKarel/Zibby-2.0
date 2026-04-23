@@ -1,45 +1,53 @@
-# Graph Report - /Users/zibby/Workspace/Zibby-2.0  (2026-04-22)
+# Graph Report - /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage  (2026-04-23)
 
 ## Corpus Check
-- Corpus is ~14,044 words - fits in a single context window. You may not need a graph.
+- 44 files · ~76,303 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 427 nodes · 1475 edges · 31 communities detected
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.81)
+- 460 nodes · 1501 edges · 38 communities detected
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Bundled JS Cluster A|Bundled JS Cluster A]]
-- [[_COMMUNITY_Bundled JS Cluster B|Bundled JS Cluster B]]
-- [[_COMMUNITY_Bundled JS Cluster C|Bundled JS Cluster C]]
-- [[_COMMUNITY_Bundled JS Cluster D|Bundled JS Cluster D]]
-- [[_COMMUNITY_Bundled JS Cluster E|Bundled JS Cluster E]]
-- [[_COMMUNITY_Bundled JS Cluster F|Bundled JS Cluster F]]
-- [[_COMMUNITY_Advise & App Handlers|Advise & App Handlers]]
-- [[_COMMUNITY_Story Execution & GitPR|Story Execution & Git/PR]]
-- [[_COMMUNITY_Bundled JS Cluster G|Bundled JS Cluster G]]
-- [[_COMMUNITY_DAG Scheduler|DAG Scheduler]]
-- [[_COMMUNITY_Electron Main Process|Electron Main Process]]
-- [[_COMMUNITY_Claude Stream Parser|Claude Stream Parser]]
-- [[_COMMUNITY_HTML Entry Points|HTML Entry Points]]
-- [[_COMMUNITY_Desktop State Store|Desktop State Store]]
-- [[_COMMUNITY_Vitest Config|Vitest Config]]
-- [[_COMMUNITY_ESLint Config|ESLint Config]]
-- [[_COMMUNITY_Stream Parser Tests|Stream Parser Tests]]
-- [[_COMMUNITY_Claude Runner Index|Claude Runner Index]]
-- [[_COMMUNITY_Shared Schemas|Shared Schemas]]
-- [[_COMMUNITY_Shared IPC Types|Shared IPC Types]]
-- [[_COMMUNITY_Shared Types Index|Shared Types Index]]
-- [[_COMMUNITY_AI Refiner|AI Refiner]]
-- [[_COMMUNITY_Slug Tests|Slug Tests]]
-- [[_COMMUNITY_DAG Tests|DAG Tests]]
-- [[_COMMUNITY_Orchestrator Index|Orchestrator Index]]
-- [[_COMMUNITY_Vite Main Config|Vite Main Config]]
-- [[_COMMUNITY_Vite Preload Config|Vite Preload Config]]
-- [[_COMMUNITY_Vite Renderer Config|Vite Renderer Config]]
-- [[_COMMUNITY_Renderer Entry|Renderer Entry]]
-- [[_COMMUNITY_Renderer Globals|Renderer Globals]]
-- [[_COMMUNITY_Preload Script|Preload Script]]
+- [[_COMMUNITY_Community 0|Community 0]]
+- [[_COMMUNITY_Community 1|Community 1]]
+- [[_COMMUNITY_Community 2|Community 2]]
+- [[_COMMUNITY_Community 3|Community 3]]
+- [[_COMMUNITY_Community 4|Community 4]]
+- [[_COMMUNITY_Community 5|Community 5]]
+- [[_COMMUNITY_Community 6|Community 6]]
+- [[_COMMUNITY_Community 7|Community 7]]
+- [[_COMMUNITY_Community 8|Community 8]]
+- [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
+- [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
+- [[_COMMUNITY_Community 23|Community 23]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 29|Community 29]]
+- [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 31|Community 31]]
+- [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
+- [[_COMMUNITY_Community 35|Community 35]]
+- [[_COMMUNITY_Community 36|Community 36]]
+- [[_COMMUNITY_Community 37|Community 37]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `S()` - 57 edges
@@ -54,195 +62,233 @@
 10. `pd()` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `handleRefine()` --calls--> `refine()`  [INFERRED]
-  apps/desktop/src/renderer/App.tsx → libs/ai-refiner/src/refine.ts
-- `handleAdvise()` --calls--> `advise()`  [INFERRED]
-  apps/desktop/src/renderer/App.tsx → libs/ai-refiner/src/advise.ts
+- `gitPush()` --calls--> `executeStory()`  [INFERRED]
+  /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts → libs/orchestrator/src/execute-story.ts
+- `ghCreatePr()` --calls--> `executeStory()`  [INFERRED]
+  /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts → libs/orchestrator/src/execute-story.ts
 - `runClaudeInWorktree()` --calls--> `On()`  [INFERRED]
-  libs/claude-runner/src/run.ts → apps/desktop/dist-renderer/assets/index-C7xtax59.js
-- `executeStory()` --calls--> `gitPush()`  [INFERRED]
-  libs/orchestrator/src/execute-story.ts → libs/github/src/index.ts
-- `executeStory()` --calls--> `ghCreatePr()`  [INFERRED]
-  libs/orchestrator/src/execute-story.ts → libs/github/src/index.ts
+  libs/claude-runner/src/run.ts → /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/apps/desktop/dist-renderer/assets/index-D1uWPkwa.js
+- `commitAllIfDirty()` --calls--> `executeStory()`  [INFERRED]
+  /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts → libs/orchestrator/src/execute-story.ts
+- `safeBuildDag()` --calls--> `buildDag()`  [INFERRED]
+  libs/orchestrator/src/run-plan.ts → /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/orchestrator/src/dag.ts
 
 ## Communities
 
-### Community 0 - "Bundled JS Cluster A"
-Cohesion: 0.06
-Nodes (59): $a(), ad(), ap(), as(), cr(), dn(), dp(), dr() (+51 more)
+### Community 0 - "Community 0"
+Cohesion: 0.05
+Nodes (66): ad(), ap(), b(), ce(), cr(), cs(), De(), dn() (+58 more)
 
-### Community 1 - "Bundled JS Cluster B"
+### Community 1 - "Community 1"
+Cohesion: 0.09
+Nodes (65): aa(), ac(), Ao(), bc(), Bo(), ca(), cc(), co() (+57 more)
+
+### Community 2 - "Community 2"
+Cohesion: 0.1
+Nodes (42): Au(), bd(), bu(), cd(), cp(), ct(), Cu(), ep() (+34 more)
+
+### Community 3 - "Community 3"
 Cohesion: 0.07
-Nodes (64): b(), Bo(), bs(), ce(), co(), cs(), da(), De() (+56 more)
+Nodes (21): advise(), jsonSchemaForReview(), renderPlanForPrompt(), runClaudeCli(), handleAdvise(), parseClaudeOutput(), estimateTokens(), optimizeContext() (+13 more)
 
-### Community 2 - "Bundled JS Cluster C"
-Cohesion: 0.1
-Nodes (61): aa(), ac(), Ao(), bc(), bd(), be(), bi(), c() (+53 more)
-
-### Community 3 - "Bundled JS Cluster D"
-Cohesion: 0.11
-Nodes (47): Al(), at(), bl(), cl(), di(), dl(), el(), en() (+39 more)
-
-### Community 4 - "Bundled JS Cluster E"
+### Community 4 - "Community 4"
 Cohesion: 0.13
-Nodes (41): $(), af(), an(), Bt(), cn(), df(), ef(), fd() (+33 more)
+Nodes (39): $(), af(), an(), Bt(), cn(), df(), ef(), fd() (+31 more)
 
-### Community 5 - "Bundled JS Cluster F"
+### Community 5 - "Community 5"
+Cohesion: 0.13
+Nodes (39): Al(), at(), bl(), cl(), dl(), el(), en(), f() (+31 more)
+
+### Community 6 - "Community 6"
+Cohesion: 0.13
+Nodes (37): $a(), be(), bi(), c(), cf(), d(), dc(), Du() (+29 more)
+
+### Community 7 - "Community 7"
 Cohesion: 0.1
-Nodes (39): Au(), bu(), cd(), cp(), ct(), Cu(), Eu(), Fr() (+31 more)
+Nodes (31): as(), bs(), dd(), di(), es(), Fo(), fs(), Fu() (+23 more)
 
-### Community 6 - "Advise & App Handlers"
-Cohesion: 0.11
-Nodes (14): advise(), jsonSchemaForReview(), renderPlanForPrompt(), runClaudeCli(), handleAdvise(), handleRefine(), jsonSchemaForPlan(), refine() (+6 more)
-
-### Community 7 - "Story Execution & Git/PR"
+### Community 8 - "Community 8"
 Cohesion: 0.12
-Nodes (16): buildPrBody(), buildPrompt(), executeStory(), On(), commitAllIfDirty(), ghCreatePr(), gitPush(), gitStatusIsClean() (+8 more)
+Nodes (16): buildPrBody(), buildPrompt(), executeStory(), commitAllIfDirty(), On(), ghCreatePr(), gitPush(), gitStatusIsClean() (+8 more)
 
-### Community 8 - "Bundled JS Cluster G"
-Cohesion: 0.31
-Nodes (9): dd(), fs(), Fu(), ha(), Iu(), pu(), rc(), tc() (+1 more)
+### Community 9 - "Community 9"
+Cohesion: 0.25
+Nodes (2): refreshUsage(), startUsagePolling()
 
-### Community 9 - "DAG Scheduler"
-Cohesion: 0.33
+### Community 10 - "Community 10"
+Cohesion: 0.29
 Nodes (3): buildDag(), hasCycle(), safeBuildDag()
 
-### Community 10 - "Electron Main Process"
-Cohesion: 0.33
-Nodes (0): 
+### Community 11 - "Community 11"
+Cohesion: 0.38
+Nodes (4): fetchUsage(), parseUsageHeaders(), parseWindow(), toGetter()
 
-### Community 11 - "Claude Stream Parser"
+### Community 12 - "Community 12"
 Cohesion: 0.6
 Nodes (3): renderEvent(), summarizeToolInput(), truncate()
 
-### Community 12 - "HTML Entry Points"
-Cohesion: 0.5
-Nodes (5): Built JS/CSS Assets Bundle, Built Renderer HTML (dist), Renderer Entry main.tsx, Root Mount Div (#root), Source Renderer HTML
-
-### Community 13 - "Desktop State Store"
+### Community 13 - "Community 13"
 Cohesion: 0.83
 Nodes (3): loadPersisted(), resolveFile(), savePersisted()
 
-### Community 14 - "Vitest Config"
+### Community 14 - "Community 14"
+Cohesion: 0.67
+Nodes (0): 
+
+### Community 15 - "Community 15"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 15 - "ESLint Config"
+### Community 16 - "Community 16"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 16 - "Stream Parser Tests"
+### Community 17 - "Community 17"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 17 - "Claude Runner Index"
+### Community 18 - "Community 18"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 18 - "Shared Schemas"
+### Community 19 - "Community 19"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 19 - "Shared IPC Types"
+### Community 20 - "Community 20"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 20 - "Shared Types Index"
+### Community 21 - "Community 21"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 21 - "AI Refiner"
+### Community 22 - "Community 22"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 22 - "Slug Tests"
+### Community 23 - "Community 23"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 23 - "DAG Tests"
+### Community 24 - "Community 24"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 24 - "Orchestrator Index"
+### Community 25 - "Community 25"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 25 - "Vite Main Config"
+### Community 26 - "Community 26"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 26 - "Vite Preload Config"
+### Community 27 - "Community 27"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 27 - "Vite Renderer Config"
+### Community 28 - "Community 28"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 28 - "Renderer Entry"
+### Community 29 - "Community 29"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 29 - "Renderer Globals"
+### Community 30 - "Community 30"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 30 - "Preload Script"
+### Community 31 - "Community 31"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 32 - "Community 32"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 33 - "Community 33"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 34 - "Community 34"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 35 - "Community 35"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 36 - "Community 36"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 37 - "Community 37"
 Cohesion: 1.0
 Nodes (0): 
 
 ## Knowledge Gaps
-- **1 isolated node(s):** `Root Mount Div (#root)`
-  These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Vitest Config`** (1 nodes): `vitest.config.ts`
+- **Thin community `Community 15`** (2 nodes): `makeCtx()`, `context-optimizer.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `ESLint Config`** (1 nodes): `eslint.config.mjs`
+- **Thin community `Community 16`** (2 nodes): `makeStory()`, `dag.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Stream Parser Tests`** (1 nodes): `stream-parser.test.ts`
+- **Thin community `Community 17`** (2 nodes): `runSingleStory()`, `runner.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Claude Runner Index`** (1 nodes): `index.ts`
+- **Thin community `Community 18`** (1 nodes): `vitest.config.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Shared Schemas`** (1 nodes): `schemas.ts`
+- **Thin community `Community 19`** (1 nodes): `eslint.config.mjs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Shared IPC Types`** (1 nodes): `ipc.ts`
+- **Thin community `Community 20`** (1 nodes): `stream-parser.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Shared Types Index`** (1 nodes): `index.ts`
+- **Thin community `Community 21`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `AI Refiner`** (1 nodes): `index.ts`
+- **Thin community `Community 22`** (1 nodes): `schemas.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Slug Tests`** (1 nodes): `slug.test.ts`
+- **Thin community `Community 23`** (1 nodes): `ipc.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `DAG Tests`** (1 nodes): `dag.test.ts`
+- **Thin community `Community 24`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Orchestrator Index`** (1 nodes): `index.ts`
+- **Thin community `Community 25`** (1 nodes): `parse-headers.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Vite Main Config`** (1 nodes): `vite.main.config.ts`
+- **Thin community `Community 26`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Vite Preload Config`** (1 nodes): `vite.preload.config.ts`
+- **Thin community `Community 27`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Vite Renderer Config`** (1 nodes): `vite.renderer.config.ts`
+- **Thin community `Community 28`** (1 nodes): `slug.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Renderer Entry`** (1 nodes): `main.tsx`
+- **Thin community `Community 29`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Renderer Globals`** (1 nodes): `global.d.ts`
+- **Thin community `Community 30`** (1 nodes): `vite.main.config.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Preload Script`** (1 nodes): `index.ts`
+- **Thin community `Community 31`** (1 nodes): `vite.preload.config.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 32`** (1 nodes): `vite.renderer.config.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 33`** (1 nodes): `main.tsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 34`** (1 nodes): `global.d.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 35`** (1 nodes): `UsageBar.tsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 36`** (1 nodes): `StoryCard.tsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 37`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `On()` connect `Story Execution & Git/PR` to `Bundled JS Cluster A`, `Bundled JS Cluster E`?**
-  _High betweenness centrality (0.084) - this node is a cross-community bridge._
-- **What connects `Root Mount Div (#root)` to the rest of the system?**
-  _1 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Bundled JS Cluster A` be split into smaller, more focused modules?**
-  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
-- **Should `Bundled JS Cluster B` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
-- **Should `Bundled JS Cluster C` be split into smaller, more focused modules?**
+- **Why does `On()` connect `Community 8` to `Community 0`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
+- **Should `Community 1` be split into smaller, more focused modules?**
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
-- **Should `Bundled JS Cluster D` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
-- **Should `Bundled JS Cluster E` be split into smaller, more focused modules?**
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
+- **Should `Community 5` be split into smaller, more focused modules?**
   _Cohesion score 0.13 - nodes in this community are weakly interconnected._

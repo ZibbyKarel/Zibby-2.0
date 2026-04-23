@@ -18,6 +18,7 @@ import {
   type PersistedState,
   type LoadedAppState,
   type RemoveStoryResult,
+  type Usage,
 } from '@zibby/shared-types/ipc';
 
 const api: IpcApi = {
@@ -45,6 +46,14 @@ const api: IpcApi = {
   saveState: (state: PersistedState): Promise<void> => ipcRenderer.invoke(IpcChannels.SaveState, state),
   removeStory: (storyIndex: number): Promise<RemoveStoryResult> =>
     ipcRenderer.invoke(IpcChannels.RemoveStory, { storyIndex }),
+  getUsage: (): Promise<Usage | null> => ipcRenderer.invoke(IpcChannels.GetUsage),
+  onUsageUpdate: (handler: (usage: Usage | null) => void) => {
+    const listener = (_: unknown, usage: Usage | null) => handler(usage);
+    ipcRenderer.on(IpcEvents.UsageUpdate, listener);
+    return () => {
+      ipcRenderer.removeListener(IpcEvents.UsageUpdate, listener);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('zibby', api);

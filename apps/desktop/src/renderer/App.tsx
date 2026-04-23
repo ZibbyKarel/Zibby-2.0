@@ -9,6 +9,7 @@ import type {
 } from '@zibby/shared-types/ipc';
 import { StoryCard } from './components/StoryCard';
 import type { StoryRuntime } from './components/StoryCard';
+import { UsageBar } from './components/UsageBar';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
@@ -243,11 +244,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
       <div className="space-y-8">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
-          <p className="text-neutral-400 text-sm">
-            Pick a folder, describe what you want done, and Claude Code executes the plan in isolated worktrees.
-          </p>
+        <header className="flex items-start justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-semibold tracking-tight">Zibby 2.0</h1>
+            <p className="text-neutral-400 text-sm">
+              Pick a folder, describe what you want done, and Claude Code executes the plan in isolated worktrees.
+            </p>
+          </div>
+          <UsageBar />
         </header>
 
         <FolderSection folder={folder} onPick={handlePick} />
