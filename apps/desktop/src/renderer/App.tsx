@@ -691,9 +691,9 @@ function AddTaskDialog({
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
   const [model, setModel] = useState('');
   const [refining, setRefining] = useState(false);
-  const [refinedAC, setRefinedAC] = useState<string[] | null>(null);
   const [refineError, setRefineError] = useState<string | null>(null);
   const refineCounterRef = useRef(0);
 
@@ -702,9 +702,9 @@ function AddTaskDialog({
       refineCounterRef.current++;  // invalidate any in-flight refine
       setTitle('');
       setDescription('');
+      setAcceptanceCriteria('');
       setModel('');
       setRefining(false);
-      setRefinedAC(null);
       setRefineError(null);
     }
   }, [open]);
@@ -713,7 +713,6 @@ function AddTaskDialog({
     const token = ++refineCounterRef.current;
     setRefining(true);
     setRefineError(null);
-    setRefinedAC(null);
     try {
       const res = await window.zibby.refineStory({
         folderPath: folder.path,
@@ -724,7 +723,7 @@ function AddTaskDialog({
       if (res.kind === 'ok') {
         setTitle(res.story.title);
         setDescription(res.story.description);
-        setRefinedAC(res.story.acceptanceCriteria);
+        setAcceptanceCriteria(res.story.acceptanceCriteria.join('\n'));
       } else {
         setRefineError(res.message);
       }
@@ -740,7 +739,9 @@ function AddTaskDialog({
     onAdd({
       title: title.trim(),
       description: description.trim(),
-      acceptanceCriteria: refinedAC ?? [],
+      acceptanceCriteria: acceptanceCriteria.trim()
+        ? acceptanceCriteria.split('\n').map((s) => s.trim()).filter(Boolean)
+        : [],
       affectedFiles: [],
       model: model || undefined,
     });
@@ -783,8 +784,20 @@ function AddTaskDialog({
             id="add-task-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Popiš co má task udělat — Refine z toho udělá kompletní user story s AC"
+            placeholder="Popiš co má task udělat — Refine z toho udělá kompletní user story"
             rows={5}
+            className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 resize-none"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="add-task-ac" className="block text-xs font-medium text-neutral-400">Akceptační kritéria</label>
+          <textarea
+            id="add-task-ac"
+            value={acceptanceCriteria}
+            onChange={(e) => setAcceptanceCriteria(e.target.value)}
+            placeholder="Každé kritérium na nový řádek (nepovinné)"
+            rows={4}
             className="w-full rounded-lg bg-neutral-950 border border-neutral-800 focus:border-indigo-500 focus:outline-none px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 resize-none"
           />
         </div>
@@ -803,19 +816,6 @@ function AddTaskDialog({
             <option value="haiku">Haiku</option>
           </select>
         </div>
-
-        {refinedAC && (
-          <div className="rounded-lg bg-neutral-950 border border-emerald-500/30 p-3 space-y-1">
-            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">
-              Acceptance criteria (z Refine)
-            </p>
-            <ul className="list-disc list-inside text-xs text-neutral-300 space-y-0.5">
-              {refinedAC.map((c, i) => (
-                <li key={i}>{c}</li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {refineError && <p className="text-xs text-rose-300">{refineError}</p>}
 
