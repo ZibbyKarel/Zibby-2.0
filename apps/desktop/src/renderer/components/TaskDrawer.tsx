@@ -1,12 +1,23 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { TaskFile } from '@nightcoder/shared-types/ipc';
+import type {
+  TaskDiffFile,
+  TaskDiffResult,
+  TaskFile,
+} from '@nightcoder/shared-types/ipc';
+import { DiffView, DiffModeEnum } from '@git-diff-view/react';
+import '@git-diff-view/react/styles/diff-view.css';
 import { Icon } from './icons';
 import { Btn, StatusPill, Chip, fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
 
 export type DrawerTab = 'logs' | 'diff' | 'details';
 
-type SaveData = { title: string; description: string; acceptance: string[]; model?: string };
+type SaveData = {
+  title: string;
+  description: string;
+  acceptance: string[];
+  model?: string;
+};
 
 type Props = {
   task: TaskVM | null;
@@ -17,9 +28,20 @@ type Props = {
   tab: DrawerTab;
   setTab: (t: DrawerTab) => void;
   runtimeMs: number | null;
+  theme: 'dark' | 'light';
 };
 
-export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, runtimeMs }: Props) {
+export function TaskDrawer({
+  task,
+  open,
+  onClose,
+  onRun,
+  onSave,
+  tab,
+  setTab,
+  runtimeMs,
+  theme,
+}: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -39,65 +61,169 @@ export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, ru
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 50,
-          opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,.5)',
+          zIndex: 50,
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
           transition: 'opacity .18s',
         }}
       />
-      <aside style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(720px, 92vw)',
-        background: 'var(--bg-1)', borderLeft: '1px solid var(--border)',
-        zIndex: 51, display: 'flex', flexDirection: 'column',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform .22s cubic-bezier(.2,.7,.3,1)',
-        boxShadow: 'var(--shadow-2)',
-      }}>
-        <header style={{ padding: '14px 18px 12px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>#{task.numericId ?? task.index + 1}</span>
-            {(task.status !== 'pending' || task.startedAt !== null) && <StatusPill status={task.status} />}
+      <aside
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 'min(720px, 92vw)',
+          background: 'var(--bg-1)',
+          borderLeft: '1px solid var(--border)',
+          zIndex: 51,
+          display: 'flex',
+          flexDirection: 'column',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform .22s cubic-bezier(.2,.7,.3,1)',
+          boxShadow: 'var(--shadow-2)',
+        }}
+      >
+        <header
+          style={{
+            padding: '14px 18px 12px',
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 8,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--mono)',
+                color: 'var(--text-3)',
+              }}
+            >
+              #{task.numericId ?? task.index + 1}
+            </span>
+            {(task.status !== 'pending' || task.startedAt !== null) && (
+              <StatusPill status={task.status} />
+            )}
             {task.status === 'running' && runtimeMs != null && (
-              <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--emerald)' }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'var(--mono)',
+                  color: 'var(--emerald)',
+                }}
+              >
                 {fmtDuration(runtimeMs)}
               </span>
             )}
             <div style={{ flex: 1 }} />
-            <Btn icon="play" variant="primary" size="sm" onClick={onRun}>Run</Btn>
+            <Btn icon="play" variant="primary" size="sm" onClick={onRun}>
+              Run
+            </Btn>
             <Btn icon="x" variant="ghost" size="sm" onClick={onClose} />
           </div>
-          <h2 style={{ margin: '2px 0 6px', fontSize: 18, fontWeight: 600, letterSpacing: '-.01em' }}>
+          <h2
+            style={{
+              margin: '2px 0 6px',
+              fontSize: 18,
+              fontWeight: 600,
+              letterSpacing: '-.01em',
+            }}
+          >
             {task.title}
           </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {task.branch && <Chip icon="git">{task.branch}</Chip>}
-            {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
-            {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
+            {task.prUrl && (
+              <Chip icon="github" tone="accent">
+                PR #{task.prUrl.split('/').pop()}
+              </Chip>
+            )}
+            {task.model && (
+              <Chip icon="sparkle" tone="violet">
+                {task.model}
+              </Chip>
+            )}
             {task.tokens != null && (
               <Chip icon="bolt">
-                ↑{fmtNum((task.tokens as {in:number;out:number}).in)} ↓{fmtNum((task.tokens as {in:number;out:number}).out)}
+                ↑{fmtNum((task.tokens as { in: number; out: number }).in)} ↓
+                {fmtNum((task.tokens as { in: number; out: number }).out)}
               </Chip>
             )}
           </div>
         </header>
 
-        <nav style={{ display: 'flex', gap: 2, padding: '0 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
-          {([
-            { k: 'logs' as DrawerTab, label: 'Logs', icon: 'terminal' as const, badge: task.logs.length || null },
-            { k: 'diff' as DrawerTab, label: 'Diff', icon: 'diff' as const, badge: null },
-            { k: 'details' as DrawerTab, label: 'Details', icon: 'edit' as const, badge: null },
-          ]).map((t) => (
-            <button key={t.k} onClick={() => setTab(t.k)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '10px 12px', fontSize: 12, fontWeight: 500,
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: tab === t.k ? 'var(--text-0)' : 'var(--text-2)',
-              borderBottom: tab === t.k ? '2px solid var(--emerald)' : '2px solid transparent',
-              marginBottom: -1,
-            }}>
+        <nav
+          style={{
+            display: 'flex',
+            gap: 2,
+            padding: '0 12px',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--bg-1)',
+          }}
+        >
+          {[
+            {
+              k: 'logs' as DrawerTab,
+              label: 'Logs',
+              icon: 'terminal' as const,
+              badge: task.logs.length || null,
+            },
+            {
+              k: 'diff' as DrawerTab,
+              label: 'Diff',
+              icon: 'diff' as const,
+              badge: null,
+            },
+            {
+              k: 'details' as DrawerTab,
+              label: 'Details',
+              icon: 'edit' as const,
+              badge: null,
+            },
+          ].map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 12px',
+                fontSize: 12,
+                fontWeight: 500,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: tab === t.k ? 'var(--text-0)' : 'var(--text-2)',
+                borderBottom:
+                  tab === t.k
+                    ? '2px solid var(--emerald)'
+                    : '2px solid transparent',
+                marginBottom: -1,
+              }}
+            >
               <Icon name={t.icon} size={13} />
               {t.label}
               {t.badge != null && (
-                <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-3)', background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 999 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    color: 'var(--text-3)',
+                    background: 'var(--bg-3)',
+                    padding: '1px 6px',
+                    borderRadius: 999,
+                  }}
+                >
                   {t.badge}
                 </span>
               )}
@@ -106,8 +232,8 @@ export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, ru
         </nav>
 
         <div style={{ flex: 1, overflow: 'auto' }}>
-          {tab === 'logs' && <LogsView key={task.index} task={task} />}
-          {tab === 'diff' && <DiffView />}
+          {tab === 'logs' && <LogsView task={task} />}
+          {tab === 'diff' && <DiffPanel task={task} theme={theme} />}
           {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
         </div>
       </aside>
@@ -138,9 +264,18 @@ function LogsView({ task }: { task: TaskVM }) {
 
   if (task.logs.length === 0) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+      <div
+        style={{
+          padding: 40,
+          textAlign: 'center',
+          color: 'var(--text-3)',
+          fontSize: 12,
+        }}
+      >
         <Icon name="terminal" size={28} />
-        <p style={{ marginTop: 8 }}>No logs yet. Run this task to stream output.</p>
+        <p style={{ marginTop: 8 }}>
+          No logs yet. Run this task to stream output.
+        </p>
       </div>
     );
   }
@@ -150,41 +285,76 @@ function LogsView({ task }: { task: TaskVM }) {
       onScroll={handleScroll}
       style={{ height: '100%', overflowY: 'auto', position: 'relative' }}
     >
-      <pre style={{
-        margin: 0, padding: '14px 18px', fontSize: 12, lineHeight: 1.55,
-        fontFamily: 'var(--mono)', color: 'var(--text-1)',
-        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-        background: 'var(--bg-0)',
-      }}>
+      <pre
+        style={{
+          margin: 0,
+          padding: '14px 18px',
+          fontSize: 12,
+          lineHeight: 1.55,
+          fontFamily: 'var(--mono)',
+          color: 'var(--text-1)',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          background: 'var(--bg-0)',
+        }}
+      >
         {task.logs.map((l, i) => {
-          const color = l.s === 'err' ? 'var(--rose)' : l.s === 'info' ? 'var(--sky)' : 'var(--text-1)';
+          const color =
+            l.s === 'err'
+              ? 'var(--rose)'
+              : l.s === 'info'
+                ? 'var(--sky)'
+                : 'var(--text-1)';
           const prefix = l.s === 'err' ? '✗ ' : '';
           return (
             <div key={i} style={{ color, display: 'flex', gap: 8 }}>
-              <span style={{ color: 'var(--text-3)', userSelect: 'none', minWidth: 28, textAlign: 'right' }}>
+              <span
+                style={{
+                  color: 'var(--text-3)',
+                  userSelect: 'none',
+                  minWidth: 28,
+                  textAlign: 'right',
+                }}
+              >
                 {String(i + 1).padStart(3, ' ')}
               </span>
-              <span style={{ flex: 1 }}>{prefix}{l.l}</span>
+              <span style={{ flex: 1 }}>
+                {prefix}
+                {l.l}
+              </span>
             </div>
           );
         })}
-        {task.status === 'running' && <div className="caret" style={{ color: 'var(--emerald)' }} />}
+        {task.status === 'running' && (
+          <div className="caret" style={{ color: 'var(--emerald)' }} />
+        )}
       </pre>
       {!autoScroll && (
-        <div style={{
-          position: 'sticky', bottom: 16,
-          display: 'flex', justifyContent: 'flex-end',
-          paddingRight: 16, pointerEvents: 'none',
-        }}>
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 16,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            paddingRight: 16,
+            pointerEvents: 'none',
+          }}
+        >
           <button
             onClick={scrollToBottom}
             title="Scroll to bottom"
             style={{
               pointerEvents: 'auto',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'var(--bg-3)', border: '1px solid var(--border)',
-              color: 'var(--text-1)', cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: 'var(--bg-3)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-1)',
+              cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,0,0,.25)',
             }}
           >
@@ -196,23 +366,340 @@ function LogsView({ task }: { task: TaskVM }) {
   );
 }
 
-function DiffView() {
+function diffSummary(f: TaskDiffFile): { adds: number; dels: number } {
+  let adds = 0;
+  let dels = 0;
+  for (const h of f.hunks) {
+    for (const line of h.split('\n')) {
+      if (line.startsWith('+') && !line.startsWith('+++')) adds++;
+      else if (line.startsWith('-') && !line.startsWith('---')) dels++;
+    }
+  }
+  return { adds, dels };
+}
+
+function filePathLabel(f: TaskDiffFile): string {
+  if (
+    f.changeKind === 'renamed' &&
+    f.oldPath &&
+    f.newPath &&
+    f.oldPath !== f.newPath
+  ) {
+    return `${f.oldPath} → ${f.newPath}`;
+  }
+  return f.newPath ?? f.oldPath ?? '(unknown)';
+}
+
+function changeKindTone(kind: TaskDiffFile['changeKind']): string {
+  switch (kind) {
+    case 'added':
+      return 'var(--emerald)';
+    case 'deleted':
+      return 'var(--rose)';
+    case 'renamed':
+      return 'var(--sky)';
+    case 'binary':
+      return 'var(--text-3)';
+    default:
+      return 'var(--amber)';
+  }
+}
+
+function DiffFileBlock({
+  file,
+  theme,
+}: {
+  file: TaskDiffFile;
+  theme: 'dark' | 'light';
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const { adds, dels } = diffSummary(file);
+  const label = filePathLabel(file);
+
   return (
-    <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
-      <Icon name="diff" size={28} />
-      <p style={{ marginTop: 8 }}>No diff available. The task hasn't produced changes yet.</p>
+    <div
+      style={{
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        background: 'var(--bg-1)',
+        overflow: 'hidden',
+        marginBottom: 10,
+      }}
+    >
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 10px',
+          background: 'var(--bg-2)',
+          borderBottom: collapsed ? 'none' : '1px solid var(--border)',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text-0)',
+          textAlign: 'left',
+        }}
+      >
+        <Icon name={collapsed ? 'chevron' : 'chevronDown'} size={12} />
+        <span
+          style={{
+            fontSize: 10,
+            padding: '1px 6px',
+            borderRadius: 999,
+            background: 'var(--bg-3)',
+            color: changeKindTone(file.changeKind),
+            fontFamily: 'var(--mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '.05em',
+          }}
+        >
+          {file.changeKind}
+        </span>
+        <code
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontFamily: 'var(--mono)',
+            fontSize: 12,
+            color: 'var(--text-1)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+          title={label}
+        >
+          {label}
+        </code>
+        <span
+          style={{
+            fontSize: 11,
+            fontFamily: 'var(--mono)',
+            color: 'var(--emerald)',
+          }}
+        >
+          +{adds}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontFamily: 'var(--mono)',
+            color: 'var(--rose)',
+          }}
+        >
+          −{dels}
+        </span>
+      </button>
+      {!collapsed &&
+        (file.changeKind === 'binary' || file.hunks.length === 0 ? (
+          <div
+            style={{
+              padding: '14px 12px',
+              fontSize: 12,
+              color: 'var(--text-3)',
+            }}
+          >
+            {file.changeKind === 'binary'
+              ? 'Binary file — diff not shown.'
+              : 'No textual changes in this file.'}
+          </div>
+        ) : (
+          <DiffView
+            data={{
+              oldFile: {
+                fileName: file.oldPath ?? undefined,
+                fileLang: file.lang ?? undefined,
+              },
+              newFile: {
+                fileName: file.newPath ?? undefined,
+                fileLang: file.lang ?? undefined,
+              },
+              hunks: file.hunks,
+            }}
+            diffViewMode={DiffModeEnum.Unified}
+            diffViewTheme={theme}
+            diffViewHighlight
+            diffViewWrap={false}
+            diffViewFontSize={12}
+          />
+        ))}
+    </div>
+  );
+}
+
+function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
+  const [result, setResult] = useState<TaskDiffResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const r = await window.nightcoder.getTaskDiff({ taskId: task.taskId });
+    setResult(r);
+    setLoading(false);
+  }, [task.taskId]);
+
+  // Re-fetch when the task changes, or when its status moves to a state that
+  // likely produced new commits (running → review/done, etc.).
+  useEffect(() => {
+    void refresh();
+  }, [refresh, task.status]);
+
+  if (loading && !result) {
+    return (
+      <div
+        style={{
+          padding: 40,
+          textAlign: 'center',
+          color: 'var(--text-3)',
+          fontSize: 12,
+        }}
+      >
+        <div className="spinner" style={{ margin: '0 auto 10px' }} />
+        Loading diff…
+      </div>
+    );
+  }
+
+  if (result?.kind === 'error') {
+    return (
+      <div style={{ padding: 18 }}>
+        <div
+          style={{
+            padding: 12,
+            background: 'rgba(244,63,94,.08)',
+            border: '1px solid rgba(244,63,94,.2)',
+            borderRadius: 8,
+            color: 'var(--rose)',
+            fontSize: 12,
+          }}
+        >
+          Failed to load diff: {result.message}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <Btn
+            icon="refresh"
+            variant="secondary"
+            size="sm"
+            onClick={() => void refresh()}
+          >
+            Retry
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  if (result?.kind === 'empty') {
+    const msg =
+      result.reason === 'no-branch'
+        ? "No diff available. The task hasn't produced a branch yet."
+        : "No changes on the task's branch compared to the base branch.";
+    return (
+      <div
+        style={{
+          padding: 40,
+          textAlign: 'center',
+          color: 'var(--text-3)',
+          fontSize: 12,
+        }}
+      >
+        <Icon name="diff" size={28} />
+        <p style={{ marginTop: 8 }}>{msg}</p>
+        <div style={{ marginTop: 10 }}>
+          <Btn
+            icon="refresh"
+            variant="ghost"
+            size="sm"
+            onClick={() => void refresh()}
+          >
+            Refresh
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  if (result?.kind !== 'ok') return null;
+
+  const totals = result.files.reduce(
+    (acc, f) => {
+      const s = diffSummary(f);
+      return { adds: acc.adds + s.adds, dels: acc.dels + s.dels };
+    },
+    { adds: 0, dels: 0 },
+  );
+
+  return (
+    <div
+      style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 4 }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 8,
+          fontSize: 11,
+          color: 'var(--text-2)',
+        }}
+      >
+        <span style={{ fontFamily: 'var(--mono)' }}>
+          {result.files.length} file{result.files.length === 1 ? '' : 's'}
+        </span>
+        <span style={{ color: 'var(--emerald)', fontFamily: 'var(--mono)' }}>
+          +{totals.adds}
+        </span>
+        <span style={{ color: 'var(--rose)', fontFamily: 'var(--mono)' }}>
+          −{totals.dels}
+        </span>
+        <span style={{ color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
+          {result.branch
+            ? `${result.baseBranch}…${result.branch}`
+            : result.baseBranch}
+        </span>
+        <div style={{ flex: 1 }} />
+        <Btn
+          icon="refresh"
+          variant="ghost"
+          size="sm"
+          onClick={() => void refresh()}
+          disabled={loading}
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </Btn>
+      </div>
+      {result.files.map((f, i) => (
+        <DiffFileBlock
+          key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
+          file={f}
+          theme={theme}
+        />
+      ))}
     </div>
   );
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px',
-  background: 'var(--bg-2)', border: '1px solid var(--border)',
-  borderRadius: 8, color: 'var(--text-0)', fontSize: 13,
-  outline: 'none', transition: 'border-color .12s', boxSizing: 'border-box',
+  width: '100%',
+  padding: '8px 10px',
+  background: 'var(--bg-2)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  color: 'var(--text-0)',
+  fontSize: 13,
+  outline: 'none',
+  transition: 'border-color .12s',
+  boxSizing: 'border-box',
 };
 
-function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) => void }) {
+function DetailsView({
+  task,
+  onSave,
+}: {
+  task: TaskVM;
+  onSave: (data: SaveData) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -231,7 +718,10 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
     onSave({
       title: title.trim(),
       description: description.trim(),
-      acceptance: acceptance.split('\n').map((s) => s.trim()).filter(Boolean),
+      acceptance: acceptance
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean),
       model: model || undefined,
     });
     setEditing(false);
@@ -247,28 +737,66 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
 
   if (editing) {
     return (
-      <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div
+        style={{
+          padding: 18,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
         <EditField label="Title">
-          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={inputStyle}
+          />
         </EditField>
         <EditField label="Description">
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-            rows={5} style={{ ...inputStyle, resize: 'vertical' }} />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={5}
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
         </EditField>
         <EditField label="Acceptance criteria" hint="one per line">
-          <textarea value={acceptance} onChange={(e) => setAcceptance(e.target.value)}
-            rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+          <textarea
+            value={acceptance}
+            onChange={(e) => setAcceptance(e.target.value)}
+            rows={4}
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
         </EditField>
         <EditField label="Model">
-          <select value={model} onChange={(e) => setModel(e.target.value)} style={{ ...inputStyle, height: 34 }}>
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            style={{ ...inputStyle, height: 34 }}
+          >
             <option value="">Sonnet (default)</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>
           </select>
         </EditField>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
-          <Btn variant="ghost" onClick={handleCancel}>Cancel</Btn>
-          <Btn variant="primary" icon="check" disabled={!title.trim() || !description.trim()} onClick={handleSave}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            justifyContent: 'flex-end',
+            paddingTop: 4,
+          }}
+        >
+          <Btn variant="ghost" onClick={handleCancel}>
+            Cancel
+          </Btn>
+          <Btn
+            variant="primary"
+            icon="check"
+            disabled={!title.trim() || !description.trim()}
+            onClick={handleSave}
+          >
             Save
           </Btn>
         </div>
@@ -277,29 +805,79 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
   }
 
   return (
-    <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div
+      style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}
+    >
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Btn icon="edit" variant="outline" size="sm" onClick={() => setEditing(true)}>Edit</Btn>
+        <Btn
+          icon="edit"
+          variant="outline"
+          size="sm"
+          onClick={() => setEditing(true)}
+        >
+          Edit
+        </Btn>
       </div>
 
       <Section label="Description">
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            color: 'var(--text-1)',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
           {task.description}
         </p>
       </Section>
 
       {task.acceptance.length > 0 && (
         <Section label="Acceptance criteria">
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
             {task.acceptance.map((a, i) => (
-              <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: 'var(--text-1)', lineHeight: 1.5 }}>
-                <span style={{
-                  width: 16, height: 16, borderRadius: 4, background: 'var(--bg-3)',
-                  border: '1px solid var(--border-2)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0,
-                  color: task.status === 'done' ? 'var(--emerald)' : 'var(--text-3)',
-                }}>
-                  {task.status === 'done' && <Icon name="check" size={10} stroke={2.5} />}
+              <li
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                  fontSize: 13,
+                  color: 'var(--text-1)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: 4,
+                    background: 'var(--bg-3)',
+                    border: '1px solid var(--border-2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 1,
+                    flexShrink: 0,
+                    color:
+                      task.status === 'done'
+                        ? 'var(--emerald)'
+                        : 'var(--text-3)',
+                  }}
+                >
+                  {task.status === 'done' && (
+                    <Icon name="check" size={10} stroke={2.5} />
+                  )}
                 </span>
                 {a}
               </li>
@@ -312,11 +890,20 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
         <Section label="Affected files">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {task.affectedFiles.map((f, i) => (
-              <code key={i} style={{
-                fontSize: 12, padding: '3px 8px', background: 'var(--bg-3)',
-                color: 'var(--text-1)', borderRadius: 5, fontFamily: 'var(--mono)',
-                border: '1px solid var(--border)',
-              }}>{f}</code>
+              <code
+                key={i}
+                style={{
+                  fontSize: 12,
+                  padding: '3px 8px',
+                  background: 'var(--bg-3)',
+                  color: 'var(--text-1)',
+                  borderRadius: 5,
+                  fontFamily: 'var(--mono)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                {f}
+              </code>
             ))}
           </div>
         </Section>
@@ -330,28 +917,81 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
         <KV k="Model" v={task.model ?? 'Sonnet (default)'} />
         <KV k="Branch" v={task.branch ?? '—'} mono />
         <KV k="Status" v={task.status} />
-        <KV k="Tokens" v={task.tokens != null ? `↑${fmtNum((task.tokens as {in:number;out:number}).in)}  ↓${fmtNum((task.tokens as {in:number;out:number}).out)}` : '—'} mono />
+        <KV
+          k="Tokens"
+          v={
+            task.tokens != null
+              ? `↑${fmtNum((task.tokens as { in: number; out: number }).in)}  ↓${fmtNum((task.tokens as { in: number; out: number }).out)}`
+              : '—'
+          }
+          mono
+        />
       </div>
     </div>
   );
 }
 
-function EditField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function EditField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.04em', display: 'flex', gap: 6, alignItems: 'center' }}>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 500,
+          color: 'var(--text-2)',
+          letterSpacing: '.04em',
+          display: 'flex',
+          gap: 6,
+          alignItems: 'center',
+        }}
+      >
         {label}
-        {hint && <span style={{ color: 'var(--text-3)', fontWeight: 400, fontStyle: 'italic' }}>· {hint}</span>}
+        {hint && (
+          <span
+            style={{
+              color: 'var(--text-3)',
+              fontWeight: 400,
+              fontStyle: 'italic',
+            }}
+          >
+            · {hint}
+          </span>
+        )}
       </span>
       {children}
     </label>
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <h3 style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{label}</h3>
+      <h3
+        style={{
+          margin: '0 0 8px',
+          fontSize: 10,
+          fontWeight: 600,
+          color: 'var(--text-3)',
+          letterSpacing: '.12em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </h3>
       {children}
     </div>
   );
@@ -359,9 +999,34 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function KV({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
-    <div style={{ padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-2)' }}>
-      <div style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 2 }}>{k}</div>
-      <div style={{ fontSize: 12, color: 'var(--text-0)', fontFamily: mono ? 'var(--mono)' : 'var(--sans)' }}>{v}</div>
+    <div
+      style={{
+        padding: '8px 10px',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        background: 'var(--bg-2)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: 'var(--text-3)',
+          letterSpacing: '.1em',
+          textTransform: 'uppercase',
+          marginBottom: 2,
+        }}
+      >
+        {k}
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          color: 'var(--text-0)',
+          fontFamily: mono ? 'var(--mono)' : 'var(--sans)',
+        }}
+      >
+        {v}
+      </div>
     </div>
   );
 }
@@ -402,7 +1067,10 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
     if (pick.kind === 'cancelled') return;
     setBusy(true);
     try {
-      const res = await window.nightcoder.addTaskFiles({ taskId, sourcePaths: pick.paths });
+      const res = await window.nightcoder.addTaskFiles({
+        taskId,
+        sourcePaths: pick.paths,
+      });
       if (res.kind === 'error') {
         setError(res.message);
       } else {
@@ -433,27 +1101,56 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
       {loading ? (
         <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Loading…</div>
       ) : files.length === 0 ? (
-        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>No files attached yet.</div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+          No files attached yet.
+        </div>
       ) : (
-        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <ul
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
           {files.map((f) => (
-            <li key={f.name} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '6px 8px', background: 'var(--bg-2)',
-              border: '1px solid var(--border)', borderRadius: 6,
-            }}>
+            <li
+              key={f.name}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 8px',
+                background: 'var(--bg-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+              }}
+            >
               <Icon name="file" size={13} />
               <span
                 title={f.name}
                 style={{
-                  flex: 1, fontSize: 12, fontFamily: 'var(--mono)',
-                  color: 'var(--text-1)', overflow: 'hidden',
-                  textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
+                  flex: 1,
+                  fontSize: 12,
+                  fontFamily: 'var(--mono)',
+                  color: 'var(--text-1)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
                 }}
               >
                 {f.name}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: 'var(--text-3)',
+                  fontFamily: 'var(--mono)',
+                }}
+              >
                 {formatBytes(f.size)}
               </span>
               <button
@@ -461,9 +1158,13 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
                 disabled={busy}
                 title="Remove"
                 style={{
-                  background: 'transparent', border: 'none',
-                  color: 'var(--text-3)', cursor: busy ? 'default' : 'pointer',
-                  padding: 2, display: 'flex', opacity: busy ? 0.5 : 1,
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-3)',
+                  cursor: busy ? 'default' : 'pointer',
+                  padding: 2,
+                  display: 'flex',
+                  opacity: busy ? 0.5 : 1,
                 }}
               >
                 <Icon name="trash" size={13} />
@@ -473,7 +1174,13 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
         </ul>
       )}
       <div>
-        <Btn icon="paperclip" variant="secondary" size="sm" onClick={() => void onAdd()} disabled={busy}>
+        <Btn
+          icon="paperclip"
+          variant="secondary"
+          size="sm"
+          onClick={() => void onAdd()}
+          disabled={busy}
+        >
           Attach files
         </Btn>
       </div>

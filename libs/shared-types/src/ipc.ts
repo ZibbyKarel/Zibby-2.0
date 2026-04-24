@@ -15,6 +15,7 @@ export const IpcChannels = {
   AddTaskFiles: 'nightcoder:addTaskFiles',
   ListTaskFiles: 'nightcoder:listTaskFiles',
   RemoveTaskFile: 'nightcoder:removeTaskFile',
+  GetTaskDiff: 'nightcoder:getTaskDiff',
 } as const;
 
 export const IpcEvents = {
@@ -235,6 +236,29 @@ export type RemoveTaskFileResult =
   | { kind: 'ok'; files: TaskFile[] }
   | { kind: 'error'; message: string };
 
+/**
+ * One file's portion of a unified git diff. `hunks` contains the `@@ ... @@`
+ * blocks as raw strings, suitable for feeding into @git-diff-view/react.
+ */
+export type TaskDiffFile = {
+  oldPath: string | null;
+  newPath: string | null;
+  /** 'added' | 'deleted' | 'modified' | 'renamed' | 'binary'. */
+  changeKind: 'added' | 'deleted' | 'modified' | 'renamed' | 'binary';
+  /** Best-effort language hint (lowercase, e.g. 'typescript', 'tsx', 'json'). */
+  lang: string | null;
+  hunks: string[];
+};
+
+export type TaskDiffResult =
+  | { kind: 'ok'; baseBranch: string; branch: string | null; files: TaskDiffFile[] }
+  | { kind: 'empty'; reason: 'no-branch' | 'no-changes' }
+  | { kind: 'error'; message: string };
+
+export type GetTaskDiffRequest = {
+  taskId: string;
+};
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -255,4 +279,5 @@ export type IpcApi = {
   addTaskFiles: (req: AddTaskFilesRequest) => Promise<AddTaskFilesResult>;
   listTaskFiles: (req: ListTaskFilesRequest) => Promise<ListTaskFilesResult>;
   removeTaskFile: (req: RemoveTaskFileRequest) => Promise<RemoveTaskFileResult>;
+  getTaskDiff: (req: GetTaskDiffRequest) => Promise<TaskDiffResult>;
 };

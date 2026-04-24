@@ -570,6 +570,7 @@ export default function App() {
         tab={drawerTab}
         setTab={setDrawerTab}
         runtimeMs={selected ? runtimeMs(selected) : null}
+        theme={theme}
       />
 
       <AddTaskDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addTask} />

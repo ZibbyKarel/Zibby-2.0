@@ -10,3 +10,5 @@ export { slugify, uniqueSlug } from './slug';
 export { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
 export type { DagNode } from './dag';
 export { installPostCommitHook, isNightcoderHook, NIGHTCODER_HOOK_MARKER } from './post-commit-hook';
+export { getTaskDiff, parseUnifiedDiff } from './task-diff';
+export type { GetTaskDiffArgs, GetTaskDiffOutcome } from './task-diff';

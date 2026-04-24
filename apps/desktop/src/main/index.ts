@@ -30,10 +30,12 @@ import {
   type ListTaskFilesResult,
   type RemoveTaskFileRequest,
   type RemoveTaskFileResult,
+  type GetTaskDiffRequest,
+  type TaskDiffResult,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { buildResumePrompt, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { buildResumePrompt, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
@@ -665,6 +667,30 @@ function registerIpc(getWebContents: () => WebContents | null) {
         if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
         const files = await listTaskFiles(folderPath, req.taskId);
         return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.GetTaskDiff,
+    async (_event, req: GetTaskDiffRequest): Promise<TaskDiffResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        const project = await loadProject(folderPath);
+        if (!project) return { kind: 'empty', reason: 'no-branch' };
+        const story = project.plan.stories.find((s) => s.taskId === req.taskId);
+        if (!story) return { kind: 'error', message: `Task ${req.taskId} is not in the current plan` };
+        // Prefer the persisted branch; otherwise derive the deterministic name
+        // so users can see a diff for the running task even before the
+        // 'branch' event has been flushed to disk.
+        const task = project.tasks[req.taskId];
+        const derivedBranch = `nightcoder/${slugify(`${story.numericId ?? project.plan.stories.indexOf(story) + 1}-${story.title}`)}`;
+        const branch = task?.branch ?? derivedBranch;
+        return await getTaskDiff({ repoPath: folderPath, branch });
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }

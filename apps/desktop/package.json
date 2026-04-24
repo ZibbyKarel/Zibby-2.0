@@ -13,10 +13,11 @@
     "dist:mac": "pnpm build && electron-builder --mac"
   },
   "dependencies": {
-    "@nightcoder/shared-types": "workspace:*",
+    "@git-diff-view/react": "^0.1.3",
     "@nightcoder/ai-refiner": "workspace:*",
     "@nightcoder/orchestrator": "workspace:*",
     "@nightcoder/project-state": "workspace:*",
+    "@nightcoder/shared-types": "workspace:*",
     "@nightcoder/usage": "workspace:*"
   }
 }

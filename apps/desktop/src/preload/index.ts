@@ -26,6 +26,8 @@ import {
   type ListTaskFilesResult,
   type RemoveTaskFileRequest,
   type RemoveTaskFileResult,
+  type GetTaskDiffRequest,
+  type TaskDiffResult,
 } from '@nightcoder/shared-types/ipc';
 
 const api: IpcApi = {
@@ -70,6 +72,8 @@ const api: IpcApi = {
     ipcRenderer.invoke(IpcChannels.ListTaskFiles, req),
   removeTaskFile: (req: RemoveTaskFileRequest): Promise<RemoveTaskFileResult> =>
     ipcRenderer.invoke(IpcChannels.RemoveTaskFile, req),
+  getTaskDiff: (req: GetTaskDiffRequest): Promise<TaskDiffResult> =>
+    ipcRenderer.invoke(IpcChannels.GetTaskDiff, req),
 };
 
 contextBridge.exposeInMainWorld('nightcoder', api);
