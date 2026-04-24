@@ -194,20 +194,18 @@ function freshTask(taskId: string): PersistedTask {
  */
 export function mergePlanOnReplan(old: ProjectState, newPlan: RefinedPlan): ProjectState {
   const newPlanWithIds: RefinedPlan = { ...newPlan, stories: assignTaskIds(newPlan.stories) as Story[] };
-  const oldStoryById = new Map(old.plan.stories.map((s) => [s.taskId, s]));
   const nextTasks: Record<string, PersistedTask> = {};
   let nextTaskNum = old.nextTaskNum ?? 1;
 
-  const stampedStories = newPlanWithIds.stories.map((story) => {
+  const stampedStories = newPlanWithIds.stories.map((story: Story) => {
     const prior = old.tasks[story.taskId];
-    const oldStory = oldStoryById.get(story.taskId);
     if (prior && PRESERVED_ON_REPLAN.has(prior.status)) {
       nextTasks[story.taskId] = prior;
+      const oldStory = old.plan.stories.find((s: Story) => s.taskId === story.taskId);
       return { ...story, numericId: oldStory?.numericId ?? story.numericId };
     } else {
       nextTasks[story.taskId] = freshTask(story.taskId);
-      const numericId = story.numericId ?? nextTaskNum++;
-      return { ...story, numericId };
+      return { ...story, numericId: story.numericId ?? nextTaskNum++ };
     }
   });
 
