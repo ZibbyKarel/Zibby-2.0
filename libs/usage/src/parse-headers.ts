@@ -25,7 +25,7 @@ function parseWindow(get: HeaderGetter, slug: '5h' | '7d'): UsageWindow | null {
   const utilNum = Number(util);
   const resetNum = Number(reset);
   if (!Number.isFinite(utilNum) || !Number.isFinite(resetNum)) return null;
-  return { usedPercentage: Math.max(0, Math.min(100, utilNum * 100)), resetsAt: resetNum };
+  return { usedPercentage: Math.max(0, Math.min(100, utilNum * 100)), resetsAt: resetNum * 1000 };
 }
 
 export function parseUsageHeaders(

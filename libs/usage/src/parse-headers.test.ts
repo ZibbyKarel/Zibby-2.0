@@ -13,8 +13,8 @@ describe('parseUsageHeaders', () => {
     });
     const usage = parseUsageHeaders(headers, 1700000000000);
     expect(usage).toEqual({
-      fiveHour: { usedPercentage: 30, resetsAt: 1776963600 },
-      sevenDay: { usedPercentage: 37, resetsAt: 1777039200 },
+      fiveHour: { usedPercentage: 30, resetsAt: 1776963600000 },
+      sevenDay: { usedPercentage: 37, resetsAt: 1777039200000 },
       fetchedAt: 1700000000000,
     });
   });
@@ -31,7 +31,7 @@ describe('parseUsageHeaders', () => {
     });
     const usage = parseUsageHeaders(headers, 0);
     expect(usage).toEqual({
-      fiveHour: { usedPercentage: 90, resetsAt: 123 },
+      fiveHour: { usedPercentage: 90, resetsAt: 123000 },
       sevenDay: null,
       fetchedAt: 0,
     });
@@ -62,6 +62,6 @@ describe('parseUsageHeaders', () => {
       'Anthropic-RateLimit-Unified-5h-Utilization': '0.5',
       'anthropic-ratelimit-unified-5h-reset': '10',
     });
-    expect(usage?.fiveHour).toEqual({ usedPercentage: 50, resetsAt: 10 });
+    expect(usage?.fiveHour).toEqual({ usedPercentage: 50, resetsAt: 10000 });
   });
 });
