@@ -53,6 +53,7 @@ export default function App() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrated = useRef(false);
   const runAllInFlight = useRef<Promise<void> | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // ── Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
@@ -291,6 +292,54 @@ export default function App() {
     await runAllInFlight.current;
   }, [plan, folder, runtime, runId, pushToast]);
 
+  const syncTaskStates = useCallback(async () => {
+    if (!folder) {
+      pushToast({ kind: 'failed', title: 'No folder selected' });
+      return;
+    }
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const res = await window.nightcoder.syncTaskStates({ folderPath: folder.path });
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Synchronize failed', desc: res.message });
+        return;
+      }
+      if (res.updates.length > 0) {
+        setRuntime((prev) => {
+          const next = { ...prev };
+          for (const u of res.updates) {
+            const cur = next[u.storyIndex] ?? emptyRuntime();
+            next[u.storyIndex] = {
+              ...cur,
+              status: u.status,
+              branch: u.branch ?? cur.branch,
+              prUrl: u.prUrl ?? cur.prUrl,
+              endedAt: cur.endedAt ?? Date.now(),
+              limitResetsAt: null,
+            };
+          }
+          return next;
+        });
+      }
+      if (res.mergedCount > 0) {
+        pushToast({
+          kind: 'done',
+          title: `Synchronized · ${res.mergedCount} merged externally`,
+          desc: `Checked ${res.checked} task${res.checked === 1 ? '' : 's'}`,
+        });
+      } else {
+        pushToast({
+          kind: 'info',
+          title: 'Synchronized',
+          desc: `Checked ${res.checked} task${res.checked === 1 ? '' : 's'} — no external merges`,
+        });
+      }
+    } finally {
+      setSyncing(false);
+    }
+  }, [folder, syncing, pushToast]);
+
   const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -388,6 +437,11 @@ export default function App() {
       id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
       run: () => { void runAll(); },
     },
+    {
+      id: 'sync', icon: 'refresh', label: 'Synchronize task states',
+      hint: 'Detect PRs merged externally',
+      run: () => { void syncTaskStates(); },
+    },
     { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
     {
       id: 'theme', icon: theme === 'dark' ? 'sun' : 'moon',
@@ -402,7 +456,7 @@ export default function App() {
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
     })),
-  ], [tasks, theme, folder, runAll]);
+  ], [tasks, theme, folder, runAll, syncTaskStates]);
 
   // ── Drag ───────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -509,6 +563,16 @@ export default function App() {
           );
         })}
         <div style={{ flex: 1 }} />
+        <Btn
+          icon="refresh"
+          variant="secondary"
+          size="sm"
+          disabled={!folder || syncing}
+          onClick={() => void syncTaskStates()}
+          title="Synchronize task states with their pull requests"
+        >
+          {syncing ? 'Synchronizing…' : 'Synchronize'}
+        </Btn>
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
