@@ -133,6 +133,21 @@ importers:
         specifier: ^19.0.0
         version: 19.2.5(react@19.2.5)
 
+  libs/form:
+    dependencies:
+      '@nightcoder/design-system':
+        specifier: workspace:*
+        version: link:../design-system
+      react:
+        specifier: ^19.0.0
+        version: 19.2.5
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.5(react@19.2.5)
+      react-hook-form:
+        specifier: ^7.0.0
+        version: 7.73.1(react@19.2.5)
+
   libs/github: {}
 
   libs/orchestrator:
