@@ -151,6 +151,42 @@ export async function ghSquashMergePr(args: SquashMergeArgs): Promise<void> {
   });
 }
 
+export type PrState = 'OPEN' | 'CLOSED' | 'MERGED';
+
+export type PrStateInfo = {
+  state: PrState;
+  mergedAt: number | null;
+};
+
+/**
+ * Look up the current state of an existing PR. Used by the renderer's Synchronize
+ * action to detect PRs that were merged outside NightCoder (e.g. via the GitHub
+ * UI) so the corresponding task can be moved to Done. Returns null when `gh`
+ * can't answer — missing binary, bad URL, or network error — so callers can
+ * treat "unknown" as a no-op rather than a failure.
+ */
+export async function ghGetPrState(args: {
+  cwd: string;
+  prUrl: string;
+  signal?: AbortSignal;
+}): Promise<PrStateInfo | null> {
+  try {
+    const { stdout } = await execFileP(
+      'gh',
+      ['pr', 'view', args.prUrl, '--json', 'state,mergedAt'],
+      { cwd: args.cwd, ...OPTS, signal: args.signal },
+    );
+    const parsed = JSON.parse(stdout) as { state?: string; mergedAt?: string | null };
+    const state = parsed.state;
+    if (state !== 'OPEN' && state !== 'CLOSED' && state !== 'MERGED') return null;
+    const mergedAtRaw = parsed.mergedAt;
+    const mergedAt = mergedAtRaw ? Date.parse(mergedAtRaw) : null;
+    return { state, mergedAt: Number.isFinite(mergedAt) ? mergedAt : null };
+  } catch {
+    return null;
+  }
+}
+
 export async function ghAuthStatus(): Promise<{ ok: boolean; stdout: string }> {
   try {
     const { stdout } = await execFileP('gh', ['auth', 'status'], OPTS);
