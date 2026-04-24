@@ -16,6 +16,7 @@
     "@nightcoder/shared-types": "workspace:*",
     "@nightcoder/ai-refiner": "workspace:*",
     "@nightcoder/orchestrator": "workspace:*",
+    "@nightcoder/project-state": "workspace:*",
     "@nightcoder/usage": "workspace:*"
   }
 }

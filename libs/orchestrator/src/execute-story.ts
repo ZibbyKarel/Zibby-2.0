@@ -81,6 +81,7 @@ export async function executeStory(args: {
   onEvent({ kind: 'status', status: 'running' });
 
   let worktree: WorktreeHandle | null = null;
+  let reachedReview = false;
   try {
     worktree = await createWorktree({
       repoPath,
@@ -143,6 +144,7 @@ export async function executeStory(args: {
       });
       onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
       onEvent({ kind: 'status', status: 'review' });
+      reachedReview = true;
       return { success: true, prUrl, branch: worktree.branch };
     } finally {
       clearInterval(cancelWatcher);
@@ -158,9 +160,19 @@ export async function executeStory(args: {
     onEvent({ kind: 'status', status: 'failed' });
     return { success: false, error: message };
   } finally {
-    if (worktree) {
+    // Keep the worktree around on failure / cancellation so the user can resume
+    // into it; only clean up on the success path where the branch is already
+    // safely pushed. `release()` always runs — the in-memory slug claim is
+    // released even if the worktree persists.
+    if (worktree && reachedReview) {
       await worktree.cleanup().catch((e) => {
         onEvent({ kind: 'log', stream: 'stderr', line: `worktree cleanup failed: ${e instanceof Error ? e.message : String(e)}` });
+      });
+    } else if (worktree) {
+      onEvent({
+        kind: 'log',
+        stream: 'info',
+        line: `worktree kept at ${worktree.path} (branch ${worktree.branch}) for potential resume`,
       });
     }
     release();

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
+import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
 
 import { Icon, NightCoderMark } from './components/icons';
 import { Btn, Chip } from './components/primitives';
@@ -237,8 +238,10 @@ export default function App() {
   const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string }) => {
     setPlan((prev) => {
       const stories = prev?.stories ?? [];
+      const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
       return {
         stories: [...stories, {
+          taskId,
           title: data.title,
           description: data.description,
           acceptanceCriteria: data.acceptance,

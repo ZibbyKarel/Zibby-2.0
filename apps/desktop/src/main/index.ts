@@ -20,13 +20,24 @@ import {
   type LoadedAppState,
   type RemoveStoryPayload,
   type RemoveStoryResult,
+  type StoryStatus,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { startPlanRun, runSingleStory, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
-import { loadPersisted, savePersisted } from './state-store';
+import {
+  initProject,
+  loadProject,
+  mergePlanOnReplan,
+  runtimeToTasks,
+  saveProject,
+  tasksToRuntime,
+  updatePlan,
+  updateTask,
+} from '@nightcoder/project-state';
+import { loadUserData, saveUserData, migrateLegacyIfNeeded } from './state-store';
 
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
@@ -110,6 +121,32 @@ function emitToRenderer(wc: WebContents, event: RunEvent) {
   if (!wc.isDestroyed()) wc.send(IpcEvents.RunEvent, event);
 }
 
+const TERMINAL_STATUSES: ReadonlySet<StoryStatus> = new Set(['review', 'done', 'failed', 'cancelled']);
+
+async function persistStoryStatus(
+  repoPath: string,
+  taskId: string,
+  status: StoryStatus,
+): Promise<void> {
+  const patch: Parameters<typeof updateTask>[2] = { status };
+  const now = Date.now();
+  if (status === 'running') patch.startedAt = now;
+  if (TERMINAL_STATUSES.has(status)) patch.endedAt = now;
+  try {
+    await updateTask(repoPath, taskId, patch);
+  } catch {
+    // Persistence failures never crash the run — the UI still sees the event.
+  }
+}
+
+async function persistStoryPr(repoPath: string, taskId: string, branch: string, url: string): Promise<void> {
+  try {
+    await updateTask(repoPath, taskId, { branch, prUrl: url });
+  } catch {
+    // ignore
+  }
+}
+
 function registerIpc(getWebContents: () => WebContents | null) {
   ipcMain.handle(IpcChannels.PickFolder, async (): Promise<PickFolderResult> => {
     const result = await dialog.showOpenDialog({
@@ -120,6 +157,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
     const folder = result.filePaths[0];
     const gitRepo = await isGitRepo(folder);
     const origin = gitRepo ? await hasGitOrigin(folder) : false;
+    await initProject(folder).catch(() => {
+      // Non-fatal — the user can still refine; persistence simply falls back to a no-op.
+    });
+    await saveUserData(app.getPath('userData'), { lastOpenedFolder: folder }).catch(() => {});
     return { kind: 'selected', path: folder, isGitRepo: gitRepo, hasOrigin: origin };
   });
 
@@ -151,6 +192,8 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.StartRun,
     async (_event, req: RunStartRequest): Promise<RunStartResult> => {
       try {
+        await updatePlan(req.folderPath, req.plan).catch(() => {});
+        const taskIdFor = (idx: number): string | undefined => req.plan.stories[idx]?.taskId;
         const handle = startPlanRun({
           plan: req.plan,
           repoPath: req.folderPath,
@@ -158,17 +201,18 @@ function registerIpc(getWebContents: () => WebContents | null) {
           completedIndices: req.completedIndices,
           onEvent: (e) => {
             const wc = getWebContents();
-            if (!wc) return;
             if ('storyIndex' in e) {
+              const tid = taskIdFor(e.storyIndex);
               if (e.kind === 'status') {
-                emitToRenderer(wc, {
+                if (tid) void persistStoryStatus(req.folderPath, tid, e.status);
+                if (wc) emitToRenderer(wc, {
                   runId: handle.runId,
                   storyIndex: e.storyIndex,
                   kind: 'status',
                   status: e.status,
                 });
               } else if (e.kind === 'log') {
-                emitToRenderer(wc, {
+                if (wc) emitToRenderer(wc, {
                   runId: handle.runId,
                   storyIndex: e.storyIndex,
                   kind: 'log',
@@ -176,7 +220,8 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   line: e.line,
                 });
               } else if (e.kind === 'pr') {
-                emitToRenderer(wc, {
+                if (tid) void persistStoryPr(req.folderPath, tid, e.branch, e.url);
+                if (wc) emitToRenderer(wc, {
                   runId: handle.runId,
                   storyIndex: e.storyIndex,
                   kind: 'pr',
@@ -185,7 +230,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
                 });
               }
             } else if (e.kind === 'run-done') {
-              emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
+              if (wc) emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
               activeRuns.delete(handle.runId);
             }
           },
@@ -204,6 +249,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
       const story = req.plan.stories[req.storyIndex];
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
       await acquireRunner();
+      const taskId = story.taskId;
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
@@ -211,13 +257,14 @@ function registerIpc(getWebContents: () => WebContents | null) {
         baseBranch: req.baseBranch,
         onEvent: (e) => {
           const wc = getWebContents();
-          if (!wc) return;
           if (e.kind === 'status') {
-            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
+            if (taskId) void persistStoryStatus(req.folderPath, taskId, e.status);
+            if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
           } else if (e.kind === 'log') {
-            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+            if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
           } else if (e.kind === 'pr') {
-            emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+            if (taskId) void persistStoryPr(req.folderPath, taskId, e.branch, e.url);
+            if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
           }
         },
       });
@@ -243,23 +290,46 @@ function registerIpc(getWebContents: () => WebContents | null) {
   });
 
   ipcMain.handle(IpcChannels.LoadState, async (): Promise<LoadedAppState> => {
-    const state = await loadPersisted(app.getPath('userData'));
+    await migrateLegacyIfNeeded(app.getPath('userData')).catch(() => {});
+    const userData = await loadUserData(app.getPath('userData'));
+    const folderPath = userData.lastOpenedFolder;
     let folder: PickFolderResult | null = null;
-    if (state.folderPath) {
+    if (folderPath) {
       try {
-        await access(path.join(state.folderPath, '.git'));
-        const gitRepo = await isGitRepo(state.folderPath);
-        const origin = gitRepo ? await hasGitOrigin(state.folderPath) : false;
-        folder = { kind: 'selected', path: state.folderPath, isGitRepo: gitRepo, hasOrigin: origin };
+        await access(path.join(folderPath, '.git'));
+        const gitRepo = await isGitRepo(folderPath);
+        const origin = gitRepo ? await hasGitOrigin(folderPath) : false;
+        folder = { kind: 'selected', path: folderPath, isGitRepo: gitRepo, hasOrigin: origin };
       } catch {
         folder = null;
       }
     }
-    return { folder, brief: state.brief ?? '', plan: state.plan ?? null, runtime: state.runtime ?? null };
+    if (!folderPath || !folder) {
+      return { folder, brief: '', plan: null, runtime: null };
+    }
+    const project = await loadProject(folderPath);
+    if (!project) {
+      return { folder, brief: '', plan: null, runtime: null };
+    }
+    const runtime = tasksToRuntime(project.plan, project.tasks);
+    return { folder, brief: project.brief, plan: project.plan, runtime };
   });
 
   ipcMain.handle(IpcChannels.SaveState, async (_event, state: PersistedState): Promise<void> => {
-    await savePersisted(app.getPath('userData'), state);
+    if (state.folderPath) {
+      await saveUserData(app.getPath('userData'), { lastOpenedFolder: state.folderPath }).catch(() => {});
+    }
+    if (!state.folderPath || !state.plan) return;
+    // Pull current tasks, merge plan (preserves done/review), then overlay the
+    // renderer-provided runtime snapshot. Main-process updateTask calls on
+    // RunEvents remain the source of truth for actively running tasks; this
+    // pathway handles brief/plan edits and renderer-driven status tweaks.
+    const current = await loadProject(state.folderPath);
+    const base = current ?? { version: 1 as const, brief: '', plan: state.plan, tasks: {} };
+    const nextBrief = state.brief ?? base.brief;
+    const merged = mergePlanOnReplan(base, state.plan);
+    const nextTasks = state.runtime ? runtimeToTasks(merged.plan, state.runtime, merged.tasks) : merged.tasks;
+    await saveProject(state.folderPath, { ...merged, brief: nextBrief, tasks: nextTasks });
   });
 
   ipcMain.handle(IpcChannels.GetUsage, async (): Promise<Usage | null> => {
@@ -273,27 +343,33 @@ function registerIpc(getWebContents: () => WebContents | null) {
         throw new Error('Cannot remove a story while a run is active');
       }
 
-      const state = await loadPersisted(app.getPath('userData'));
-      if (!state.plan) {
+      const userData = await loadUserData(app.getPath('userData'));
+      const folderPath = userData.lastOpenedFolder;
+      if (!folderPath) {
+        throw new Error('No folder is currently opened');
+      }
+      const project = await loadProject(folderPath);
+      if (!project) {
         throw new Error('No plan is currently stored');
       }
 
-      const story = state.plan.stories[payload.storyIndex];
+      const story = project.plan.stories[payload.storyIndex];
       if (!story) {
         throw new Error(`Story ${payload.storyIndex} not found in plan`);
       }
 
-      const updatedPlan = removeStoryFromPlan(state.plan, payload.storyIndex);
+      const updatedPlan = removeStoryFromPlan(project.plan, payload.storyIndex);
 
       let branchDeletionWarning: string | undefined;
-      if (state.folderPath) {
-        const slug = slugify(`${payload.storyIndex + 1}-${story.title}`);
-        const branch = `nightcoder/${slug}`;
-        const result = await deleteStoryBranch({ repoPath: state.folderPath, branch });
+      const persistedBranch = project.tasks[story.taskId]?.branch;
+      if (persistedBranch) {
+        const result = await deleteStoryBranch({ repoPath: folderPath, branch: persistedBranch });
         branchDeletionWarning = result.warning;
       }
 
-      await savePersisted(app.getPath('userData'), { ...state, plan: updatedPlan });
+      const { [story.taskId]: _removed, ...remainingTasks } = project.tasks;
+      void _removed;
+      await saveProject(folderPath, { ...project, plan: updatedPlan, tasks: remainingTasks });
 
       return { plan: updatedPlan, ...(branchDeletionWarning !== undefined ? { branchDeletionWarning } : {}) };
     }

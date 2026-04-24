@@ -23,6 +23,7 @@ export type PickFolderResult =
   | { kind: 'selected'; path: string; isGitRepo: boolean; hasOrigin: boolean };
 
 export type Story = {
+  taskId: string;
   title: string;
   description: string;
   acceptanceCriteria: string[];
@@ -122,6 +123,33 @@ export type PersistedStoryRuntime = {
   endedAt: number | null;
 };
 
+/**
+ * Persisted per-task runtime state for the per-project `.nightcoder/index.json`
+ * manifest. Keyed by stable taskId so replan doesn't shift entries.
+ */
+export type PersistedTask = {
+  taskId: string;
+  status: StoryStatus;
+  branch: string | null;
+  prUrl: string | null;
+  startedAt: number | null;
+  endedAt: number | null;
+  sessionId?: string;
+};
+
+/** Shape of `<repo>/.nightcoder/index.json`. */
+export type ProjectState = {
+  version: 1;
+  brief: string;
+  plan: RefinedPlan;
+  tasks: Record<string, PersistedTask>;
+};
+
+/**
+ * Wire format still accepted by the legacy SaveState IPC. The main process
+ * decomposes this into `{ lastOpenedFolder }` (userData) plus a per-project
+ * ProjectState file. New code should prefer the per-project store directly.
+ */
 export type PersistedState = {
   folderPath?: string;
   brief?: string;

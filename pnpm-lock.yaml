@@ -93,6 +93,9 @@ importers:
       '@nightcoder/orchestrator':
         specifier: workspace:*
         version: link:../../libs/orchestrator
+      '@nightcoder/project-state':
+        specifier: workspace:*
+        version: link:../../libs/project-state
       '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
@@ -125,6 +128,12 @@ importers:
       '@nightcoder/github':
         specifier: workspace:*
         version: link:../github
+      '@nightcoder/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  libs/project-state:
+    dependencies:
       '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../shared-types

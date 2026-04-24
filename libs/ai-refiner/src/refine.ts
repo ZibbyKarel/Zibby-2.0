@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { RefinedPlanSchema } from '@nightcoder/shared-types/schemas';
-import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
+import { RefinedPlanCoreSchema } from '@nightcoder/shared-types/schemas';
+import { assignTaskIds } from '@nightcoder/shared-types/task-id';
+import type { RefinedPlan, Story } from '@nightcoder/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
 import { optimizeContext } from './context-optimizer';
 import { runClaudeCli, parseClaudeOutput } from './claude-cli';
@@ -25,7 +26,7 @@ Rules:
 Return the plan via structured output — no prose commentary.`;
 
 function jsonSchemaForPlan() {
-  const schema = z.toJSONSchema(RefinedPlanSchema, { target: 'draft-7' }) as Record<string, unknown>;
+  const schema = z.toJSONSchema(RefinedPlanCoreSchema, { target: 'draft-7' }) as Record<string, unknown>;
   delete schema.$schema;
   return schema;
 }
@@ -51,5 +52,7 @@ export async function refine(params: {
     timeoutMs: params.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   });
 
-  return parseClaudeOutput(stdout, RefinedPlanSchema);
+  const core = parseClaudeOutput(stdout, RefinedPlanCoreSchema);
+  const stories = assignTaskIds(core.stories) as Story[];
+  return { stories, dependencies: core.dependencies };
 }

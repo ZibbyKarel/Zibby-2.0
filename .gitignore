@@ -33,3 +33,4 @@ vite.config.*.timestamp*
 docs/superpowers/
 design.zip
 design/
+.nightcoder/

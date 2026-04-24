@@ -1,0 +1,192 @@
+import { readFile, writeFile, rename, mkdir, access } from 'node:fs/promises';
+import path from 'node:path';
+import type {
+  RefinedPlan,
+  Story,
+  PersistedTask,
+  PersistedStoryRuntime,
+  ProjectState,
+  StoryStatus,
+} from '@nightcoder/shared-types/ipc';
+import { ProjectStateSchema } from '@nightcoder/shared-types/schemas';
+import { assignTaskIds } from '@nightcoder/shared-types/task-id';
+
+export const PROJECT_DIR = '.nightcoder';
+const INDEX_FILE = 'index.json';
+const INNER_GITIGNORE = '*\n';
+const ROOT_GITIGNORE_LINE = '.nightcoder/';
+const PRESERVED_ON_REPLAN: ReadonlySet<StoryStatus> = new Set(['review', 'done']);
+
+export function projectDir(repoPath: string): string {
+  return path.join(repoPath, PROJECT_DIR);
+}
+
+function indexFile(repoPath: string): string {
+  return path.join(projectDir(repoPath), INDEX_FILE);
+}
+
+function emptyState(): ProjectState {
+  return { version: 1, brief: '', plan: { stories: [], dependencies: [] }, tasks: {} };
+}
+
+async function fileExists(p: string): Promise<boolean> {
+  try { await access(p); return true; } catch { return false; }
+}
+
+async function ensureRootGitignore(repoPath: string): Promise<void> {
+  const file = path.join(repoPath, '.gitignore');
+  let existing = '';
+  try {
+    existing = await readFile(file, 'utf8');
+  } catch {
+    existing = '';
+  }
+  const lines = existing.split('\n').map((l) => l.trim());
+  if (lines.includes(ROOT_GITIGNORE_LINE) || lines.includes('.nightcoder') || lines.includes('.nightcoder/*')) {
+    return;
+  }
+  const needsNewline = existing.length > 0 && !existing.endsWith('\n');
+  const next = existing + (needsNewline ? '\n' : '') + ROOT_GITIGNORE_LINE + '\n';
+  await writeFile(file, next, 'utf8');
+}
+
+async function ensureInnerGitignore(repoPath: string): Promise<void> {
+  const file = path.join(projectDir(repoPath), '.gitignore');
+  if (await fileExists(file)) return;
+  await writeFile(file, INNER_GITIGNORE, 'utf8');
+}
+
+export async function initProject(repoPath: string): Promise<void> {
+  await mkdir(projectDir(repoPath), { recursive: true });
+  await ensureInnerGitignore(repoPath);
+  await ensureRootGitignore(repoPath).catch(() => {
+    // Non-fatal — a non-git folder still gets a usable .nightcoder/ dir.
+  });
+  if (!(await fileExists(indexFile(repoPath)))) {
+    await writeStateRaw(repoPath, emptyState());
+  }
+}
+
+export async function loadProject(repoPath: string): Promise<ProjectState | null> {
+  try {
+    const raw = await readFile(indexFile(repoPath), 'utf8');
+    const parsed = JSON.parse(raw);
+    const result = ProjectStateSchema.safeParse(parsed);
+    if (!result.success) return null;
+    return result.data;
+  } catch {
+    return null;
+  }
+}
+
+async function writeStateRaw(repoPath: string, state: ProjectState): Promise<void> {
+  await mkdir(projectDir(repoPath), { recursive: true });
+  const file = indexFile(repoPath);
+  const tmp = `${file}.tmp`;
+  await writeFile(tmp, JSON.stringify(state, null, 2), 'utf8');
+  await rename(tmp, file);
+}
+
+const writeQueues = new Map<string, Promise<void>>();
+
+/** Serialize all writes per repoPath — multiple runners update in parallel. */
+function enqueue<T>(repoPath: string, fn: () => Promise<T>): Promise<T> {
+  const prev = writeQueues.get(repoPath) ?? Promise.resolve();
+  const next = prev.then(fn, fn);
+  writeQueues.set(
+    repoPath,
+    next.then(() => undefined, () => undefined),
+  );
+  return next;
+}
+
+export async function saveProject(repoPath: string, state: ProjectState): Promise<void> {
+  await enqueue(repoPath, () => writeStateRaw(repoPath, state));
+}
+
+export async function updateTask(
+  repoPath: string,
+  taskId: string,
+  patch: Partial<Omit<PersistedTask, 'taskId'>>,
+): Promise<void> {
+  await enqueue(repoPath, async () => {
+    const current = (await loadProject(repoPath)) ?? emptyState();
+    const prev = current.tasks[taskId] ?? freshTask(taskId);
+    const next: PersistedTask = { ...prev, ...patch, taskId };
+    await writeStateRaw(repoPath, { ...current, tasks: { ...current.tasks, [taskId]: next } });
+  });
+}
+
+export async function updatePlan(repoPath: string, plan: RefinedPlan, brief?: string): Promise<void> {
+  await enqueue(repoPath, async () => {
+    const current = (await loadProject(repoPath)) ?? emptyState();
+    const merged = mergePlanOnReplan(current, plan);
+    await writeStateRaw(repoPath, { ...merged, brief: brief ?? current.brief });
+  });
+}
+
+function freshTask(taskId: string): PersistedTask {
+  return { taskId, status: 'pending', branch: null, prUrl: null, startedAt: null, endedAt: null };
+}
+
+/**
+ * When the user replans, keep tasks that are already `review`/`done` by taskId
+ * match; everything else resets to `pending`. Renamed titles produce a new
+ * taskId, so their old entries get dropped (and should be archived by the
+ * caller if history preservation is needed).
+ */
+export function mergePlanOnReplan(old: ProjectState, newPlan: RefinedPlan): ProjectState {
+  const newPlanWithIds: RefinedPlan = { ...newPlan, stories: assignTaskIds(newPlan.stories) as Story[] };
+  const nextTasks: Record<string, PersistedTask> = {};
+  for (const story of newPlanWithIds.stories) {
+    const prior = old.tasks[story.taskId];
+    if (prior && PRESERVED_ON_REPLAN.has(prior.status)) {
+      nextTasks[story.taskId] = prior;
+    } else {
+      nextTasks[story.taskId] = freshTask(story.taskId);
+    }
+  }
+  return { ...old, plan: newPlanWithIds, tasks: nextTasks };
+}
+
+/** Convert the new per-task map into the legacy index-keyed runtime shape. */
+export function tasksToRuntime(
+  plan: RefinedPlan,
+  tasks: Record<string, PersistedTask>,
+): Record<number, PersistedStoryRuntime> {
+  const out: Record<number, PersistedStoryRuntime> = {};
+  plan.stories.forEach((story, idx) => {
+    const t = tasks[story.taskId];
+    if (!t) return;
+    out[idx] = {
+      status: t.status,
+      branch: t.branch,
+      prUrl: t.prUrl,
+      startedAt: t.startedAt,
+      endedAt: t.endedAt,
+    };
+  });
+  return out;
+}
+
+/** Convert the legacy index-keyed runtime into taskId-keyed tasks. */
+export function runtimeToTasks(
+  plan: RefinedPlan,
+  runtime: Record<number, PersistedStoryRuntime>,
+  prior: Record<string, PersistedTask> = {},
+): Record<string, PersistedTask> {
+  const out: Record<string, PersistedTask> = { ...prior };
+  plan.stories.forEach((story, idx) => {
+    const rt = runtime[idx];
+    if (!rt) return;
+    out[story.taskId] = {
+      ...(out[story.taskId] ?? freshTask(story.taskId)),
+      status: rt.status,
+      branch: rt.branch,
+      prUrl: rt.prUrl,
+      startedAt: rt.startedAt,
+      endedAt: rt.endedAt,
+    };
+  });
+  return out;
+}
