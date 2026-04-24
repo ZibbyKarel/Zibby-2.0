@@ -3,7 +3,7 @@ import path from 'node:path';
 import { PersistedPlanSchema, PersistedRuntimeSchema } from '@zibby/shared-types/schemas';
 import type { PersistedState } from '@zibby/shared-types/ipc';
 
-const FILE_NAME = 'zibby-state.json';
+const FILE_NAME = 'nightcoder-state.json';
 
 function resolveFile(userDataDir: string): string {
   return path.join(userDataDir, FILE_NAME);

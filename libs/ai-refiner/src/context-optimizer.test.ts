@@ -77,11 +77,11 @@ describe('estimateTokens', () => {
 
 describe('optimizeContext', () => {
   beforeEach(() => {
-    delete process.env.ZIBBY_SKIP_CONTEXT_OPTIMIZATION;
+    delete process.env.NIGHTCODER_SKIP_CONTEXT_OPTIMIZATION;
   });
 
   afterEach(() => {
-    delete process.env.ZIBBY_SKIP_CONTEXT_OPTIMIZATION;
+    delete process.env.NIGHTCODER_SKIP_CONTEXT_OPTIMIZATION;
   });
 
   it('reduces token count by at least 30% on realistic fixture', () => {
@@ -127,8 +127,8 @@ describe('optimizeContext', () => {
     expect(parsed.packageManager).toBeDefined();
   });
 
-  it('returns original context when ZIBBY_SKIP_CONTEXT_OPTIMIZATION=1', () => {
-    process.env.ZIBBY_SKIP_CONTEXT_OPTIMIZATION = '1';
+  it('returns original context when NIGHTCODER_SKIP_CONTEXT_OPTIMIZATION=1', () => {
+    process.env.NIGHTCODER_SKIP_CONTEXT_OPTIMIZATION = '1';
     const ctx = makeCtx();
     const result = optimizeContext(ctx);
     expect(result).toBe(ctx);

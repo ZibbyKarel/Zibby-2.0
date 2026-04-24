@@ -73,7 +73,7 @@ function optimizeFile(file: RepoFile): RepoFile {
 }
 
 export function optimizeContext(ctx: RepoContext): RepoContext {
-  if (process.env.ZIBBY_SKIP_CONTEXT_OPTIMIZATION === '1') return ctx;
+  if (process.env.NIGHTCODER_SKIP_CONTEXT_OPTIMIZATION === '1') return ctx;
 
   const optimized: RepoContext = {
     ...ctx,
@@ -83,7 +83,7 @@ export function optimizeContext(ctx: RepoContext): RepoContext {
   const baseline = estimateTokens(rawText(ctx));
   const after = estimateTokens(rawText(optimized));
   const pct = baseline > 0 ? Math.round((1 - after / baseline) * 100) : 0;
-  console.log(`[zibby] context optimization: ${baseline} → ${after} est. tokens (${pct}% reduction)`);
+  console.log(`[nightcoder] context optimization: ${baseline} → ${after} est. tokens (${pct}% reduction)`);
 
   return optimized;
 }

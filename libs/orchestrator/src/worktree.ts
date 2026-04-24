@@ -27,7 +27,7 @@ async function mirrorLocalAiSettings(
   destRoot: string,
   onInfo?: (msg: string) => void
 ): Promise<string[]> {
-  if (process.env.ZIBBY_INHERIT_LOCAL_AI === '0') return [];
+  if (process.env.NIGHTCODER_INHERIT_LOCAL_AI === '0') return [];
   const copied: string[] = [];
   for (const rel of LOCAL_AI_SETTINGS_FILES) {
     const src = path.join(sourceRoot, rel);
