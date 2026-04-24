@@ -1,5 +1,16 @@
 import { z } from 'zod';
-import type { Story, Dependency, RefinedPlan, AdvisorReview, RemoveStoryPayload, PersistedStoryRuntime, PersistedTask, ProjectState } from './ipc';
+import type { Story, Dependency, RefinedPlan, AdvisorReview, RemoveStoryPayload, PersistedStoryRuntime, PersistedTask, ProjectState, StoryAgents } from './ipc';
+
+const ThinkingLevelSchema = z.enum(['off', 'low', 'medium', 'high']);
+const AgentConfigSchema = z.object({
+  model: z.string().optional(),
+  thinking: ThinkingLevelSchema.optional(),
+});
+export const StoryAgentsSchema = z.object({
+  plan: AgentConfigSchema.optional(),
+  code: AgentConfigSchema.optional(),
+  qa: AgentConfigSchema.optional(),
+}) satisfies z.ZodType<StoryAgents>;
 
 /**
  * `StoryCoreSchema` is the model-facing shape (no taskId — taskIds are stamped
@@ -12,6 +23,7 @@ export const StoryCoreSchema = z.object({
   acceptanceCriteria: z.array(z.string().min(3)).min(1).max(12),
   affectedFiles: z.array(z.string()).max(40),
   model: z.string().optional(),
+  agents: StoryAgentsSchema.optional(),
 });
 
 export const StorySchema = StoryCoreSchema.extend({
@@ -46,6 +58,7 @@ const PersistedStorySchema = z.object({
   acceptanceCriteria: z.array(z.string()).default([]),
   affectedFiles: z.array(z.string()).default([]),
   model: z.string().optional(),
+  agents: StoryAgentsSchema.optional(),
 });
 
 const PersistedDependencySchema = z.object({
@@ -97,6 +110,7 @@ const ProjectPlanStorySchema = z.object({
   acceptanceCriteria: z.array(z.string()).default([]),
   affectedFiles: z.array(z.string()).default([]),
   model: z.string().optional(),
+  agents: StoryAgentsSchema.optional(),
 });
 
 const ProjectPlanSchema = z.object({

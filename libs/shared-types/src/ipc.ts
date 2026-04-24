@@ -17,6 +17,7 @@ export const IpcChannels = {
   RemoveTaskFile: 'nightcoder:removeTaskFile',
   GetTaskDiff: 'nightcoder:getTaskDiff',
   SquashMergeTask: 'nightcoder:squashMergeTask',
+  ReadRepoTree: 'nightcoder:readRepoTree',
 } as const;
 
 export const IpcEvents = {
@@ -30,6 +31,25 @@ export type PickFolderResult =
   | { kind: 'cancelled' }
   | { kind: 'selected'; path: string; isGitRepo: boolean; hasOrigin: boolean };
 
+/**
+ * Per-phase agent configuration. `thinking` is stored but the runner does not
+ * yet pass it through to the claude CLI — it's a planning hint for when a
+ * multi-phase pipeline (Plan → Code → QA) lands. Today only `agents.code.model`
+ * is honored at runtime (it overrides the legacy `Story.model`).
+ */
+export type ThinkingLevel = 'off' | 'low' | 'medium' | 'high';
+
+export type AgentConfig = {
+  model?: string;
+  thinking?: ThinkingLevel;
+};
+
+export type StoryAgents = {
+  plan?: AgentConfig;
+  code?: AgentConfig;
+  qa?: AgentConfig;
+};
+
 export type Story = {
   taskId: string;
   /** Monotonically increasing project-scoped ID, assigned at first run. */
@@ -38,7 +58,12 @@ export type Story = {
   description: string;
   acceptanceCriteria: string[];
   affectedFiles: string[];
+  /**
+   * Legacy single-model field. Kept for compat with stored plans and the
+   * runner fallback. New callers should populate `agents.code.model` too.
+   */
   model?: string;
+  agents?: StoryAgents;
 };
 
 export type Dependency = {
@@ -268,6 +293,20 @@ export type SquashMergeTaskResult =
   | { kind: 'ok'; prUrl: string; subject: string }
   | { kind: 'error'; message: string };
 
+export type FileTreeNode = {
+  name: string;
+  type: 'file' | 'dir';
+  children?: FileTreeNode[];
+};
+
+export type ReadRepoTreeRequest = {
+  folderPath: string;
+};
+
+export type ReadRepoTreeResult =
+  | { kind: 'ok'; tree: FileTreeNode[]; truncated: boolean }
+  | { kind: 'error'; message: string };
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -290,4 +329,5 @@ export type IpcApi = {
   removeTaskFile: (req: RemoveTaskFileRequest) => Promise<RemoveTaskFileResult>;
   getTaskDiff: (req: GetTaskDiffRequest) => Promise<TaskDiffResult>;
   squashMergeTask: (req: SquashMergeTaskRequest) => Promise<SquashMergeTaskResult>;
+  readRepoTree: (req: ReadRepoTreeRequest) => Promise<ReadRepoTreeResult>;
 };
