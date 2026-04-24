@@ -189,7 +189,7 @@ export async function executeStory(args: {
   resume?: ResumeContext;
 }): Promise<StoryExecutionResult> {
   const { story, repoPath, baseBranch, usedSlugs, onEvent, signal, resume } = args;
-  const slugBase = slugify(`${args.storyIndex + 1}-${story.title}`);
+  const slugBase = slugify(`${story.numericId ?? args.storyIndex + 1}-${story.title}`);
 
   const release = tryClaimStory(repoPath, slugBase);
   if (!release) {
