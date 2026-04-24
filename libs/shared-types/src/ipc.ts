@@ -11,6 +11,10 @@ export const IpcChannels = {
   RemoveStory: 'nightcoder:removeStory',
   GetUsage: 'nightcoder:getUsage',
   OpenExternal: 'nightcoder:openExternal',
+  PickFilesToAttach: 'nightcoder:pickFilesToAttach',
+  AddTaskFiles: 'nightcoder:addTaskFiles',
+  ListTaskFiles: 'nightcoder:listTaskFiles',
+  RemoveTaskFile: 'nightcoder:removeTaskFile',
 } as const;
 
 export const IpcEvents = {
@@ -186,6 +190,41 @@ export type Usage = {
   fetchedAt: number;
 };
 
+export type TaskFile = {
+  name: string;
+  size: number;
+};
+
+export type PickFilesToAttachResult =
+  | { kind: 'cancelled' }
+  | { kind: 'selected'; paths: string[] };
+
+export type AddTaskFilesRequest = {
+  taskId: string;
+  sourcePaths: string[];
+};
+
+export type AddTaskFilesResult =
+  | { kind: 'ok'; files: TaskFile[] }
+  | { kind: 'error'; message: string };
+
+export type ListTaskFilesRequest = {
+  taskId: string;
+};
+
+export type ListTaskFilesResult =
+  | { kind: 'ok'; files: TaskFile[] }
+  | { kind: 'error'; message: string };
+
+export type RemoveTaskFileRequest = {
+  taskId: string;
+  name: string;
+};
+
+export type RemoveTaskFileResult =
+  | { kind: 'ok'; files: TaskFile[] }
+  | { kind: 'error'; message: string };
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -202,4 +241,8 @@ export type IpcApi = {
   getUsage: () => Promise<Usage | null>;
   onUsageUpdate: (handler: (usage: Usage | null) => void) => () => void;
   openExternal: (url: string) => Promise<void>;
+  pickFilesToAttach: () => Promise<PickFilesToAttachResult>;
+  addTaskFiles: (req: AddTaskFilesRequest) => Promise<AddTaskFilesResult>;
+  listTaskFiles: (req: ListTaskFilesRequest) => Promise<ListTaskFilesResult>;
+  removeTaskFile: (req: RemoveTaskFileRequest) => Promise<RemoveTaskFileResult>;
 };
