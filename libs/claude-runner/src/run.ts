@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { parseLine, renderEvent, type HumanReadable } from './stream-parser';
+import { detectLimitInText } from './detect-limit';
 
 const DEFAULT_MODEL = process.env.CLAUDE_RUN_MODEL ?? 'sonnet';
 const DEFAULT_CLAUDE_BIN = process.env.CLAUDE_CLI_PATH ?? 'claude';
@@ -20,6 +21,10 @@ export type RunnerResult = {
   stopReason?: string;
   error?: string;
   exitCode: number | null;
+  /** True when output indicated a Claude usage/rate limit was hit. */
+  limitHit?: boolean;
+  /** Epoch ms when the hit limit is expected to reset, if parseable. */
+  limitResetsAt?: number | null;
 };
 
 export type RunnerHandle = {
@@ -68,6 +73,22 @@ export function runClaudeInWorktree(
   let cancelled = false;
   let done = false;
   let finalResult: HumanReadable['meta'] | undefined;
+  let limitHit = false;
+  let limitResetsAt: number | null = null;
+
+  const noteLimitFromText = (text: string): void => {
+    if (limitHit && limitResetsAt !== null) return;
+    const d = detectLimitInText(text);
+    if (!d.hit) return;
+    if (!limitHit) {
+      limitHit = true;
+      callbacks.onEvent({
+        kind: 'info',
+        line: `claude: usage limit detected${d.resetsAt ? ` (resets at ${new Date(d.resetsAt).toISOString()})` : ''}`,
+      });
+    }
+    if (limitResetsAt === null && d.resetsAt !== null) limitResetsAt = d.resetsAt;
+  };
 
   proc.stdout!.on('data', (chunk: Buffer) => {
     stdoutBuffer += chunk.toString();
@@ -77,13 +98,18 @@ export function runClaudeInWorktree(
       stdoutBuffer = stdoutBuffer.slice(idx + 1);
       const event = parseLine(line);
       if (!event) continue;
-      if (callbacks.onAssistantText && event.type === 'assistant') {
+      if (event.type === 'assistant') {
         const blocks = (event as { message: { content?: Array<{ type: string; text?: string }> } }).message?.content ?? [];
         for (const block of blocks) {
           if (block.type === 'text' && typeof block.text === 'string' && block.text.length > 0) {
-            callbacks.onAssistantText(block.text);
+            if (callbacks.onAssistantText) callbacks.onAssistantText(block.text);
+            noteLimitFromText(block.text);
           }
         }
+      }
+      if (event.type === 'result') {
+        const resultText = typeof (event as { result?: unknown }).result === 'string' ? (event as { result: string }).result : '';
+        if (resultText) noteLimitFromText(resultText);
       }
       for (const rendered of renderEvent(event)) {
         if (rendered.kind === 'done') finalResult = rendered.meta;
@@ -95,6 +121,7 @@ export function runClaudeInWorktree(
   proc.stderr!.on('data', (chunk: Buffer) => {
     const text = chunk.toString();
     stderrBuffer += text;
+    noteLimitFromText(text);
     for (const line of text.split('\n')) {
       const trimmed = line.trim();
       if (!trimmed) continue;
@@ -107,7 +134,7 @@ export function runClaudeInWorktree(
       if (done) return;
       done = true;
       if (cancelled) {
-        resolve({ success: false, error: 'cancelled', exitCode: code });
+        resolve({ success: false, error: 'cancelled', exitCode: code, limitHit, limitResetsAt });
         return;
       }
       if (code !== 0) {
@@ -115,18 +142,20 @@ export function runClaudeInWorktree(
           success: false,
           error: `exit ${code}: ${stderrBuffer.trim().slice(-400) || '<empty>'}`,
           exitCode: code,
+          limitHit,
+          limitResetsAt,
         });
         return;
       }
       const isError = finalResult?.['is_error'] === true;
       const stopReason = typeof finalResult?.['stop_reason'] === 'string' ? (finalResult['stop_reason'] as string) : undefined;
-      resolve({ success: !isError, stopReason, exitCode: code });
+      resolve({ success: !isError && !limitHit, stopReason, exitCode: code, limitHit, limitResetsAt });
     });
 
     proc.on('error', (err) => {
       if (done) return;
       done = true;
-      resolve({ success: false, error: err.message, exitCode: null });
+      resolve({ success: false, error: err.message, exitCode: null, limitHit, limitResetsAt });
     });
   });
 
