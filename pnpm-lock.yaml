@@ -128,6 +128,9 @@ importers:
       '@nightcoder/github':
         specifier: workspace:*
         version: link:../github
+      '@nightcoder/project-state':
+        specifier: workspace:*
+        version: link:../project-state
       '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../shared-types

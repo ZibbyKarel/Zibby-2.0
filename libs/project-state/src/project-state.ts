@@ -1,4 +1,4 @@
-import { readFile, writeFile, rename, mkdir, access } from 'node:fs/promises';
+import { appendFile, readFile, writeFile, rename, mkdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import type {
   RefinedPlan,
@@ -13,12 +13,29 @@ import { assignTaskIds } from '@nightcoder/shared-types/task-id';
 
 export const PROJECT_DIR = '.nightcoder';
 const INDEX_FILE = 'index.json';
+const TASKS_SUBDIR = 'tasks';
 const INNER_GITIGNORE = '*\n';
 const ROOT_GITIGNORE_LINE = '.nightcoder/';
 const PRESERVED_ON_REPLAN: ReadonlySet<StoryStatus> = new Set(['review', 'done']);
 
 export function projectDir(repoPath: string): string {
   return path.join(repoPath, PROJECT_DIR);
+}
+
+export function taskDir(repoPath: string, taskId: string): string {
+  return path.join(projectDir(repoPath), TASKS_SUBDIR, taskId);
+}
+
+export function journalPath(repoPath: string, taskId: string): string {
+  return path.join(taskDir(repoPath, taskId), 'journal.md');
+}
+
+export function planPath(repoPath: string, taskId: string): string {
+  return path.join(taskDir(repoPath, taskId), 'plan.md');
+}
+
+export function storyJsonPath(repoPath: string, taskId: string): string {
+  return path.join(taskDir(repoPath, taskId), 'story.json');
 }
 
 function indexFile(repoPath: string): string {
@@ -167,6 +184,40 @@ export function tasksToRuntime(
     };
   });
   return out;
+}
+
+/**
+ * Ensure the per-task folder exists and write the frozen story spec to
+ * `story.json`. Called once per task start. Idempotent — overwrites
+ * story.json so edits to title/description propagate.
+ */
+export async function ensureTaskDir(repoPath: string, story: Story): Promise<void> {
+  const dir = taskDir(repoPath, story.taskId);
+  await mkdir(dir, { recursive: true });
+  await writeFile(storyJsonPath(repoPath, story.taskId), JSON.stringify(story, null, 2) + '\n', 'utf8');
+}
+
+export async function writePlanMd(repoPath: string, taskId: string, content: string): Promise<void> {
+  await mkdir(taskDir(repoPath, taskId), { recursive: true });
+  await writeFile(planPath(repoPath, taskId), content.endsWith('\n') ? content : content + '\n', 'utf8');
+}
+
+/**
+ * Append one journal entry. Used by the polling fallback when the repo has a
+ * foreign post-commit hook we can't replace. The hook itself writes entries
+ * directly in the same format (shell script — no JS dependency).
+ */
+export async function appendJournalLine(
+  repoPath: string,
+  taskId: string,
+  entry: { timestamp: number; hash: string; subject: string },
+): Promise<void> {
+  await mkdir(taskDir(repoPath, taskId), { recursive: true });
+  await appendFile(
+    journalPath(repoPath, taskId),
+    `${entry.timestamp} ${entry.hash} ${entry.subject}\n`,
+    'utf8',
+  );
 }
 
 /** Convert the legacy index-keyed runtime into taskId-keyed tasks. */

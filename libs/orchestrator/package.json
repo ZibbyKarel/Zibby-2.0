@@ -11,6 +11,7 @@
   "dependencies": {
     "@nightcoder/shared-types": "workspace:*",
     "@nightcoder/claude-runner": "workspace:*",
-    "@nightcoder/github": "workspace:*"
+    "@nightcoder/github": "workspace:*",
+    "@nightcoder/project-state": "workspace:*"
   }
 }

@@ -4,15 +4,21 @@ import path from 'node:path';
 import os from 'node:os';
 import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import {
+  appendJournalLine,
+  ensureTaskDir,
   initProject,
+  journalPath,
   loadProject,
   mergePlanOnReplan,
+  planPath,
   projectDir,
   runtimeToTasks,
   saveProject,
+  storyJsonPath,
   tasksToRuntime,
   updatePlan,
   updateTask,
+  writePlanMd,
 } from './project-state';
 
 let repo: string;
@@ -200,6 +206,36 @@ describe('updatePlan', () => {
     await updatePlan(repo, plan);
     const loaded = await loadProject(repo);
     expect(loaded?.brief).toBe('preserved');
+  });
+});
+
+describe('ensureTaskDir + story.json', () => {
+  it('writes story.json and creates the task directory', async () => {
+    await initProject(repo);
+    await ensureTaskDir(repo, plan.stories[0]);
+    const raw = await readFile(storyJsonPath(repo, 'add-login'), 'utf8');
+    const parsed = JSON.parse(raw);
+    expect(parsed.title).toBe('Add login');
+    expect(parsed.taskId).toBe('add-login');
+  });
+});
+
+describe('writePlanMd', () => {
+  it('writes the plan markdown with a trailing newline', async () => {
+    await initProject(repo);
+    await writePlanMd(repo, 'add-login', '# Plan\n\n1. do thing');
+    const contents = await readFile(planPath(repo, 'add-login'), 'utf8');
+    expect(contents).toBe('# Plan\n\n1. do thing\n');
+  });
+});
+
+describe('appendJournalLine', () => {
+  it('appends entries in the on-disk format', async () => {
+    await initProject(repo);
+    await appendJournalLine(repo, 'add-login', { timestamp: 100, hash: 'abc123', subject: 'initial' });
+    await appendJournalLine(repo, 'add-login', { timestamp: 200, hash: 'def456', subject: 'wire it up' });
+    const contents = await readFile(journalPath(repo, 'add-login'), 'utf8');
+    expect(contents).toBe('100 abc123 initial\n200 def456 wire it up\n');
   });
 });
 

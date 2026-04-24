@@ -7,6 +7,13 @@ export {
   mergePlanOnReplan,
   tasksToRuntime,
   runtimeToTasks,
+  ensureTaskDir,
+  writePlanMd,
+  appendJournalLine,
   projectDir,
+  taskDir,
+  journalPath,
+  planPath,
+  storyJsonPath,
   PROJECT_DIR,
 } from './project-state';
