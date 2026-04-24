@@ -31,6 +31,7 @@ import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
+  archiveDroppedTaskFolders,
   initProject,
   loadProject,
   mergePlanOnReplan,
@@ -461,6 +462,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
       const { [story.taskId]: _removed, ...remainingTasks } = project.tasks;
       void _removed;
       await saveProject(folderPath, { ...project, plan: updatedPlan, tasks: remainingTasks });
+      await archiveDroppedTaskFolders(folderPath, [story.taskId]).catch(() => {
+        // Archive is best-effort — branch is already deleted and state is saved.
+      });
 
       return { plan: updatedPlan, ...(branchDeletionWarning !== undefined ? { branchDeletionWarning } : {}) };
     }
