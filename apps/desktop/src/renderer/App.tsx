@@ -44,6 +44,7 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<'interrupted' | 'cancelled_error' | 'pending'>>(() => new Set());
   const [tick, setTick] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -205,12 +206,25 @@ export default function App() {
 
   const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime, interrupted), [plan, runtime, interrupted]);
 
+  const toggleFilter = useCallback((key: 'interrupted' | 'cancelled_error' | 'pending') => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
   const visible = useMemo(() => {
     const q = search.toLowerCase();
-    return tasks.filter((t) =>
-      !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
-    );
-  }, [tasks, search]);
+    return tasks.filter((t) => {
+      if (q && !t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false;
+      if (activeFilters.size === 0) return true;
+      if (activeFilters.has('interrupted') && t.interrupted) return true;
+      if (activeFilters.has('cancelled_error') && (t.status === 'cancelled' || t.status === 'failed')) return true;
+      if (activeFilters.has('pending') && (t.status === 'pending' || t.status === 'blocked')) return true;
+      return false;
+    });
+  }, [tasks, search, activeFilters]);
 
   const grouped = useMemo(() => {
     const out = { queue: [] as TaskVM[], running: [] as TaskVM[], review: [] as TaskVM[], done: [] as TaskVM[] };
@@ -469,6 +483,30 @@ export default function App() {
         <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
           {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
         </span>
+        <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
+        {([
+          { key: 'interrupted' as const,     label: 'Interrupted',      activeColor: 'var(--amber)',  activeBg: 'rgba(245,158,11,.12)',  activeBorder: 'rgba(245,158,11,.3)' },
+          { key: 'cancelled_error' as const, label: 'Cancelled / Error', activeColor: 'var(--rose)',   activeBg: 'rgba(244,63,94,.12)',   activeBorder: 'rgba(244,63,94,.3)'  },
+          { key: 'pending' as const,         label: 'Pending',          activeColor: 'var(--sky)',    activeBg: 'rgba(56,189,248,.12)',  activeBorder: 'rgba(56,189,248,.3)' },
+        ] as const).map(({ key, label, activeColor, activeBg, activeBorder }) => {
+          const isActive = activeFilters.has(key);
+          return (
+            <button
+              key={key}
+              onClick={() => toggleFilter(key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 9px',
+                borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                fontFamily: 'var(--mono)', whiteSpace: 'nowrap', transition: 'background .12s, border-color .12s, color .12s',
+                color: isActive ? activeColor : 'var(--text-2)',
+                background: isActive ? activeBg : 'transparent',
+                border: `1px solid ${isActive ? activeBorder : 'var(--border)'}`,
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
         <div style={{ flex: 1 }} />
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
