@@ -15,6 +15,8 @@ export type TaskVM = {
   id: string;
   taskId: string;
   index: number;
+  /** Persistent project-scoped numeric ID, null until first run. */
+  numericId: number | null;
   title: string;
   description: string;
   acceptance: string[];
@@ -56,6 +58,7 @@ export function toTasks(
       id: String(idx),
       taskId: story.taskId,
       index: idx,
+      numericId: story.numericId ?? null,
       title: story.title,
       description: story.description,
       acceptance: story.acceptanceCriteria,

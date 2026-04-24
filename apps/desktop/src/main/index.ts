@@ -206,10 +206,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
     IpcChannels.StartRun,
     async (_event, req: RunStartRequest): Promise<RunStartResult> => {
       try {
-        await updatePlan(req.folderPath, req.plan).catch(() => {});
-        const taskIdFor = (idx: number): string | undefined => req.plan.stories[idx]?.taskId;
+        const stampedPlan = await updatePlan(req.folderPath, req.plan).catch(() => req.plan);
+        const taskIdFor = (idx: number): string | undefined => stampedPlan.stories[idx]?.taskId;
         const handle = startPlanRun({
-          plan: req.plan,
+          plan: stampedPlan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
           completedIndices: req.completedIndices,
@@ -322,11 +322,11 @@ function registerIpc(getWebContents: () => WebContents | null) {
       if (storyIndex < 0) return { kind: 'error', message: `Task ${req.taskId} is not in the current plan` };
       const story = project.plan.stories[storyIndex];
       const task = project.tasks[req.taskId];
-      // Branch name is deterministic from (index+1)-<title-slug>; fall back to it
+      // Branch name is deterministic from <numericId>-<title-slug>; fall back to it
       // when an interrupt happened before the 'branch' event was persisted.
       // attachWorktree validates the branch/worktree actually exists and throws
       // otherwise — so an invalid inference surfaces as a clear error downstream.
-      const branch = task?.branch ?? `nightcoder/${slugify(`${storyIndex + 1}-${story.title}`)}`;
+      const branch = task?.branch ?? `nightcoder/${slugify(`${story.numericId ?? storyIndex + 1}-${story.title}`)}`;
       // If the interrupt happened after claude finished (status=pushing), skip
       // rerunning the whole session — just redo the push + PR step.
       const pushOnly = task?.status === 'pushing';
@@ -417,7 +417,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
     // RunEvents remain the source of truth for actively running tasks; this
     // pathway handles brief/plan edits and renderer-driven status tweaks.
     const current = await loadProject(state.folderPath);
-    const base = current ?? { version: 1 as const, brief: '', plan: state.plan, tasks: {} };
+    const base = current ?? { version: 1 as const, brief: '', plan: state.plan, tasks: {}, nextTaskNum: 1 };
     const nextBrief = state.brief ?? base.brief;
     const merged = mergePlanOnReplan(base, state.plan);
     const nextTasks = state.runtime ? runtimeToTasks(merged.plan, state.runtime, merged.tasks) : merged.tasks;
