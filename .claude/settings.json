@@ -10,6 +10,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f graphify-out/graph.json ] && graphify update . >/tmp/graphify-update.log 2>&1 || true",
+            "async": true,
+            "timeout": 120
+          }
+        ]
+      }
     ]
   }
 }

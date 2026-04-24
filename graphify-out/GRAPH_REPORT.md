@@ -1,11 +1,11 @@
 # Graph Report - /Users/zibby/Workspace/Zibby-2.0  (2026-04-24)
 
 ## Corpus Check
-- 62 files · ~130,783 words
+- 62 files · ~131,751 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 526 nodes · 1562 edges · 52 communities detected
+- 527 nodes · 1563 edges · 52 communities detected
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -91,35 +91,35 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
-Nodes (88): ad(), ap(), as(), b(), Bo(), Bt(), ce(), cp() (+80 more)
+Nodes (71): ad(), an(), at(), bd(), Bt(), cd(), cp(), cr() (+63 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.08
-Nodes (79): $a(), aa(), ac(), Ao(), bc(), be(), bi(), c() (+71 more)
+Cohesion: 0.07
+Nodes (81): $a(), aa(), ac(), Ao(), bc(), be(), bi(), c() (+73 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.12
-Nodes (43): Al(), at(), bl(), cl(), dl(), ds(), el(), ep() (+35 more)
+Cohesion: 0.07
+Nodes (54): as(), b(), Bo(), bs(), ce(), cs(), De(), Do() (+46 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.08
-Nodes (42): bs(), cs(), dd(), di(), Do(), es(), fs(), Fu() (+34 more)
+Cohesion: 0.12
+Nodes (41): Al(), ap(), bl(), cl(), di(), dl(), el(), en() (+33 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.13
-Nodes (40): $(), af(), an(), cf(), cn(), df(), ef(), en() (+32 more)
+Cohesion: 0.16
+Nodes (38): $(), af(), cf(), cn(), df(), ef(), fd(), ff() (+30 more)
 
 ### Community 5 - "Community 5"
+Cohesion: 0.11
+Nodes (35): Au(), bu(), ct(), Cu(), Eu(), Fr(), fs(), ft() (+27 more)
+
+### Community 6 - "Community 6"
 Cohesion: 0.07
 Nodes (7): DetailsView(), TaskDrawer(), fmtCountdown(), fmtDuration(), UsageMini(), TaskCard(), fmtNum()
 
-### Community 6 - "Community 6"
+### Community 7 - "Community 7"
 Cohesion: 0.1
 Nodes (19): isStoryActive(), key(), tryClaimStory(), buildPrBody(), buildPrompt(), executeStory(), On(), commitAllIfDirty() (+11 more)
-
-### Community 7 - "Community 7"
-Cohesion: 0.16
-Nodes (28): Au(), bd(), bu(), cd(), Cu(), Eu(), ft(), gu() (+20 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.14
@@ -170,7 +170,7 @@ Cohesion: 1.0
 Nodes (2): applyUsage(), toViewUsage()
 
 ### Community 20 - "Community 20"
-Cohesion: 1.0
+Cohesion: 0.67
 Nodes (0): 
 
 ### Community 21 - "Community 21"
@@ -298,17 +298,15 @@ Cohesion: 1.0
 Nodes (0): 
 
 ## Knowledge Gaps
-- **Thin community `Community 20`** (2 nodes): `makeCtx()`, `context-optimizer.test.ts`
+- **Thin community `Community 21`** (2 nodes): `makeCtx()`, `context-optimizer.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 21`** (2 nodes): `makeStory()`, `dag.test.ts`
+- **Thin community `Community 22`** (2 nodes): `makeStory()`, `dag.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 22`** (2 nodes): `runSingleStory()`, `runner.ts`
+- **Thin community `Community 23`** (2 nodes): `runSingleStory()`, `runner.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 23`** (2 nodes): `App()`, `App.tsx`
+- **Thin community `Community 24`** (2 nodes): `App()`, `App.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (2 nodes): `onKey()`, `CommandPalette.tsx`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (2 nodes): `Icon()`, `icons.tsx`
+- **Thin community `Community 25`** (2 nodes): `onKey()`, `CommandPalette.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 26`** (2 nodes): `onKey()`, `AddTaskDialog.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -366,17 +364,17 @@ Nodes (0):
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `On()` connect `Community 6` to `Community 0`, `Community 4`?**
-  _High betweenness centrality (0.068) - this node is a cross-community bridge._
+- **Why does `On()` connect `Community 7` to `Community 0`, `Community 4`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
-- **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
 - **Should `Community 5` be split into smaller, more focused modules?**
+  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
+- **Should `Community 6` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._

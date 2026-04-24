@@ -54,7 +54,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/task-card.jsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_design_task_card_jsx",
-      "community": 5,
+      "community": 6,
       "norm_label": "task-card.jsx"
     },
     {
@@ -63,7 +63,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/task-card.jsx",
       "source_location": "L7",
       "id": "task_card_taskcard",
-      "community": 5,
+      "community": 6,
       "norm_label": "taskcard()"
     },
     {
@@ -72,7 +72,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/task-card.jsx",
       "source_location": "L115",
       "id": "task_card_column",
-      "community": 5,
+      "community": 6,
       "norm_label": "column()"
     },
     {
@@ -180,7 +180,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_design_shell_jsx",
-      "community": 5,
+      "community": 6,
       "norm_label": "shell.jsx"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L7",
       "id": "shell_addtaskdialog",
-      "community": 5,
+      "community": 6,
       "norm_label": "addtaskdialog()"
     },
     {
@@ -198,7 +198,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L122",
       "id": "shell_field",
-      "community": 5,
+      "community": 6,
       "norm_label": "field()"
     },
     {
@@ -207,7 +207,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L138",
       "id": "shell_commandpalette",
-      "community": 5,
+      "community": 6,
       "norm_label": "commandpalette()"
     },
     {
@@ -216,7 +216,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L225",
       "id": "shell_toasts",
-      "community": 5,
+      "community": 6,
       "norm_label": "toasts()"
     },
     {
@@ -225,7 +225,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L260",
       "id": "shell_usagepanel",
-      "community": 5,
+      "community": 6,
       "norm_label": "usagepanel()"
     },
     {
@@ -234,7 +234,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L275",
       "id": "shell_usagemini",
-      "community": 5,
+      "community": 6,
       "norm_label": "usagemini()"
     },
     {
@@ -243,7 +243,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/shell.jsx",
       "source_location": "L293",
       "id": "shell_dependencygraph",
-      "community": 5,
+      "community": 6,
       "norm_label": "dependencygraph()"
     },
     {
@@ -252,7 +252,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_design_drawer_jsx",
-      "community": 5,
+      "community": 6,
       "norm_label": "drawer.jsx"
     },
     {
@@ -261,7 +261,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L7",
       "id": "drawer_taskdrawer",
-      "community": 5,
+      "community": 6,
       "norm_label": "taskdrawer()"
     },
     {
@@ -270,7 +270,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L105",
       "id": "drawer_logsview",
-      "community": 5,
+      "community": 6,
       "norm_label": "logsview()"
     },
     {
@@ -279,7 +279,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L149",
       "id": "drawer_diffview",
-      "community": 5,
+      "community": 6,
       "norm_label": "diffview()"
     },
     {
@@ -288,7 +288,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L167",
       "id": "drawer_difffile",
-      "community": 5,
+      "community": 6,
       "norm_label": "difffile()"
     },
     {
@@ -297,7 +297,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L213",
       "id": "drawer_detailsview",
-      "community": 5,
+      "community": 6,
       "norm_label": "detailsview()"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L267",
       "id": "drawer_section",
-      "community": 5,
+      "community": 6,
       "norm_label": "section()"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/drawer.jsx",
       "source_location": "L276",
       "id": "drawer_kv",
-      "community": 5,
+      "community": 6,
       "norm_label": "kv()"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_design_primitives_jsx",
-      "community": 5,
+      "community": 6,
       "norm_label": "primitives.jsx"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L7",
       "id": "primitives_icon",
-      "community": 5,
+      "community": 6,
       "norm_label": "icon()"
     },
     {
@@ -459,7 +459,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L47",
       "id": "primitives_btn",
-      "community": 5,
+      "community": 6,
       "norm_label": "btn()"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L74",
       "id": "primitives_statuspill",
-      "community": 5,
+      "community": 6,
       "norm_label": "statuspill()"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L97",
       "id": "primitives_chip",
-      "community": 5,
+      "community": 6,
       "norm_label": "chip()"
     },
     {
@@ -486,7 +486,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L116",
       "id": "primitives_usagering",
-      "community": 5,
+      "community": 6,
       "norm_label": "usagering()"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L141",
       "id": "primitives_fmtduration",
-      "community": 5,
+      "community": 6,
       "norm_label": "fmtduration()"
     },
     {
@@ -504,7 +504,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L150",
       "id": "primitives_fmtcountdown",
-      "community": 5,
+      "community": 6,
       "norm_label": "fmtcountdown()"
     },
     {
@@ -513,7 +513,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/design/primitives.jsx",
       "source_location": "L161",
       "id": "primitives_fmtnum",
-      "community": 5,
+      "community": 6,
       "norm_label": "fmtnum()"
     },
     {
@@ -585,7 +585,7 @@
       "source_file": "libs/claude-runner/src/run.ts",
       "source_location": "L1",
       "id": "libs_claude_runner_src_run_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "run.ts"
     },
     {
@@ -594,7 +594,7 @@
       "source_file": "libs/claude-runner/src/run.ts",
       "source_location": "L32",
       "id": "run_runclaudeinworktree",
-      "community": 6,
+      "community": 7,
       "norm_label": "runclaudeinworktree()"
     },
     {
@@ -711,7 +711,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_worktrees_1_zobrazeni_usage_libs_github_src_index_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "index.ts"
     },
     {
@@ -720,7 +720,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L14",
       "id": "index_hasanycommits",
-      "community": 6,
+      "community": 7,
       "norm_label": "hasanycommits()"
     },
     {
@@ -729,7 +729,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L23",
       "id": "index_gitstatusisclean",
-      "community": 6,
+      "community": 7,
       "norm_label": "gitstatusisclean()"
     },
     {
@@ -738,7 +738,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L32",
       "id": "index_commitallifdirty",
-      "community": 6,
+      "community": 7,
       "norm_label": "commitallifdirty()"
     },
     {
@@ -747,7 +747,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L44",
       "id": "index_gitpush",
-      "community": 6,
+      "community": 7,
       "norm_label": "gitpush()"
     },
     {
@@ -756,7 +756,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L63",
       "id": "index_ghcreatepr",
-      "community": 6,
+      "community": 7,
       "norm_label": "ghcreatepr()"
     },
     {
@@ -765,7 +765,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L78",
       "id": "index_deletestorybranch",
-      "community": 6,
+      "community": 7,
       "norm_label": "deletestorybranch()"
     },
     {
@@ -774,7 +774,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/.worktrees/1-zobrazeni-usage/libs/github/src/index.ts",
       "source_location": "L100",
       "id": "index_ghauthstatus",
-      "community": 6,
+      "community": 7,
       "norm_label": "ghauthstatus()"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/ai-refiner/src/context-optimizer.test.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_ai_refiner_src_context_optimizer_test_ts",
-      "community": 20,
+      "community": 21,
       "norm_label": "context-optimizer.test.ts"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/ai-refiner/src/context-optimizer.test.ts",
       "source_location": "L57",
       "id": "context_optimizer_test_makectx",
-      "community": 20,
+      "community": 21,
       "norm_label": "makectx()"
     },
     {
@@ -1035,7 +1035,7 @@
       "source_file": "libs/orchestrator/src/slug.ts",
       "source_location": "L1",
       "id": "libs_orchestrator_src_slug_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "slug.ts"
     },
     {
@@ -1044,7 +1044,7 @@
       "source_file": "libs/orchestrator/src/slug.ts",
       "source_location": "L1",
       "id": "slug_slugify",
-      "community": 6,
+      "community": 7,
       "norm_label": "slugify()"
     },
     {
@@ -1053,7 +1053,7 @@
       "source_file": "libs/orchestrator/src/slug.ts",
       "source_location": "L12",
       "id": "slug_uniqueslug",
-      "community": 6,
+      "community": 7,
       "norm_label": "uniqueslug()"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_orchestrator_src_worktree_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "worktree.ts"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L16",
       "id": "worktree_exists",
-      "community": 6,
+      "community": 7,
       "norm_label": "exists()"
     },
     {
@@ -1089,7 +1089,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L25",
       "id": "worktree_mirrorlocalaisettings",
-      "community": 6,
+      "community": 7,
       "norm_label": "mirrorlocalaisettings()"
     },
     {
@@ -1098,7 +1098,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L47",
       "id": "worktree_detectbasebranch",
-      "community": 6,
+      "community": 7,
       "norm_label": "detectbasebranch()"
     },
     {
@@ -1107,7 +1107,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L80",
       "id": "worktree_refexists",
-      "community": 6,
+      "community": 7,
       "norm_label": "refexists()"
     },
     {
@@ -1116,7 +1116,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L89",
       "id": "worktree_nextfreename",
-      "community": 6,
+      "community": 7,
       "norm_label": "nextfreename()"
     },
     {
@@ -1125,7 +1125,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/worktree.ts",
       "source_location": "L105",
       "id": "worktree_createworktree",
-      "community": 6,
+      "community": 7,
       "norm_label": "createworktree()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/dag.test.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_orchestrator_src_dag_test_ts",
-      "community": 21,
+      "community": 22,
       "norm_label": "dag.test.ts"
     },
     {
@@ -1179,7 +1179,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/dag.test.ts",
       "source_location": "L60",
       "id": "dag_test_makestory",
-      "community": 21,
+      "community": 22,
       "norm_label": "makestory()"
     },
     {
@@ -1188,7 +1188,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/active-stories.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_orchestrator_src_active_stories_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "active-stories.ts"
     },
     {
@@ -1197,7 +1197,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/active-stories.ts",
       "source_location": "L3",
       "id": "active_stories_key",
-      "community": 6,
+      "community": 7,
       "norm_label": "key()"
     },
     {
@@ -1206,7 +1206,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/active-stories.ts",
       "source_location": "L7",
       "id": "active_stories_tryclaimstory",
-      "community": 6,
+      "community": 7,
       "norm_label": "tryclaimstory()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/active-stories.ts",
       "source_location": "L16",
       "id": "active_stories_isstoryactive",
-      "community": 6,
+      "community": 7,
       "norm_label": "isstoryactive()"
     },
     {
@@ -1287,7 +1287,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/runner.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_orchestrator_src_runner_ts",
-      "community": 22,
+      "community": 23,
       "norm_label": "runner.ts"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/runner.ts",
       "source_location": "L10",
       "id": "runner_runsinglestory",
-      "community": 22,
+      "community": 23,
       "norm_label": "runsinglestory()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/execute-story.ts",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_libs_orchestrator_src_execute_story_ts",
-      "community": 6,
+      "community": 7,
       "norm_label": "execute-story.ts"
     },
     {
@@ -1314,7 +1314,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/execute-story.ts",
       "source_location": "L21",
       "id": "execute_story_buildprompt",
-      "community": 6,
+      "community": 7,
       "norm_label": "buildprompt()"
     },
     {
@@ -1323,7 +1323,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/execute-story.ts",
       "source_location": "L41",
       "id": "execute_story_buildprbody",
-      "community": 6,
+      "community": 7,
       "norm_label": "buildprbody()"
     },
     {
@@ -1332,7 +1332,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/libs/orchestrator/src/execute-story.ts",
       "source_location": "L56",
       "id": "execute_story_executestory",
-      "community": 6,
+      "community": 7,
       "norm_label": "executestory()"
     },
     {
@@ -1377,7 +1377,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_t",
-      "community": 0,
+      "community": 2,
       "norm_label": "t()"
     },
     {
@@ -1386,7 +1386,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_n",
-      "community": 0,
+      "community": 2,
       "norm_label": "n()"
     },
     {
@@ -1404,7 +1404,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_v",
-      "community": 0,
+      "community": 2,
       "norm_label": "v()"
     },
     {
@@ -1422,7 +1422,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_b",
-      "community": 0,
+      "community": 2,
       "norm_label": "b()"
     },
     {
@@ -1431,7 +1431,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_s",
-      "community": 1,
+      "community": 4,
       "norm_label": "s()"
     },
     {
@@ -1440,7 +1440,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_ne",
-      "community": 0,
+      "community": 5,
       "norm_label": "ne()"
     },
     {
@@ -1449,7 +1449,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_re",
-      "community": 0,
+      "community": 2,
       "norm_label": "re()"
     },
     {
@@ -1458,7 +1458,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_w",
-      "community": 0,
+      "community": 2,
       "norm_label": "w()"
     },
     {
@@ -1476,7 +1476,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_oe",
-      "community": 0,
+      "community": 2,
       "norm_label": "oe()"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_ce",
-      "community": 0,
+      "community": 2,
       "norm_label": "ce()"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_le",
-      "community": 0,
+      "community": 2,
       "norm_label": "le()"
     },
     {
@@ -1512,7 +1512,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_ue",
-      "community": 0,
+      "community": 2,
       "norm_label": "ue()"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_r",
-      "community": 3,
+      "community": 2,
       "norm_label": "r()"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_x",
-      "community": 0,
+      "community": 2,
       "norm_label": "x()"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_l",
-      "community": 2,
+      "community": 0,
       "norm_label": "l()"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_u",
-      "community": 2,
+      "community": 0,
       "norm_label": "u()"
     },
     {
@@ -1584,7 +1584,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_f",
-      "community": 2,
+      "community": 0,
       "norm_label": "f()"
     },
     {
@@ -1593,7 +1593,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_p",
-      "community": 2,
+      "community": 0,
       "norm_label": "p()"
     },
     {
@@ -1602,7 +1602,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_me",
-      "community": 7,
+      "community": 0,
       "norm_label": "me()"
     },
     {
@@ -1647,7 +1647,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L1",
       "id": "index_c7xtax59_te",
-      "community": 0,
+      "community": 2,
       "norm_label": "te()"
     },
     {
@@ -1656,7 +1656,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L3",
       "id": "index_c7xtax59_de",
-      "community": 0,
+      "community": 2,
       "norm_label": "de()"
     },
     {
@@ -1665,7 +1665,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L6",
       "id": "index_c7xtax59_ke",
-      "community": 0,
+      "community": 2,
       "norm_label": "ke()"
     },
     {
@@ -1683,7 +1683,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_tt",
-      "community": 7,
+      "community": 0,
       "norm_label": "tt()"
     },
     {
@@ -1692,7 +1692,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_nt",
-      "community": 7,
+      "community": 5,
       "norm_label": "nt()"
     },
     {
@@ -1701,7 +1701,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_rt",
-      "community": 4,
+      "community": 0,
       "norm_label": "rt()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_it",
-      "community": 3,
+      "community": 5,
       "norm_label": "it()"
     },
     {
@@ -1719,7 +1719,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_at",
-      "community": 2,
+      "community": 0,
       "norm_label": "at()"
     },
     {
@@ -1737,7 +1737,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_st",
-      "community": 0,
+      "community": 5,
       "norm_label": "st()"
     },
     {
@@ -1746,7 +1746,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ct",
-      "community": 0,
+      "community": 5,
       "norm_label": "ct()"
     },
     {
@@ -1755,7 +1755,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_lt",
-      "community": 3,
+      "community": 5,
       "norm_label": "lt()"
     },
     {
@@ -1782,7 +1782,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ft",
-      "community": 7,
+      "community": 5,
       "norm_label": "ft()"
     },
     {
@@ -1908,7 +1908,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_en",
-      "community": 4,
+      "community": 3,
       "norm_label": "en()"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_an",
-      "community": 4,
+      "community": 0,
       "norm_label": "an()"
     },
     {
@@ -2007,7 +2007,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_on",
-      "community": 6,
+      "community": 7,
       "norm_label": "on()"
     },
     {
@@ -2169,7 +2169,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fr",
-      "community": 0,
+      "community": 5,
       "norm_label": "fr()"
     },
     {
@@ -2196,7 +2196,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_jr",
-      "community": 3,
+      "community": 2,
       "norm_label": "jr()"
     },
     {
@@ -2214,7 +2214,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_li",
-      "community": 7,
+      "community": 5,
       "norm_label": "li()"
     },
     {
@@ -2241,7 +2241,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fi",
-      "community": 1,
+      "community": 3,
       "norm_label": "fi()"
     },
     {
@@ -2250,7 +2250,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_pi",
-      "community": 7,
+      "community": 3,
       "norm_label": "pi()"
     },
     {
@@ -2259,7 +2259,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_mi",
-      "community": 1,
+      "community": 3,
       "norm_label": "mi()"
     },
     {
@@ -2439,7 +2439,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_sa",
-      "community": 1,
+      "community": 2,
       "norm_label": "sa()"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ha",
-      "community": 3,
+      "community": 5,
       "norm_label": "ha()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ga",
-      "community": 2,
+      "community": 3,
       "norm_label": "ga()"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_xa",
-      "community": 3,
+      "community": 1,
       "norm_label": "xa()"
     },
     {
@@ -2529,7 +2529,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fa",
-      "community": 0,
+      "community": 2,
       "norm_label": "fa()"
     },
     {
@@ -2547,7 +2547,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_wa",
-      "community": 0,
+      "community": 2,
       "norm_label": "wa()"
     },
     {
@@ -2574,7 +2574,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_za",
-      "community": 2,
+      "community": 3,
       "norm_label": "za()"
     },
     {
@@ -2583,7 +2583,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_qa",
-      "community": 3,
+      "community": 5,
       "norm_label": "qa()"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_vo",
-      "community": 3,
+      "community": 2,
       "norm_label": "vo()"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_do",
-      "community": 3,
+      "community": 2,
       "norm_label": "do()"
     },
     {
@@ -2727,7 +2727,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ko",
-      "community": 1,
+      "community": 2,
       "norm_label": "ko()"
     },
     {
@@ -2745,7 +2745,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_jo",
-      "community": 3,
+      "community": 2,
       "norm_label": "jo()"
     },
     {
@@ -2754,7 +2754,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fo",
-      "community": 0,
+      "community": 2,
       "norm_label": "fo()"
     },
     {
@@ -2772,7 +2772,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_bo",
-      "community": 0,
+      "community": 2,
       "norm_label": "bo()"
     },
     {
@@ -2781,7 +2781,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_uo",
-      "community": 3,
+      "community": 2,
       "norm_label": "uo()"
     },
     {
@@ -2790,7 +2790,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_wo",
-      "community": 3,
+      "community": 2,
       "norm_label": "wo()"
     },
     {
@@ -2799,7 +2799,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_qo",
-      "community": 3,
+      "community": 2,
       "norm_label": "qo()"
     },
     {
@@ -2817,7 +2817,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_xo",
-      "community": 0,
+      "community": 2,
       "norm_label": "xo()"
     },
     {
@@ -2826,7 +2826,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_es",
-      "community": 3,
+      "community": 2,
       "norm_label": "es()"
     },
     {
@@ -2835,7 +2835,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ts",
-      "community": 3,
+      "community": 2,
       "norm_label": "ts()"
     },
     {
@@ -2844,7 +2844,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ns",
-      "community": 3,
+      "community": 2,
       "norm_label": "ns()"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_rs",
-      "community": 3,
+      "community": 2,
       "norm_label": "rs()"
     },
     {
@@ -2862,7 +2862,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_is",
-      "community": 3,
+      "community": 2,
       "norm_label": "is()"
     },
     {
@@ -2871,7 +2871,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_as",
-      "community": 0,
+      "community": 2,
       "norm_label": "as()"
     },
     {
@@ -2880,7 +2880,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_os",
-      "community": 3,
+      "community": 2,
       "norm_label": "os()"
     },
     {
@@ -2889,7 +2889,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ss",
-      "community": 3,
+      "community": 2,
       "norm_label": "ss()"
     },
     {
@@ -2898,7 +2898,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_cs",
-      "community": 3,
+      "community": 2,
       "norm_label": "cs()"
     },
     {
@@ -2907,7 +2907,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ls",
-      "community": 3,
+      "community": 2,
       "norm_label": "ls()"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_us",
-      "community": 3,
+      "community": 2,
       "norm_label": "us()"
     },
     {
@@ -2934,7 +2934,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fs",
-      "community": 3,
+      "community": 5,
       "norm_label": "fs()"
     },
     {
@@ -2943,7 +2943,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ps",
-      "community": 3,
+      "community": 2,
       "norm_label": "ps()"
     },
     {
@@ -2952,7 +2952,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ms",
-      "community": 3,
+      "community": 1,
       "norm_label": "ms()"
     },
     {
@@ -2961,7 +2961,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_hs",
-      "community": 3,
+      "community": 2,
       "norm_label": "hs()"
     },
     {
@@ -2979,7 +2979,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_vs",
-      "community": 3,
+      "community": 2,
       "norm_label": "vs()"
     },
     {
@@ -2988,7 +2988,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ys",
-      "community": 3,
+      "community": 0,
       "norm_label": "ys()"
     },
     {
@@ -2997,7 +2997,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_bs",
-      "community": 3,
+      "community": 2,
       "norm_label": "bs()"
     },
     {
@@ -3006,7 +3006,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_xs",
-      "community": 3,
+      "community": 2,
       "norm_label": "xs()"
     },
     {
@@ -3015,7 +3015,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ws",
-      "community": 3,
+      "community": 2,
       "norm_label": "ws()"
     },
     {
@@ -3024,7 +3024,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ks",
-      "community": 0,
+      "community": 2,
       "norm_label": "ks()"
     },
     {
@@ -3033,7 +3033,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_js",
-      "community": 0,
+      "community": 2,
       "norm_label": "js()"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_zs",
-      "community": 2,
+      "community": 3,
       "norm_label": "zs()"
     },
     {
@@ -3051,7 +3051,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_qs",
-      "community": 0,
+      "community": 2,
       "norm_label": "qs()"
     },
     {
@@ -3069,7 +3069,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_tc",
-      "community": 3,
+      "community": 1,
       "norm_label": "tc()"
     },
     {
@@ -3087,7 +3087,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_rc",
-      "community": 3,
+      "community": 1,
       "norm_label": "rc()"
     },
     {
@@ -3195,7 +3195,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_gc",
-      "community": 2,
+      "community": 3,
       "norm_label": "gc()"
     },
     {
@@ -3258,7 +3258,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_kc",
-      "community": 2,
+      "community": 3,
       "norm_label": "kc()"
     },
     {
@@ -3267,7 +3267,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_jc",
-      "community": 2,
+      "community": 3,
       "norm_label": "jc()"
     },
     {
@@ -3276,7 +3276,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_zc",
-      "community": 2,
+      "community": 3,
       "norm_label": "zc()"
     },
     {
@@ -3285,7 +3285,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_qc",
-      "community": 2,
+      "community": 3,
       "norm_label": "qc()"
     },
     {
@@ -3294,7 +3294,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_el",
-      "community": 2,
+      "community": 3,
       "norm_label": "el()"
     },
     {
@@ -3303,7 +3303,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_tl",
-      "community": 2,
+      "community": 3,
       "norm_label": "tl()"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_nl",
-      "community": 2,
+      "community": 0,
       "norm_label": "nl()"
     },
     {
@@ -3321,7 +3321,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_rl",
-      "community": 2,
+      "community": 3,
       "norm_label": "rl()"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_sl",
-      "community": 2,
+      "community": 3,
       "norm_label": "sl()"
     },
     {
@@ -3339,7 +3339,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_cl",
-      "community": 2,
+      "community": 3,
       "norm_label": "cl()"
     },
     {
@@ -3348,7 +3348,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ll",
-      "community": 2,
+      "community": 3,
       "norm_label": "ll()"
     },
     {
@@ -3357,7 +3357,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_dl",
-      "community": 2,
+      "community": 3,
       "norm_label": "dl()"
     },
     {
@@ -3366,7 +3366,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fl",
-      "community": 2,
+      "community": 3,
       "norm_label": "fl()"
     },
     {
@@ -3375,7 +3375,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_pl",
-      "community": 2,
+      "community": 3,
       "norm_label": "pl()"
     },
     {
@@ -3384,7 +3384,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ml",
-      "community": 2,
+      "community": 3,
       "norm_label": "ml()"
     },
     {
@@ -3411,7 +3411,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_yl",
-      "community": 2,
+      "community": 3,
       "norm_label": "yl()"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_bl",
-      "community": 2,
+      "community": 3,
       "norm_label": "bl()"
     },
     {
@@ -3429,7 +3429,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_xl",
-      "community": 2,
+      "community": 3,
       "norm_label": "xl()"
     },
     {
@@ -3438,7 +3438,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_wl",
-      "community": 2,
+      "community": 3,
       "norm_label": "wl()"
     },
     {
@@ -3447,7 +3447,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ol",
-      "community": 2,
+      "community": 3,
       "norm_label": "ol()"
     },
     {
@@ -3456,7 +3456,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_kl",
-      "community": 2,
+      "community": 3,
       "norm_label": "kl()"
     },
     {
@@ -3465,7 +3465,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_al",
-      "community": 2,
+      "community": 3,
       "norm_label": "al()"
     },
     {
@@ -3474,7 +3474,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_il",
-      "community": 2,
+      "community": 3,
       "norm_label": "il()"
     },
     {
@@ -3483,7 +3483,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_pu",
-      "community": 3,
+      "community": 1,
       "norm_label": "pu()"
     },
     {
@@ -3492,7 +3492,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_mu",
-      "community": 3,
+      "community": 2,
       "norm_label": "mu()"
     },
     {
@@ -3501,7 +3501,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_hu",
-      "community": 7,
+      "community": 5,
       "norm_label": "hu()"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_gu",
-      "community": 7,
+      "community": 5,
       "norm_label": "gu()"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_vu",
-      "community": 7,
+      "community": 5,
       "norm_label": "vu()"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_yu",
-      "community": 1,
+      "community": 5,
       "norm_label": "yu()"
     },
     {
@@ -3537,7 +3537,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_bu",
-      "community": 7,
+      "community": 5,
       "norm_label": "bu()"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_xu",
-      "community": 7,
+      "community": 5,
       "norm_label": "xu()"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_su",
-      "community": 7,
+      "community": 5,
       "norm_label": "su()"
     },
     {
@@ -3564,7 +3564,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_cu",
-      "community": 7,
+      "community": 5,
       "norm_label": "cu()"
     },
     {
@@ -3573,7 +3573,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_wu",
-      "community": 2,
+      "community": 3,
       "norm_label": "wu()"
     },
     {
@@ -3582,7 +3582,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_tu",
-      "community": 7,
+      "community": 5,
       "norm_label": "tu()"
     },
     {
@@ -3591,7 +3591,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_eu",
-      "community": 7,
+      "community": 5,
       "norm_label": "eu()"
     },
     {
@@ -3609,7 +3609,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ou",
-      "community": 7,
+      "community": 5,
       "norm_label": "ou()"
     },
     {
@@ -3618,7 +3618,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ku",
-      "community": 7,
+      "community": 5,
       "norm_label": "ku()"
     },
     {
@@ -3627,7 +3627,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_au",
-      "community": 7,
+      "community": 5,
       "norm_label": "au()"
     },
     {
@@ -3636,7 +3636,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ju",
-      "community": 0,
+      "community": 5,
       "norm_label": "ju()"
     },
     {
@@ -3654,7 +3654,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_fu",
-      "community": 3,
+      "community": 1,
       "norm_label": "fu()"
     },
     {
@@ -3663,7 +3663,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_iu",
-      "community": 3,
+      "community": 1,
       "norm_label": "iu()"
     },
     {
@@ -3672,7 +3672,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_lu",
-      "community": 7,
+      "community": 5,
       "norm_label": "lu()"
     },
     {
@@ -3681,7 +3681,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ru",
-      "community": 0,
+      "community": 5,
       "norm_label": "ru()"
     },
     {
@@ -3690,7 +3690,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_zu",
-      "community": 7,
+      "community": 5,
       "norm_label": "zu()"
     },
     {
@@ -3699,7 +3699,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_uu",
-      "community": 7,
+      "community": 5,
       "norm_label": "uu()"
     },
     {
@@ -3708,7 +3708,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_z",
-      "community": 2,
+      "community": 3,
       "norm_label": "z()"
     },
     {
@@ -3717,7 +3717,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_qu",
-      "community": 1,
+      "community": 5,
       "norm_label": "qu()"
     },
     {
@@ -3726,7 +3726,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_rd",
-      "community": 7,
+      "community": 5,
       "norm_label": "rd()"
     },
     {
@@ -3735,7 +3735,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_id",
-      "community": 7,
+      "community": 5,
       "norm_label": "id()"
     },
     {
@@ -3762,7 +3762,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_sd",
-      "community": 7,
+      "community": 0,
       "norm_label": "sd()"
     },
     {
@@ -3771,7 +3771,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_cd",
-      "community": 7,
+      "community": 0,
       "norm_label": "cd()"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_ld",
-      "community": 7,
+      "community": 5,
       "norm_label": "ld()"
     },
     {
@@ -3798,7 +3798,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_dd",
-      "community": 3,
+      "community": 1,
       "norm_label": "dd()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L8",
       "id": "index_c7xtax59_bd",
-      "community": 7,
+      "community": 0,
       "norm_label": "bd()"
     },
     {
@@ -3951,7 +3951,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_zd",
-      "community": 2,
+      "community": 1,
       "norm_label": "zd()"
     },
     {
@@ -3960,7 +3960,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_qd",
-      "community": 2,
+      "community": 3,
       "norm_label": "qd()"
     },
     {
@@ -4023,7 +4023,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_sf",
-      "community": 0,
+      "community": 2,
       "norm_label": "sf()"
     },
     {
@@ -4086,7 +4086,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_vf",
-      "community": 2,
+      "community": 0,
       "norm_label": "vf()"
     },
     {
@@ -4176,7 +4176,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_hf",
-      "community": 2,
+      "community": 3,
       "norm_label": "hf()"
     },
     {
@@ -4185,7 +4185,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_qf",
-      "community": 7,
+      "community": 5,
       "norm_label": "qf()"
     },
     {
@@ -4194,7 +4194,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_ep",
-      "community": 2,
+      "community": 0,
       "norm_label": "ep()"
     },
     {
@@ -4203,7 +4203,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_tp",
-      "community": 0,
+      "community": 3,
       "norm_label": "tp()"
     },
     {
@@ -4212,7 +4212,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_np",
-      "community": 2,
+      "community": 3,
       "norm_label": "np()"
     },
     {
@@ -4239,7 +4239,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_ap",
-      "community": 0,
+      "community": 3,
       "norm_label": "ap()"
     },
     {
@@ -4293,7 +4293,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_pp",
-      "community": 2,
+      "community": 0,
       "norm_label": "pp()"
     },
     {
@@ -4311,7 +4311,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L9",
       "id": "index_c7xtax59_wp",
-      "community": 0,
+      "community": 3,
       "norm_label": "wp()"
     },
     {
@@ -4356,7 +4356,7 @@
       "source_file": "apps/desktop/dist-renderer/assets/index-C7xtax59.js",
       "source_location": "L11",
       "id": "index_c7xtax59_ee",
-      "community": 0,
+      "community": 2,
       "norm_label": "ee()"
     },
     {
@@ -4365,7 +4365,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/App.tsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_app_tsx",
-      "community": 23,
+      "community": 24,
       "norm_label": "app.tsx"
     },
     {
@@ -4374,7 +4374,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/App.tsx",
       "source_location": "L30",
       "id": "app_app",
-      "community": 23,
+      "community": 24,
       "norm_label": "app()"
     },
     {
@@ -4491,7 +4491,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/CommandPalette.tsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_commandpalette_tsx",
-      "community": 24,
+      "community": 25,
       "norm_label": "commandpalette.tsx"
     },
     {
@@ -4500,7 +4500,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/CommandPalette.tsx",
       "source_location": "L41",
       "id": "commandpalette_onkey",
-      "community": 24,
+      "community": 25,
       "norm_label": "onkey()"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/icons.tsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_icons_tsx",
-      "community": 25,
+      "community": 20,
       "norm_label": "icons.tsx"
     },
     {
@@ -4527,8 +4527,17 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/icons.tsx",
       "source_location": "L47",
       "id": "icons_icon",
-      "community": 25,
+      "community": 20,
       "norm_label": "icon()"
+    },
+    {
+      "label": "NightCoderMark()",
+      "file_type": "code",
+      "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/icons.tsx",
+      "source_location": "L67",
+      "id": "icons_nightcodermark",
+      "community": 20,
+      "norm_label": "nightcodermark()"
     },
     {
       "label": "AddTaskDialog.tsx",
@@ -4554,7 +4563,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/TaskDrawer.tsx",
       "source_location": "L1",
       "id": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_taskdrawer_tsx",
-      "community": 5,
+      "community": 6,
       "norm_label": "taskdrawer.tsx"
     },
     {
@@ -4563,7 +4572,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/TaskDrawer.tsx",
       "source_location": "L24",
       "id": "taskdrawer_onkey",
-      "community": 5,
+      "community": 6,
       "norm_label": "onkey()"
     },
     {
@@ -4572,7 +4581,7 @@
       "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/TaskDrawer.tsx",
       "source_location": "L76",
       "id": "taskdrawer_fmtnum",
-      "community": 5,
+      "community": 6,
       "norm_label": "fmtnum()"
     },
     {
@@ -23241,6 +23250,18 @@
       "_tgt": "icons_icon",
       "source": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_icons_tsx",
       "target": "icons_icon",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/Users/zibby/Workspace/Zibby-2.0/apps/desktop/src/renderer/components/icons.tsx",
+      "source_location": "L67",
+      "weight": 1.0,
+      "_src": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_icons_tsx",
+      "_tgt": "icons_nightcodermark",
+      "source": "users_zibby_workspace_zibby_2_0_apps_desktop_src_renderer_components_icons_tsx",
+      "target": "icons_nightcodermark",
       "confidence_score": 1.0
     },
     {

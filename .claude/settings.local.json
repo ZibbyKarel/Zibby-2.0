@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(*)",
-      "WebFetch(domain:api.anthropic.com)"
+      "WebFetch(domain:api.anthropic.com)",
+      "Skill(update-config)"
     ]
   }
 }
