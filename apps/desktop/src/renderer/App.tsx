@@ -205,6 +205,7 @@ export default function App() {
   }, []);
 
   const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime, interrupted), [plan, runtime, interrupted]);
+  const hasRunnableTasks = tasks.some(t => t.status !== 'done' && t.status !== 'review');
 
   const toggleFilter = useCallback((key: 'interrupted' | 'cancelled_error' | 'pending') => {
     setActiveFilters((prev) => {
@@ -511,6 +512,7 @@ export default function App() {
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
+          disabled={!hasRunnableTasks}
           onClick={() => void runAll()}
         >
           Run all
