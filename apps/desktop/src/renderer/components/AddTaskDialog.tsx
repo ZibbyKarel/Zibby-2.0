@@ -115,8 +115,7 @@ export function AddTaskDialog({ open, onClose, onAdd }: Props) {
           </Field>
           <Field label="Model">
             <select value={model} onChange={(e) => setModel(e.target.value)} style={{ ...inputStyle, height: 32 }}>
-              <option value="">Default (sonnet)</option>
-              <option value="sonnet">Sonnet</option>
+              <option value="">Sonnet (default)</option>
               <option value="opus">Opus</option>
               <option value="haiku">Haiku</option>
             </select>
