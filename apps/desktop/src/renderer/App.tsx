@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 
-import { Icon } from './components/icons';
+import { Icon, NightCoderMark } from './components/icons';
 import { Btn, Chip } from './components/primitives';
 import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
@@ -329,13 +329,7 @@ export default function App() {
         background: 'var(--bg-1)', display: 'flex', alignItems: 'center', gap: 16,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: 'linear-gradient(135deg, var(--emerald), #059669)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#04140d', fontWeight: 700, fontSize: 14,
-            boxShadow: '0 0 0 1px rgba(16,185,129,.3), 0 0 20px rgba(16,185,129,.15)',
-          }}>N</div>
+          <NightCoderMark size={30} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>NightCoder</div>
             <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>multi-agent coding workflow</div>

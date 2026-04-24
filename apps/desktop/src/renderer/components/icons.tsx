@@ -61,3 +61,36 @@ export function Icon({ name, size = 16, stroke = 1.75 }: IconProps) {
     </svg>
   );
 }
+
+let _markIdCounter = 0;
+
+export function NightCoderMark({ size = 30, accent = '#10b981' }: { size?: number; accent?: string }) {
+  const id = React.useId ? React.useId() : String(_markIdCounter++);
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-label="NightCoder">
+      <defs>
+        <linearGradient id={`nc-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.95"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0.55"/>
+        </linearGradient>
+        <radialGradient id={`nc-glow-${id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.3"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0"/>
+        </radialGradient>
+        <mask id={`nc-crescent-${id}`}>
+          <rect width="32" height="32" fill="black"/>
+          <circle cx="16" cy="16" r="12" fill="white"/>
+          <circle cx="21" cy="12" r="10" fill="black"/>
+        </mask>
+      </defs>
+      <circle cx="16" cy="16" r="15" fill={`url(#nc-glow-${id})`}/>
+      <rect width="32" height="32" fill={`url(#nc-${id})`} mask={`url(#nc-crescent-${id})`}/>
+      <g stroke="#04140d" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M11 14.5 L8.5 17 L11 19.5"/>
+        <path d="M15.5 13 L13 21"/>
+      </g>
+      <circle cx="23" cy="22" r="1" fill={accent}/>
+      <circle cx="25" cy="9" r="0.7" fill={accent} opacity="0.7"/>
+    </svg>
+  );
+}
