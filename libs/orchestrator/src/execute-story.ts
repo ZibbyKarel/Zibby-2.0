@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 import path from 'node:path';
 import type { Story, StoryStatus } from '@nightcoder/shared-types/ipc';
 import { runClaudeInWorktree } from '@nightcoder/claude-runner';
-import { commitAllIfDirty, gitPush, ghCreatePr } from '@nightcoder/github';
+import { commitAllIfDirty, gitPush, ghCreatePr, ghFindPrForBranch } from '@nightcoder/github';
 import {
   appendJournalLine,
   ensureTaskDir,
@@ -170,6 +170,11 @@ export type ResumeContext = {
   branch: string;
   /** Full prompt body — callers should build this via `buildResumePrompt()`. */
   prompt: string;
+  /**
+   * When true, skip claude entirely and go straight to push+PR. Used when the
+   * task was interrupted in the `pushing` status — claude already finished.
+   */
+  pushOnly?: boolean;
 };
 
 export async function executeStory(args: {
@@ -256,51 +261,55 @@ export async function executeStory(args: {
       if (signal.cancelled && !abort.signal.aborted) abort.abort();
     }, 250);
 
-    const journalAbs = path.resolve(journalPath(repoPath, story.taskId));
-    let assistantText = '';
+    if (!resume?.pushOnly) {
+      const journalAbs = path.resolve(journalPath(repoPath, story.taskId));
+      let assistantText = '';
 
-    const handle = runClaudeInWorktree(
-      {
-        cwd: worktree.path,
-        prompt: resume ? resume.prompt : buildPrompt(story),
-        addDirs: [],
-        model: story.model,
-        env: { NIGHTCODER_JOURNAL_PATH: journalAbs },
-      },
-      {
-        onEvent: (e) => {
-          const tag = e.kind === 'tool' ? `tool: ${e.line}` : e.kind === 'text' ? e.line : e.kind === 'error' ? `error: ${e.line}` : e.line;
-          onEvent({ kind: 'log', stream: 'stdout', line: tag });
+      const handle = runClaudeInWorktree(
+        {
+          cwd: worktree.path,
+          prompt: resume ? resume.prompt : buildPrompt(story),
+          addDirs: [],
+          model: story.model,
+          env: { NIGHTCODER_JOURNAL_PATH: journalAbs },
         },
-        onStderr: (line) => onEvent({ kind: 'log', stream: 'stderr', line }),
-        onAssistantText: (text) => { assistantText += text; },
+        {
+          onEvent: (e) => {
+            const tag = e.kind === 'tool' ? `tool: ${e.line}` : e.kind === 'text' ? e.line : e.kind === 'error' ? `error: ${e.line}` : e.line;
+            onEvent({ kind: 'log', stream: 'stdout', line: tag });
+          },
+          onStderr: (line) => onEvent({ kind: 'log', stream: 'stderr', line }),
+          onAssistantText: (text) => { assistantText += text; },
+        }
+      );
+
+      const runnerCancelWatcher = setInterval(() => {
+        if (signal.cancelled) handle.cancel();
+      }, 250);
+
+      const result = await handle.result;
+      clearInterval(runnerCancelWatcher);
+
+      const planBlock = extractPlanBlock(assistantText);
+      if (planBlock) {
+        await writePlanMd(repoPath, story.taskId, planBlock).catch((e) => {
+          onEvent({ kind: 'log', stream: 'stderr', line: `plan.md write failed: ${e instanceof Error ? e.message : String(e)}` });
+        });
+        onEvent({ kind: 'log', stream: 'info', line: 'captured plan block → plan.md' });
       }
-    );
 
-    const runnerCancelWatcher = setInterval(() => {
-      if (signal.cancelled) handle.cancel();
-    }, 250);
-
-    const result = await handle.result;
-    clearInterval(runnerCancelWatcher);
-
-    const planBlock = extractPlanBlock(assistantText);
-    if (planBlock) {
-      await writePlanMd(repoPath, story.taskId, planBlock).catch((e) => {
-        onEvent({ kind: 'log', stream: 'stderr', line: `plan.md write failed: ${e instanceof Error ? e.message : String(e)}` });
-      });
-      onEvent({ kind: 'log', stream: 'info', line: 'captured plan block → plan.md' });
-    }
-
-    if (signal.cancelled) {
-      clearInterval(cancelWatcher);
-      onEvent({ kind: 'status', status: 'cancelled' });
-      return { success: false, error: 'cancelled' };
-    }
-    if (!result.success) {
-      clearInterval(cancelWatcher);
-      onEvent({ kind: 'status', status: 'failed' });
-      return { success: false, error: result.error ?? `stop_reason=${result.stopReason ?? '?'}` };
+      if (signal.cancelled) {
+        clearInterval(cancelWatcher);
+        onEvent({ kind: 'status', status: 'cancelled' });
+        return { success: false, error: 'cancelled' };
+      }
+      if (!result.success) {
+        clearInterval(cancelWatcher);
+        onEvent({ kind: 'status', status: 'failed' });
+        return { success: false, error: result.error ?? `stop_reason=${result.stopReason ?? '?'}` };
+      }
+    } else {
+      onEvent({ kind: 'log', stream: 'info', line: 'push-only resume — skipping claude, jumping straight to push + PR' });
     }
 
     try {
@@ -313,13 +322,20 @@ export async function executeStory(args: {
       if (madeCommit) onEvent({ kind: 'log', stream: 'info', line: 'flushed uncommitted changes into final commit' });
       await gitPush(worktree.path, worktree.branch, { signal: abort.signal });
       onEvent({ kind: 'log', stream: 'info', line: `pushed ${worktree.branch}` });
-      const prUrl = await ghCreatePr({
+      // A prior push-only resume or interrupted PR step may have already created
+      // the PR. Reuse it instead of re-running `gh pr create` (which errors on
+      // "a pull request already exists").
+      const existingPr = await ghFindPrForBranch({ cwd: worktree.path, branch: worktree.branch, signal: abort.signal });
+      const prUrl = existingPr ?? await ghCreatePr({
         cwd: worktree.path,
         title: story.title,
         body: buildPrBody(story),
         baseBranch,
         signal: abort.signal,
       });
+      if (existingPr) {
+        onEvent({ kind: 'log', stream: 'info', line: `reusing existing PR ${existingPr}` });
+      }
       onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
       onEvent({ kind: 'status', status: 'review' });
       reachedReview = true;

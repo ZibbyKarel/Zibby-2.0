@@ -75,6 +75,29 @@ export async function ghCreatePr(args: CreatePrArgs): Promise<string> {
   return match[0];
 }
 
+/**
+ * Return the URL of the existing open PR for `branch`, or null. Used during
+ * push-only resume to avoid "a pull request already exists" errors from
+ * re-running ghCreatePr after an interrupted push/PR step.
+ */
+export async function ghFindPrForBranch(args: {
+  cwd: string;
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<string | null> {
+  try {
+    const { stdout } = await execFileP(
+      'gh',
+      ['pr', 'list', '--head', args.branch, '--state', 'open', '--json', 'url', '--jq', '.[0].url // empty'],
+      { cwd: args.cwd, ...OPTS, signal: args.signal },
+    );
+    const url = stdout.trim();
+    return url.length > 0 ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteStoryBranch(args: {
   repoPath: string;
   branch: string;

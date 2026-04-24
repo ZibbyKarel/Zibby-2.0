@@ -326,6 +326,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
       // attachWorktree validates the branch/worktree actually exists and throws
       // otherwise — so an invalid inference surfaces as a clear error downstream.
       const branch = task?.branch ?? `nightcoder/${slugify(`${storyIndex + 1}-${story.title}`)}`;
+      // If the interrupt happened after claude finished (status=pushing), skip
+      // rerunning the whole session — just redo the push + PR step.
+      const pushOnly = task?.status === 'pushing';
 
       const [plan, journalTail] = await Promise.all([
         readPlanMd(folderPath, req.taskId),
@@ -339,7 +342,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         story,
         storyIndex,
         repoPath: folderPath,
-        resume: { branch, prompt },
+        resume: { branch, prompt, pushOnly },
         onEvent: (e) => {
           const wc = getWebContents();
           if (e.kind === 'status') {
