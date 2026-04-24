@@ -16,6 +16,7 @@ export const IpcChannels = {
   ListTaskFiles: 'nightcoder:listTaskFiles',
   RemoveTaskFile: 'nightcoder:removeTaskFile',
   GetTaskDiff: 'nightcoder:getTaskDiff',
+  SquashAndMergeTask: 'nightcoder:squashAndMergeTask',
 } as const;
 
 export const IpcEvents = {
@@ -259,6 +260,14 @@ export type GetTaskDiffRequest = {
   taskId: string;
 };
 
+export type SquashAndMergeTaskRequest = {
+  taskId: string;
+};
+
+export type SquashAndMergeTaskResult =
+  | { kind: 'ok'; mergedCommitTitle: string }
+  | { kind: 'error'; message: string };
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -280,4 +289,5 @@ export type IpcApi = {
   listTaskFiles: (req: ListTaskFilesRequest) => Promise<ListTaskFilesResult>;
   removeTaskFile: (req: RemoveTaskFileRequest) => Promise<RemoveTaskFileResult>;
   getTaskDiff: (req: GetTaskDiffRequest) => Promise<TaskDiffResult>;
+  squashAndMergeTask: (req: SquashAndMergeTaskRequest) => Promise<SquashAndMergeTaskResult>;
 };
