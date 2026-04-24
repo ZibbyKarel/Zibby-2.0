@@ -28,6 +28,8 @@ import {
   type RemoveTaskFileResult,
   type GetTaskDiffRequest,
   type TaskDiffResult,
+  type SquashAndMergeTaskRequest,
+  type SquashAndMergeTaskResult,
 } from '@nightcoder/shared-types/ipc';
 
 const api: IpcApi = {
@@ -74,6 +76,8 @@ const api: IpcApi = {
     ipcRenderer.invoke(IpcChannels.RemoveTaskFile, req),
   getTaskDiff: (req: GetTaskDiffRequest): Promise<TaskDiffResult> =>
     ipcRenderer.invoke(IpcChannels.GetTaskDiff, req),
+  squashAndMergeTask: (req: SquashAndMergeTaskRequest): Promise<SquashAndMergeTaskResult> =>
+    ipcRenderer.invoke(IpcChannels.SquashAndMergeTask, req),
 };
 
 contextBridge.exposeInMainWorld('nightcoder', api);
