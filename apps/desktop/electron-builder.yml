@@ -1,5 +1,5 @@
-appId: app.zibby.two
-productName: Zibby 2.0
+appId: app.nightcoder
+productName: NightCoder
 electronVersion: 33.4.11
 directories:
   output: release
@@ -21,4 +21,4 @@ mac:
   identity: null
   hardenedRuntime: false
 dmg:
-  title: Zibby 2.0
+  title: NightCoder

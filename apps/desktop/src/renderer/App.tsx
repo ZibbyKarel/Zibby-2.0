@@ -335,9 +335,9 @@ export default function App() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#04140d', fontWeight: 700, fontSize: 14,
             boxShadow: '0 0 0 1px rgba(16,185,129,.3), 0 0 20px rgba(16,185,129,.15)',
-          }}>Z</div>
+          }}>N</div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>Zibby 2.0</div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>NightCoder</div>
             <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>multi-agent coding workflow</div>
           </div>
         </div>
