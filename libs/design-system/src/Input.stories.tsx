@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Input } from './Input';
 
@@ -14,7 +15,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const row: React.CSSProperties = {
+const row: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'minmax(160px, max-content) 1fr',
   alignItems: 'center',
@@ -22,7 +23,7 @@ const row: React.CSSProperties = {
   width: 'min(520px, 80vw)',
 };
 
-const label: React.CSSProperties = {
+const label: CSSProperties = {
   color: 'var(--text-2)',
   fontSize: '0.8125rem',
 };

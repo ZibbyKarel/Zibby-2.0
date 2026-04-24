@@ -8,7 +8,7 @@
     "build": "pnpm --filter desktop build",
     "dist:mac": "pnpm --filter desktop dist:mac",
     "lint": "eslint \"{apps,libs}/**/*.{ts,tsx}\"",
-    "typecheck": "pnpm --filter desktop typecheck",
+    "typecheck": "pnpm --filter desktop typecheck && tsc -p libs/design-system/tsconfig.json --noEmit",
     "test": "vitest run",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

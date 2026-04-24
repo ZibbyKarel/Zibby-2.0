@@ -64,11 +64,11 @@ Every component that lives under `libs/design-system/src/` MUST ship with both a
 
 - `libs/design-system/src/<Name>.tsx` — the component
 - `libs/design-system/src/<Name>.test.tsx` — Vitest + React Testing Library tests. Start the file with `// @vitest-environment jsdom`. Cover: rendering, ref forwarding (if the component uses `forwardRef`), `className` merging, prop-driven visual states (disabled/readOnly/invalid/etc.), and at least one user-interaction assertion.
-- `libs/design-system/src/<Name>.stories.tsx` — Storybook stories. Exactly two stories are required in this order:
+- `libs/design-system/src/<Name>.stories.tsx` — Storybook stories. At minimum the file must export these two stories, and they must be the first two in source order (Storybook renders them in that order):
   1. **`Overview`** — renders the component in **every** supported variant side-by-side (empty, placeholder/filled, disabled, read-only, invalid, required, each relevant `type`/`size`/`variant`, custom `className`, …). This is the visual-regression reference.
   2. **`Playground`** — exposes **every** configurable prop through `args` + `argTypes` so reviewers can drive the component entirely from the Storybook controls panel. Event-like props should use `{ action: '<name>' }`; enum-like props should use `{ control: 'select', options: [...] }`.
 
-The stories file is not optional and `Overview` must come before `Playground` in the file — Storybook renders them in source order. A new design-system component without both files should not be merged.
+Additional stories (e.g. `InForm`, `WithLongContent`) are welcome after those two. The stories file itself is not optional — a new design-system component without both the test file and the stories file should not be merged.
 
 ## graphify
 
