@@ -120,6 +120,37 @@ export async function deleteStoryBranch(args: {
   return warnings.length > 0 ? { warning: warnings.join('; ') } : {};
 }
 
+export type SquashMergeArgs = {
+  cwd: string;
+  prUrl: string;
+  subject: string;
+  body?: string;
+  signal?: AbortSignal;
+};
+
+/**
+ * Squash-and-merge an existing PR via `gh pr merge --squash`. GitHub performs
+ * the actual squash server-side, so the merge commit's subject is what the
+ * caller passes here (e.g. `[#3]: Add widget`). Body is optional.
+ */
+export async function ghSquashMergePr(args: SquashMergeArgs): Promise<void> {
+  const ghArgs = [
+    'pr',
+    'merge',
+    args.prUrl,
+    '--squash',
+    '--subject',
+    args.subject,
+    '--body',
+    args.body ?? '',
+  ];
+  await execFileP('gh', ghArgs, {
+    cwd: args.cwd,
+    ...OPTS,
+    signal: args.signal,
+  });
+}
+
 export async function ghAuthStatus(): Promise<{ ok: boolean; stdout: string }> {
   try {
     const { stdout } = await execFileP('gh', ['auth', 'status'], OPTS);

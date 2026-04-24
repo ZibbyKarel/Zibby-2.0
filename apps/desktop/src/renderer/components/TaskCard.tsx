@@ -135,20 +135,20 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
               <Icon name="play" size={11} /> resume
             </button>
           )}
-          {canRun && !canResume && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRun(); }}
-              style={{
-                background: 'var(--accent-soft)', border: '1px solid var(--accent-ring)',
-                borderRadius: 6, padding: '2px 8px', color: 'var(--emerald)',
-                cursor: 'pointer', fontSize: 11, fontFamily: 'var(--mono)',
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}
-              title="Run this task"
-            >
-              <Icon name="play" size={11} /> run
-            </button>
-          )}
+          <button
+            disabled={!canRun}
+            onClick={(e) => { e.stopPropagation(); onRun(); }}
+            style={{
+              background: 'var(--accent-soft)', border: '1px solid var(--accent-ring)',
+              borderRadius: 6, padding: '2px 8px', color: 'var(--emerald)',
+              cursor: canRun ? 'pointer' : 'not-allowed', fontSize: 11, fontFamily: 'var(--mono)',
+              display: 'flex', alignItems: 'center', gap: 4,
+              opacity: canRun ? 1 : 0.4,
+            }}
+            title={canRun ? 'Run this task' : 'Task is not in a runnable state'}
+          >
+            <Icon name="play" size={11} /> run
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, borderRadius: 4, display: 'flex' }}

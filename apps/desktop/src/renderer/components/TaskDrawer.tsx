@@ -56,6 +56,12 @@ export function TaskDrawer({
 
   if (!task) return null;
 
+  const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
+  const canResume =
+    task.status === 'interrupted' ||
+    (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
+  const runnable = canRun || canResume;
+
   return (
     <>
       <div
@@ -125,8 +131,15 @@ export function TaskDrawer({
               </span>
             )}
             <div style={{ flex: 1 }} />
-            <Btn icon="play" variant="primary" size="sm" onClick={onRun}>
-              Run
+            <Btn
+              icon="play"
+              variant="primary"
+              size="sm"
+              onClick={onRun}
+              disabled={!runnable}
+              title={runnable ? undefined : 'Task is not in a runnable state'}
+            >
+              {canResume ? 'Resume' : 'Run'}
             </Btn>
             <Btn icon="x" variant="ghost" size="sm" onClick={onClose} />
           </div>
@@ -531,6 +544,8 @@ function DiffFileBlock({
 function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
   const [result, setResult] = useState<TaskDiffResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const [mergeError, setMergeError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -538,6 +553,26 @@ function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
     setResult(r);
     setLoading(false);
   }, [task.taskId]);
+
+  const squashAndMerge = useCallback(async () => {
+    if (!task.prUrl) return;
+    const ok = window.confirm(
+      `Squash and merge this task's PR?\n\nAll commits on the task branch will be combined into a single commit on ${task.prUrl}.`,
+    );
+    if (!ok) return;
+    setMergeError(null);
+    setMerging(true);
+    try {
+      const res = await window.nightcoder.squashMergeTask({ taskId: task.taskId });
+      if (res.kind === 'error') {
+        setMergeError(res.message);
+      } else {
+        void refresh();
+      }
+    } finally {
+      setMerging(false);
+    }
+  }, [task.taskId, task.prUrl, refresh]);
 
   // Re-fetch when the task changes, or when its status moves to a state that
   // likely produced new commits (running → review/done, etc.).
@@ -660,15 +695,45 @@ function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
         </span>
         <div style={{ flex: 1 }} />
         <Btn
+          icon="git"
+          variant="primary"
+          size="sm"
+          onClick={() => void squashAndMerge()}
+          disabled={merging || loading || !task.prUrl}
+          title={
+            task.prUrl
+              ? 'Squash all commits on this branch into one and merge the PR'
+              : 'Task has no PR yet'
+          }
+        >
+          {merging ? 'Merging…' : 'Squash and Merge'}
+        </Btn>
+        <Btn
           icon="refresh"
           variant="ghost"
           size="sm"
           onClick={() => void refresh()}
-          disabled={loading}
+          disabled={loading || merging}
         >
           {loading ? 'Refreshing…' : 'Refresh'}
         </Btn>
       </div>
+      {mergeError && (
+        <div
+          style={{
+            padding: 10,
+            marginBottom: 10,
+            background: 'rgba(244,63,94,.08)',
+            border: '1px solid rgba(244,63,94,.2)',
+            borderRadius: 8,
+            color: 'var(--rose)',
+            fontSize: 12,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          Squash-merge failed: {mergeError}
+        </div>
+      )}
       {result.files.map((f, i) => (
         <DiffFileBlock
           key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
