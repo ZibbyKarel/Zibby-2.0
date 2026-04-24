@@ -717,14 +717,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         const displayId = story.numericId ?? storyIndex + 1;
         const subject = `[${displayId}]: ${story.title}`;
         await ghSquashAndMergePr({ cwd: folderPath, prUrl, subject });
-        await updateTask(folderPath, req.taskId, { status: 'done', endedAt: Date.now() }).catch(() => {});
-        const wc = getWebContents();
-        if (wc) emitToRenderer(wc, {
-          runId: `squash-${Date.now()}-${req.taskId}`,
-          storyIndex,
-          kind: 'status',
-          status: 'done',
-        });
+        await persistStoryStatus(folderPath, req.taskId, 'done');
         return { kind: 'ok', mergedCommitTitle: subject };
       } catch (err) {
         const stderr = (err as { stderr?: string }).stderr;
