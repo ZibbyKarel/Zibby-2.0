@@ -23,6 +23,13 @@ export function startPlanRun(args: {
   baseBranch?: string;
   maxParallel?: number;
   completedIndices?: readonly number[];
+  /**
+   * Optional per-story base-branch override. Returning a non-empty string
+   * overrides the plan-level `baseBranch` for that story's worktree AND its
+   * PR target. Returning null/undefined falls back to the plan default.
+   * Used to branch a blocked task off its blocker's branch.
+   */
+  baseBranchFor?: (storyIndex: number) => string | null | undefined;
   onEvent: (event: PlanEvent) => void;
 }): PlanRunHandle {
   const runId = `run-${Date.now()}-${nextRunId++}`;
@@ -66,11 +73,13 @@ export function startPlanRun(args: {
 
     const runOne = async (index: number): Promise<void> => {
       status[index] = 'running';
+      const override = args.baseBranchFor?.(index);
+      const effectiveBase = override && override.length > 0 ? override : baseBranch;
       const res = await executeStory({
         story: args.plan.stories[index],
         storyIndex: index,
         repoPath: args.repoPath,
-        baseBranch,
+        baseBranch: effectiveBase,
         usedSlugs,
         signal,
         onEvent: (e) => args.onEvent({ storyIndex: index, ...e }),

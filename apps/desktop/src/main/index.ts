@@ -43,7 +43,7 @@ import {
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, resolveBlockerBaseBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch, ghSquashMergePr, ghGetPrState } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
@@ -485,11 +485,30 @@ function registerIpc(getWebContents: () => WebContents | null) {
       try {
         const stampedPlan = await updatePlan(req.folderPath, req.plan).catch(() => req.plan);
         const taskIdFor = (idx: number): string | undefined => stampedPlan.stories[idx]?.taskId;
+        // Snapshot persisted tasks once so per-story blocker lookups don't
+        // hammer disk. We deliberately don't refresh mid-run: within a plan
+        // run the blocker either already has a branch (captured here) or it
+        // runs before its dependents and the topological ordering in
+        // startPlanRun guarantees it pushes before we read its branch from
+        // the live event stream. Reading once keeps the resolver sync.
+        const projectForResolve = await loadProject(req.folderPath).catch(() => null);
+        const liveBranches = new Map<number, string>();
         const handle = startPlanRun({
           plan: stampedPlan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
           completedIndices: req.completedIndices,
+          baseBranchFor: (storyIndex) => {
+            const story = stampedPlan.stories[storyIndex];
+            if (!story?.blockerTaskId) return null;
+            const blockerIdx = stampedPlan.stories.findIndex((s) => s.taskId === story.blockerTaskId);
+            // Prefer an in-run branch captured from the blocker's `branch`
+            // event — it reflects what the blocker's worktree actually used,
+            // even if disk state is stale.
+            const live = blockerIdx >= 0 ? liveBranches.get(blockerIdx) : undefined;
+            if (live) return live;
+            return resolveBlockerBaseBranch({ story, tasks: projectForResolve?.tasks });
+          },
           onEvent: (e) => {
             const wc = getWebContents();
             if ('storyIndex' in e) {
@@ -511,6 +530,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   line: e.line,
                 });
               } else if (e.kind === 'branch') {
+                liveBranches.set(e.storyIndex, e.branch);
                 if (tid) void persistStoryBranch(req.folderPath, tid, e.branch);
                 if (wc) emitToRenderer(wc, {
                   runId: handle.runId,
@@ -558,11 +578,17 @@ function registerIpc(getWebContents: () => WebContents | null) {
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
       await acquireRunner();
       const taskId = story.taskId;
+      let effectiveBase: string | undefined = req.baseBranch;
+      if (!effectiveBase && story.blockerTaskId) {
+        const project = await loadProject(req.folderPath).catch(() => null);
+        const blockerBase = project ? resolveBlockerBaseBranch({ story, tasks: project.tasks }) : null;
+        if (blockerBase) effectiveBase = blockerBase;
+      }
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
         repoPath: req.folderPath,
-        baseBranch: req.baseBranch,
+        baseBranch: effectiveBase,
         onEvent: (e) => {
           const wc = getWebContents();
           if (e.kind === 'status') {
