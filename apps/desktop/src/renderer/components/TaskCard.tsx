@@ -17,7 +17,7 @@ type Props = {
 export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, onEdit, onRun, onDelete }: Props) {
   const waits = task.waitsOn.length > 0;
   const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
-  const canResume = task.interrupted && task.status === 'running';
+  const canResume = task.interrupted && (task.status === 'running' || task.status === 'pushing');
 
   return (
     <article

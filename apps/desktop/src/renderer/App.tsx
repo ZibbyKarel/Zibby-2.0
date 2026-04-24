@@ -68,7 +68,7 @@ export default function App() {
           return next;
         });
         const interruptedIndices = Object.entries(state.runtime)
-          .filter(([, v]) => v.status === 'running')
+          .filter(([, v]) => v.status === 'running' || v.status === 'pushing')
           .map(([k]) => Number(k));
         if (interruptedIndices.length > 0) setInterrupted(new Set(interruptedIndices));
       }
