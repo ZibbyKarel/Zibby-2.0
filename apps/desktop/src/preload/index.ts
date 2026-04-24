@@ -19,6 +19,13 @@ import {
   type LoadedAppState,
   type RemoveStoryResult,
   type Usage,
+  type PickFilesToAttachResult,
+  type AddTaskFilesRequest,
+  type AddTaskFilesResult,
+  type ListTaskFilesRequest,
+  type ListTaskFilesResult,
+  type RemoveTaskFileRequest,
+  type RemoveTaskFileResult,
 } from '@nightcoder/shared-types/ipc';
 
 const api: IpcApi = {
@@ -55,6 +62,14 @@ const api: IpcApi = {
     };
   },
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IpcChannels.OpenExternal, url),
+  pickFilesToAttach: (): Promise<PickFilesToAttachResult> =>
+    ipcRenderer.invoke(IpcChannels.PickFilesToAttach),
+  addTaskFiles: (req: AddTaskFilesRequest): Promise<AddTaskFilesResult> =>
+    ipcRenderer.invoke(IpcChannels.AddTaskFiles, req),
+  listTaskFiles: (req: ListTaskFilesRequest): Promise<ListTaskFilesResult> =>
+    ipcRenderer.invoke(IpcChannels.ListTaskFiles, req),
+  removeTaskFile: (req: RemoveTaskFileRequest): Promise<RemoveTaskFileResult> =>
+    ipcRenderer.invoke(IpcChannels.RemoveTaskFile, req),
 };
 
 contextBridge.exposeInMainWorld('nightcoder', api);

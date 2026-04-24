@@ -263,10 +263,12 @@ export default function App() {
     }
   }, [tasks, runTask, pushToast, setRuntime]);
 
-  const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string }) => {
+  const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string; attachedFilePaths: string[] }) => {
+    let newTaskId: string | null = null;
     setPlan((prev) => {
       const stories = prev?.stories ?? [];
       const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
+      newTaskId = taskId;
       return {
         stories: [...stories, {
           taskId,
@@ -280,7 +282,18 @@ export default function App() {
       };
     });
     setAddOpen(false);
-  }, []);
+    if (data.attachedFilePaths.length > 0 && newTaskId) {
+      const taskIdForCopy = newTaskId;
+      void (async () => {
+        const res = await window.nightcoder.addTaskFiles({ taskId: taskIdForCopy, sourcePaths: data.attachedFilePaths });
+        if (res.kind === 'error') {
+          pushToast({ kind: 'failed', title: 'Attach files failed', desc: res.message });
+        } else if (res.files.length > 0) {
+          pushToast({ kind: 'info', title: 'Files attached', desc: `${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
+        }
+      })();
+    }
+  }, [pushToast]);
 
   const editTask = useCallback((idx: number, data: { title: string; description: string; acceptance: string[]; model?: string }) => {
     setPlan((prev) => {

@@ -5,7 +5,7 @@ type IconName =
   | 'chevron' | 'chevronDown' | 'search' | 'clock' | 'bolt' | 'warn'
   | 'github' | 'terminal' | 'diff' | 'more' | 'link' | 'command'
   | 'sun' | 'moon' | 'bell' | 'edit' | 'trash' | 'copy'
-  | 'arrowRight' | 'filter' | 'sparkle';
+  | 'arrowRight' | 'filter' | 'sparkle' | 'paperclip' | 'file';
 
 const paths: Record<IconName, React.ReactNode> = {
   folder: <><path d="M3 6a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/></>,
@@ -36,6 +36,8 @@ const paths: Record<IconName, React.ReactNode> = {
   arrowRight: <><path d="M5 12h14M13 5l7 7-7 7"/></>,
   filter: <><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></>,
   sparkle: <><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17Z"/></>,
+  paperclip: <><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57a4 4 0 0 1 5.66 5.66l-8.58 8.57a2 2 0 0 1-2.83-2.83l7.07-7.07"/></>,
+  file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"/><path d="M14 2v6h6"/></>,
 };
 
 type IconProps = {
