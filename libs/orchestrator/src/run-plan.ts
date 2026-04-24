@@ -38,11 +38,12 @@ export function startPlanRun(args: {
       return { success: false };
     }
 
-    const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked'> = dag.map(() => 'pending');
+    const status: Array<'pending' | 'running' | 'done' | 'failed' | 'blocked' | 'interrupted'> = dag.map(() => 'pending');
     for (const idx of args.completedIndices ?? []) {
       if (idx >= 0 && idx < status.length) status[idx] = 'done';
     }
     let failed = false;
+    let limitHit = false;
 
     const blockCascade = (fromIndex: number) => {
       for (const idx of collectTransitiveSuccessors(dag, fromIndex)) {
@@ -81,6 +82,13 @@ export function startPlanRun(args: {
         // this run's perspective so downstream tasks don't stall, and don't
         // cascade failure — the other execution will drive the real events.
         status[index] = 'done';
+      } else if (res.limitHit) {
+        // Usage limit hit — the story stays interrupted (worktree preserved
+        // for resume). Don't cascade blocked to downstream stories; they'll
+        // be auto-resumed together when the limit resets. But do stop this
+        // plan run from launching anything new — it would hit the same wall.
+        status[index] = 'interrupted';
+        limitHit = true;
       } else {
         status[index] = 'failed';
         failed = true;
@@ -91,7 +99,7 @@ export function startPlanRun(args: {
     const active = new Set<Promise<void>>();
     while (true) {
       if (signal.cancelled) break;
-      const ready = markNowReady();
+      const ready = limitHit ? [] : markNowReady();
       while (ready.length > 0 && active.size < maxParallel) {
         const idx = ready.shift()!;
         const p = runOne(idx).finally(() => active.delete(p));
