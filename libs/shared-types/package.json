@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./ipc": "./src/ipc.ts",
     "./schemas": "./src/schemas.ts",
-    "./task-id": "./src/task-id.ts"
+    "./task-id": "./src/task-id.ts",
+    "./plan": "./src/plan.ts"
   },
   "dependencies": {
     "zod": "^4.3.6"

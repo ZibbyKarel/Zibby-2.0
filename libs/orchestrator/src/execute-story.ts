@@ -287,12 +287,16 @@ export async function executeStory(args: {
         onEvent({ kind: 'log', stream: 'info', line: `attached files: ${attachedNames.join(', ')}` });
       }
 
+      // Prefer the per-phase Code model when the dialog populated it; fall
+      // back to the legacy flat `story.model` for plans created before the
+      // phase picker landed.
+      const modelForCode = story.agents?.code?.model ?? story.model;
       const handle = runClaudeInWorktree(
         {
           cwd: worktree.path,
           prompt: resume ? resume.prompt : buildPrompt(story, attachedNames),
           addDirs,
-          model: story.model,
+          model: modelForCode,
           env: { NIGHTCODER_JOURNAL_PATH: journalAbs },
         },
         {

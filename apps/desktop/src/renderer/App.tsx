@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
+import { addStoryToPlan } from '@nightcoder/shared-types/plan';
 
 import { Icon, BrandMark } from './components/icons';
 import { Btn, Chip } from './components/primitives';
@@ -261,6 +262,26 @@ export default function App() {
     if (currentStatus === 'running' || currentStatus === 'pushing' || currentStatus === 'review' || currentStatus === 'done') {
       return;
     }
+    // Refuse when a blocker exists but hasn't produced a branch yet — starting
+    // now would silently fall back to main and lose the user's branching intent.
+    // Plan runs (startPlanRun) handle this via the DAG, so this only matters
+    // for the per-card Run button.
+    const blockers = plan.dependencies.filter((d) => d.to === idx).map((d) => d.from);
+    const readyBlockers = blockers.filter((from) => {
+      const st = runtime[from]?.status;
+      const branch = runtime[from]?.branch;
+      return !!branch || st === 'review' || st === 'done';
+    });
+    if (blockers.length > 0 && readyBlockers.length < blockers.length) {
+      const firstPending = blockers.find((from) => !readyBlockers.includes(from));
+      const blockerTitle = firstPending !== undefined ? plan.stories[firstPending]?.title : undefined;
+      pushToast({
+        kind: 'failed',
+        title: 'Blocker not ready',
+        desc: blockerTitle ? `Run "${blockerTitle}" first` : 'A blocking task has not started yet',
+      });
+      return;
+    }
     const storyRunId = `story-${Date.now()}-${idx}`;
     pushToast({ kind: 'info', title: 'Task started', desc: story.title });
     const res = await window.nightcoder.runStory({ runId: storyRunId, storyIndex: idx, folderPath: folder.path, plan });
@@ -310,26 +331,18 @@ export default function App() {
   const addTask = useCallback((data: AddTaskPayload) => {
     let newTaskId: string | null = null;
     setPlan((prev) => {
-      const stories = prev?.stories ?? [];
-      const existingDeps = prev?.dependencies ?? [];
-      const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
+      const currentPlan = prev ?? { stories: [], dependencies: [] };
+      const taskId = taskIdForNewStory(data.title, collectTaskIds(currentPlan.stories));
       newTaskId = taskId;
-      const newIndex = stories.length;
-      const nextDeps = data.blockingIndex !== null && data.blockingIndex >= 0 && data.blockingIndex < stories.length
-        ? [...existingDeps, { from: data.blockingIndex, to: newIndex, reason: 'user: blocks this task' }]
-        : existingDeps;
-      return {
-        stories: [...stories, {
-          taskId,
-          title: data.title,
-          description: data.description,
-          acceptanceCriteria: data.acceptance,
-          affectedFiles: [],
-          model: data.model,
-          agents: data.agents,
-        }],
-        dependencies: nextDeps,
-      };
+      return addStoryToPlan(currentPlan, {
+        taskId,
+        title: data.title,
+        description: data.description,
+        acceptance: data.acceptance,
+        model: data.model,
+        agents: data.agents,
+        blockingIndex: data.blockingIndex,
+      });
     });
     setAddOpen(false);
     if (data.attachedFilePaths.length > 0 && newTaskId) {
