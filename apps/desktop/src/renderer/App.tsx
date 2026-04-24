@@ -262,23 +262,22 @@ export default function App() {
     if (currentStatus === 'running' || currentStatus === 'pushing' || currentStatus === 'review' || currentStatus === 'done') {
       return;
     }
-    // Refuse when a blocker exists but hasn't produced a branch yet — starting
-    // now would silently fall back to main and lose the user's branching intent.
-    // Plan runs (startPlanRun) handle this via the DAG, so this only matters
-    // for the per-card Run button.
+    // Refuse when a blocker hasn't finished — `gh pr create --base <blocker>`
+    // needs the blocker's branch on origin, which only happens after push
+    // (i.e. status 'review' or 'done'). Plan runs already enforce this via the
+    // DAG; this guard covers the per-card Run button.
     const blockers = plan.dependencies.filter((d) => d.to === idx).map((d) => d.from);
-    const readyBlockers = blockers.filter((from) => {
+    const pendingBlocker = blockers.find((from) => {
       const st = runtime[from]?.status;
-      const branch = runtime[from]?.branch;
-      return !!branch || st === 'review' || st === 'done';
+      return st !== 'review' && st !== 'done';
     });
-    if (blockers.length > 0 && readyBlockers.length < blockers.length) {
-      const firstPending = blockers.find((from) => !readyBlockers.includes(from));
-      const blockerTitle = firstPending !== undefined ? plan.stories[firstPending]?.title : undefined;
+    if (pendingBlocker !== undefined) {
       pushToast({
         kind: 'failed',
         title: 'Blocker not ready',
-        desc: blockerTitle ? `Run "${blockerTitle}" first` : 'A blocking task has not started yet',
+        desc: plan.stories[pendingBlocker]?.title
+          ? `Finish "${plan.stories[pendingBlocker].title}" first`
+          : 'A blocking task has not finished yet',
       });
       return;
     }
