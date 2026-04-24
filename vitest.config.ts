@@ -17,11 +17,14 @@ export default defineConfig({
       { find: /^@nightcoder\/github$/, replacement: r('libs/github/src/index.ts') },
       { find: /^@nightcoder\/project-state$/, replacement: r('libs/project-state/src/index.ts') },
       { find: /^@nightcoder\/usage$/, replacement: r('libs/usage/src/index.ts') },
+      { find: /^@nightcoder\/design-system$/, replacement: r('libs/design-system/src/index.ts') },
+      { find: /^@nightcoder\/form$/, replacement: r('libs/form/src/index.ts') },
     ],
   },
   test: {
-    include: ['libs/**/*.{test,spec}.ts'],
+    include: ['libs/**/*.{test,spec}.{ts,tsx}'],
     environment: 'node',
     passWithNoTests: false,
+    setupFiles: ['./vitest.setup.ts'],
   },
 });
