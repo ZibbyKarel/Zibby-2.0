@@ -90,7 +90,7 @@ async function nextFreeName(repoPath: string, baseSlug: string): Promise<{ slug:
   let suffix = 0;
   while (true) {
     const slug = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
-    const branch = `zibby/${slug}`;
+    const branch = `nightcoder/${slug}`;
     const worktreePath = path.join(repoPath, '.worktrees', slug);
     const [branchTaken, pathTaken] = await Promise.all([
       refExists(repoPath, `refs/heads/${branch}`),
@@ -111,7 +111,7 @@ export async function createWorktree(args: {
   const resolved = await nextFreeName(args.repoPath, args.slug);
   const { branch, worktreePath } = resolved;
   if (resolved.slug !== args.slug) {
-    args.onInfo?.(`branch zibby/${args.slug} already existed, using ${branch}`);
+    args.onInfo?.(`branch nightcoder/${args.slug} already existed, using ${branch}`);
   }
 
   try {

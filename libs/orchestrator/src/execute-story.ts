@@ -128,7 +128,7 @@ export async function executeStory(args: {
       onEvent({ kind: 'status', status: 'pushing' });
       const madeCommit = await commitAllIfDirty(
         worktree.path,
-        `chore(zibby): flush uncommitted changes for ${story.title}`,
+        `chore(nightcoder): flush uncommitted changes for ${story.title}`,
         { signal: abort.signal }
       );
       if (madeCommit) onEvent({ kind: 'log', stream: 'info', line: 'flushed uncommitted changes into final commit' });

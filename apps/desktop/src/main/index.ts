@@ -288,7 +288,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
       let branchDeletionWarning: string | undefined;
       if (state.folderPath) {
         const slug = slugify(`${payload.storyIndex + 1}-${story.title}`);
-        const branch = `zibby/${slug}`;
+        const branch = `nightcoder/${slug}`;
         const result = await deleteStoryBranch({ repoPath: state.folderPath, branch });
         branchDeletionWarning = result.warning;
       }

@@ -69,7 +69,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
-        {task.branch && <Chip icon="git">{task.branch.replace('zibby/', '')}</Chip>}
+        {task.branch && <Chip icon="git">{task.branch.replace('nightcoder/', '')}</Chip>}
         {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
         {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
         {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
