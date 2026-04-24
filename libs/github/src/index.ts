@@ -98,6 +98,35 @@ export async function ghFindPrForBranch(args: {
   }
 }
 
+export type SquashAndMergePrArgs = {
+  cwd: string;
+  prUrl: string;
+  subject: string;
+  body?: string;
+  deleteBranch?: boolean;
+  signal?: AbortSignal;
+};
+
+/**
+ * Squash-merge an open PR via `gh pr merge --squash`. Passes `--body` and
+ * `--delete-branch` explicitly so we never depend on `gh`'s interactive
+ * prompts (it runs non-interactively here) or the user's `gh config`.
+ */
+export async function ghSquashAndMergePr(args: SquashAndMergePrArgs): Promise<void> {
+  const ghArgs = [
+    'pr',
+    'merge',
+    args.prUrl,
+    '--squash',
+    '--subject',
+    args.subject,
+    '--body',
+    args.body ?? '',
+    args.deleteBranch ? '--delete-branch' : '--delete-branch=false',
+  ];
+  await execFileP('gh', ghArgs, { cwd: args.cwd, ...OPTS, signal: args.signal });
+}
+
 export async function deleteStoryBranch(args: {
   repoPath: string;
   branch: string;
