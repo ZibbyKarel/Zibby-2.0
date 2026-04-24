@@ -1,7 +1,8 @@
-import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
+import type { PersistedTask, RefinedPlan } from '@nightcoder/shared-types/ipc';
 import { detectBaseBranch } from './worktree';
 import { executeStory, type StoryExecutionEvent } from './execute-story';
 import { buildDag, collectTransitiveSuccessors, type DagNode } from './dag';
+import { resolveBaseBranch } from './base-branch';
 
 const DEFAULT_PARALLELISM = Number(process.env.MAX_PARALLEL_RUNNERS ?? 3);
 
@@ -23,6 +24,8 @@ export function startPlanRun(args: {
   baseBranch?: string;
   maxParallel?: number;
   completedIndices?: readonly number[];
+  /** Persisted per-task state — used to resolve a blocker's branch as the base. */
+  tasks?: Readonly<Record<string, PersistedTask>>;
   onEvent: (event: PlanEvent) => void;
 }): PlanRunHandle {
   const runId = `run-${Date.now()}-${nextRunId++}`;
@@ -31,7 +34,12 @@ export function startPlanRun(args: {
   const maxParallel = Math.max(1, args.maxParallel ?? DEFAULT_PARALLELISM);
 
   const result = (async () => {
-    const baseBranch = args.baseBranch ?? (await detectBaseBranch(args.repoPath));
+    const fallbackBase = args.baseBranch ?? (await detectBaseBranch(args.repoPath));
+    // In-flight branch discoveries: as each story emits its 'branch' event we
+    // record it here so downstream (dependent) stories can base their worktree
+    // on the blocker's branch — even before it's persisted to disk.
+    const liveBranches = new Map<number, string>();
+    const tasksSnapshot: Record<string, PersistedTask> = { ...(args.tasks ?? {}) };
     const dag = safeBuildDag(args.plan, args.onEvent);
     if (!dag) {
       args.onEvent({ kind: 'run-done', success: false });
@@ -66,6 +74,31 @@ export function startPlanRun(args: {
 
     const runOne = async (index: number): Promise<void> => {
       status[index] = 'running';
+      // Overlay liveBranches (from blockers that have started this run) onto
+      // the persisted-tasks snapshot, so the resolver sees the freshest branch
+      // info available without needing to reload from disk.
+      const effectiveTasks: Record<string, PersistedTask> = { ...tasksSnapshot };
+      for (const [idx, branch] of liveBranches) {
+        const story = args.plan.stories[idx];
+        if (!story) continue;
+        const existing = effectiveTasks[story.taskId];
+        effectiveTasks[story.taskId] = existing
+          ? { ...existing, branch }
+          : {
+              taskId: story.taskId,
+              status: 'running',
+              branch,
+              prUrl: null,
+              startedAt: null,
+              endedAt: null,
+            };
+      }
+      const baseBranch = resolveBaseBranch({
+        plan: args.plan,
+        tasks: effectiveTasks,
+        storyIndex: index,
+        fallback: fallbackBase,
+      });
       const res = await executeStory({
         story: args.plan.stories[index],
         storyIndex: index,
@@ -73,7 +106,10 @@ export function startPlanRun(args: {
         baseBranch,
         usedSlugs,
         signal,
-        onEvent: (e) => args.onEvent({ storyIndex: index, ...e }),
+        onEvent: (e) => {
+          if (e.kind === 'branch') liveBranches.set(index, e.branch);
+          args.onEvent({ storyIndex: index, ...e });
+        },
       });
       if (res.success) {
         status[index] = 'done';

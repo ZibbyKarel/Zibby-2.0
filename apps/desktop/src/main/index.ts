@@ -390,12 +390,14 @@ function registerIpc(getWebContents: () => WebContents | null) {
     async (_event, req: RunStartRequest): Promise<RunStartResult> => {
       try {
         const stampedPlan = await updatePlan(req.folderPath, req.plan).catch(() => req.plan);
+        const project = await loadProject(req.folderPath).catch(() => null);
         const taskIdFor = (idx: number): string | undefined => stampedPlan.stories[idx]?.taskId;
         const handle = startPlanRun({
           plan: stampedPlan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
           completedIndices: req.completedIndices,
+          tasks: project?.tasks,
           onEvent: (e) => {
             const wc = getWebContents();
             if ('storyIndex' in e) {
@@ -464,11 +466,14 @@ function registerIpc(getWebContents: () => WebContents | null) {
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
       await acquireRunner();
       const taskId = story.taskId;
+      const project = await loadProject(req.folderPath).catch(() => null);
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
         repoPath: req.folderPath,
         baseBranch: req.baseBranch,
+        plan: req.plan,
+        tasks: project?.tasks,
         onEvent: (e) => {
           const wc = getWebContents();
           if (e.kind === 'status') {

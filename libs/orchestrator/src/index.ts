@@ -13,3 +13,4 @@ export { installPostCommitHook, isNightcoderHook, NIGHTCODER_HOOK_MARKER } from 
 export { getTaskDiff, parseUnifiedDiff } from './task-diff';
 export type { GetTaskDiffArgs, GetTaskDiffOutcome } from './task-diff';
 export { formatSquashCommitTitle } from './squash-merge';
+export { resolveBaseBranch, deriveBranchForStory } from './base-branch';
