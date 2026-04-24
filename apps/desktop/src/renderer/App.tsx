@@ -53,6 +53,7 @@ export default function App() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrated = useRef(false);
   const runAllInFlight = useRef<Promise<void> | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // ── Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
@@ -291,6 +292,28 @@ export default function App() {
     await runAllInFlight.current;
   }, [plan, folder, runtime, runId, pushToast]);
 
+  const synchronize = useCallback(async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const res = await window.nightcoder.syncPrStatuses();
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Synchronize failed', desc: res.message });
+        return;
+      }
+      const parts: string[] = [`${res.checked} PR${res.checked === 1 ? '' : 's'} checked`];
+      if (res.updated > 0) parts.push(`${res.updated} merged → Done`);
+      if (res.errors > 0) parts.push(`${res.errors} unreachable`);
+      pushToast({
+        kind: res.updated > 0 ? 'done' : 'info',
+        title: res.updated > 0 ? 'Tasks synchronized' : 'Up to date',
+        desc: parts.join(' · '),
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [syncing, pushToast]);
+
   const handleDrop = useCallback(async (taskId: string, colId: 'queue' | 'running' | 'review' | 'done') => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -388,6 +411,10 @@ export default function App() {
       id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
       run: () => { void runAll(); },
     },
+    {
+      id: 'synchronize', icon: 'refresh', label: 'Synchronize PR statuses',
+      run: () => { void synchronize(); },
+    },
     { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
     {
       id: 'theme', icon: theme === 'dark' ? 'sun' : 'moon',
@@ -402,7 +429,7 @@ export default function App() {
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
     })),
-  ], [tasks, theme, folder, runAll]);
+  ], [tasks, theme, folder, runAll, synchronize]);
 
   // ── Drag ───────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -509,6 +536,14 @@ export default function App() {
           );
         })}
         <div style={{ flex: 1 }} />
+        <Btn
+          icon="refresh" variant="secondary" size="sm"
+          disabled={syncing || !folder}
+          onClick={() => void synchronize()}
+          title="Refresh task statuses from GitHub PRs"
+        >
+          {syncing ? 'Synchronizing…' : 'Synchronize'}
+        </Btn>
         <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
         <Btn
           icon="play" variant="primary" size="sm"
