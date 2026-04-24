@@ -24,3 +24,5 @@ export {
   storyJsonPath,
   PROJECT_DIR,
 } from './project-state';
+export { readRepoTree } from './repo-tree';
+export type { RepoTreeResult, ReadRepoTreeOptions } from './repo-tree';

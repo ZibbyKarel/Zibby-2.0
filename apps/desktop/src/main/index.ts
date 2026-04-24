@@ -34,6 +34,8 @@ import {
   type TaskDiffResult,
   type SquashMergeTaskRequest,
   type SquashMergeTaskResult,
+  type ReadRepoTreeRequest,
+  type ReadRepoTreeResult,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
@@ -50,6 +52,7 @@ import {
   mergePlanOnReplan,
   readJournalTail,
   readPlanMd,
+  readRepoTree,
   removeTaskFile,
   runtimeToTasks,
   saveProject,
@@ -732,6 +735,19 @@ function registerIpc(getWebContents: () => WebContents | null) {
         const raw = err instanceof Error ? err.message : String(err);
         const stderr = (err as { stderr?: string }).stderr;
         return { kind: 'error', message: stderr ? `${raw}\n${stderr}` : raw };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.ReadRepoTree,
+    async (_event, req: ReadRepoTreeRequest): Promise<ReadRepoTreeResult> => {
+      try {
+        if (!req.folderPath) return { kind: 'error', message: 'folderPath is required' };
+        const { tree, truncated } = await readRepoTree(req.folderPath);
+        return { kind: 'ok', tree, truncated };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
     },
   );
