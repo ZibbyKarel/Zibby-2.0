@@ -37,6 +37,9 @@ import {
   type SyncTaskStatesRequest,
   type SyncTaskStatesResult,
   type SyncTaskStateUpdate,
+  type ListRepoTreeRequest,
+  type ListRepoTreeResult,
+  type RepoTreeEntry,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
@@ -65,6 +68,97 @@ import { loadUserData, saveUserData, migrateLegacyIfNeeded } from './state-store
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
+
+const REPO_TREE_SKIP_DIRS: ReadonlySet<string> = new Set([
+  '.git',
+  'node_modules',
+  '.worktrees',
+  '.nightcoder',
+]);
+const REPO_TREE_MAX_ENTRIES = 20_000;
+
+/**
+ * Enumerate the repo file tree for the AddTask dialog's picker.
+ *
+ * Uses `git ls-files -z -co --exclude-standard` when available — gives us the
+ * union of tracked + untracked-not-ignored paths for free. Falls back to a
+ * filesystem walk (skipping common noisy directories) for non-git folders.
+ */
+async function buildRepoTree(repoPath: string): Promise<RepoTreeEntry[]> {
+  const paths = await collectRepoPaths(repoPath);
+  paths.sort();
+  const root: RepoTreeEntry[] = [];
+  const dirIndex = new Map<string, RepoTreeEntry>();
+  for (const rel of paths) {
+    if (!rel) continue;
+    const parts = rel.split('/');
+    let parentChildren = root;
+    let prefix = '';
+    for (let i = 0; i < parts.length; i++) {
+      const name = parts[i];
+      const isLast = i === parts.length - 1;
+      prefix = prefix ? `${prefix}/${name}` : name;
+      if (isLast) {
+        parentChildren.push({ name, path: prefix, kind: 'file' });
+      } else {
+        let dir = dirIndex.get(prefix);
+        if (!dir) {
+          dir = { name, path: prefix, kind: 'dir', children: [] };
+          dirIndex.set(prefix, dir);
+          parentChildren.push(dir);
+        }
+        parentChildren = dir.children!;
+      }
+    }
+  }
+  const sortTree = (nodes: RepoTreeEntry[]): void => {
+    nodes.sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    for (const n of nodes) if (n.children) sortTree(n.children);
+  };
+  sortTree(root);
+  return root;
+}
+
+async function collectRepoPaths(repoPath: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileP(
+      'git',
+      ['ls-files', '-z', '-co', '--exclude-standard'],
+      { cwd: repoPath, maxBuffer: 16 * 1024 * 1024 },
+    );
+    const list = stdout.split('\0').filter((s) => s.length > 0);
+    return list.length > REPO_TREE_MAX_ENTRIES ? list.slice(0, REPO_TREE_MAX_ENTRIES) : list;
+  } catch {
+    // Not a git repo (or git missing) — fall back to a filesystem walk.
+    const out: string[] = [];
+    await walkRepo(repoPath, '', out);
+    return out;
+  }
+}
+
+async function walkRepo(root: string, rel: string, out: string[]): Promise<void> {
+  if (out.length >= REPO_TREE_MAX_ENTRIES) return;
+  const { readdir } = await import('node:fs/promises');
+  let entries: import('node:fs').Dirent[];
+  try {
+    entries = await readdir(path.join(root, rel), { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (out.length >= REPO_TREE_MAX_ENTRIES) return;
+    if (REPO_TREE_SKIP_DIRS.has(entry.name)) continue;
+    const childRel = rel ? `${rel}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      await walkRepo(root, childRel, out);
+    } else if (entry.isFile()) {
+      out.push(childRel);
+    }
+  }
+}
 
 const MAX_PARALLEL_RUNNERS = Math.max(1, Number(process.env.MAX_PARALLEL_RUNNERS ?? 3));
 let activeRunnerCount = 0;
@@ -807,6 +901,19 @@ function registerIpc(getWebContents: () => WebContents | null) {
         if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
         const files = await removeTaskFile(folderPath, req.taskId, req.name);
         return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.ListRepoTree,
+    async (_event, req: ListRepoTreeRequest): Promise<ListRepoTreeResult> => {
+      try {
+        if (!req.folderPath) return { kind: 'error', message: 'No folder path provided' };
+        const tree = await buildRepoTree(req.folderPath);
+        return { kind: 'ok', tree };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
