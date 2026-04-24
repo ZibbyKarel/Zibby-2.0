@@ -56,6 +56,12 @@ export function TaskDrawer({
 
   if (!task) return null;
 
+  const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
+  const canResume =
+    task.status === 'interrupted' ||
+    (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
+  const runnable = canRun || canResume;
+
   return (
     <>
       <div
@@ -125,8 +131,15 @@ export function TaskDrawer({
               </span>
             )}
             <div style={{ flex: 1 }} />
-            <Btn icon="play" variant="primary" size="sm" onClick={onRun}>
-              Run
+            <Btn
+              icon="play"
+              variant="primary"
+              size="sm"
+              onClick={onRun}
+              disabled={!runnable}
+              title={runnable ? undefined : 'Task is not in a runnable state'}
+            >
+              {canResume ? 'Resume' : 'Run'}
             </Btn>
             <Btn icon="x" variant="ghost" size="sm" onClick={onClose} />
           </div>
