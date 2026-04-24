@@ -29,7 +29,10 @@ export type ResolveBaseBranchInput = {
   fallback: string;
 };
 
-const DEAD_STATUSES: ReadonlySet<StoryStatus> = new Set(['cancelled', 'failed']);
+// `done` tasks get their source branch deleted on origin by `gh pr merge
+// --squash`, so a PR against them would fail. `cancelled`/`failed` point at
+// stale worktrees. All three fall back to the repo's default branch.
+const DEAD_STATUSES: ReadonlySet<StoryStatus> = new Set(['cancelled', 'failed', 'done']);
 
 export function resolveBaseBranch(input: ResolveBaseBranchInput): string {
   const { plan, tasks, storyIndex, fallback } = input;

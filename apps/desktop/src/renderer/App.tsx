@@ -358,10 +358,13 @@ export default function App() {
   }, [pushToast]);
 
   const blockerCandidates = useMemo<BlockerCandidate[]>(() => {
-    // Only non-terminal tasks can serve as blockers — branching off a cancelled
-    // or failed task's branch would reuse stale state.
+    // Only tasks with a live branch can serve as blockers. Cancelled/failed
+    // tasks branch off stale state; 'done' tasks may have had their source
+    // branch deleted on origin by `gh pr merge --squash`, so `gh pr create
+    // --base` against them would fail.
+    const DISALLOWED: ReadonlyArray<typeof tasks[number]['status']> = ['cancelled', 'failed', 'done'];
     return tasks
-      .filter((t) => t.status !== 'cancelled' && t.status !== 'failed')
+      .filter((t) => !DISALLOWED.includes(t.status))
       .map((t) => ({
         index: t.index,
         title: t.title,

@@ -53,14 +53,16 @@ describe('resolveBaseBranch', () => {
     expect(base).toBe('nightcoder/7-add-widget');
   });
 
-  it('falls back to fallback when the blocker is cancelled/failed', () => {
+  it('falls back to fallback when the blocker is cancelled/failed/done', () => {
     const p = plan([
       { id: 'a', title: 'Add Widget' },
       { id: 'b', title: 'Widget polish' },
     ], [[0, 1]]);
-    const tasks = { a: task({ taskId: 'a', branch: 'nightcoder/1-add-widget', status: 'failed' }) };
-    const base = resolveBaseBranch({ plan: p, tasks, storyIndex: 1, fallback: 'main' });
-    expect(base).toBe('main');
+    for (const status of ['failed', 'cancelled', 'done'] as const) {
+      const tasks = { a: task({ taskId: 'a', branch: 'nightcoder/1-add-widget', status }) };
+      const base = resolveBaseBranch({ plan: p, tasks, storyIndex: 1, fallback: 'main' });
+      expect(base).toBe('main');
+    }
   });
 
   it('picks the lowest-index blocker deterministically when there are multiple', () => {
