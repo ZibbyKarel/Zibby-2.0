@@ -29,7 +29,9 @@ const COLS = [
 ];
 
 export default function App() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>(
+    () => window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  );
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [plan, setPlan] = useState<RefinedPlan | null>(null);
 
