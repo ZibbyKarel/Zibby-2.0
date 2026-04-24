@@ -4832,6 +4832,10 @@ snapshots:
     dependencies:
       react: 19.2.5
 
+  reactivity-store@0.4.0(react@19.2.5):
+    dependencies:
+      react: 19.2.5
+
   react@19.2.5: {}
 
   read-binary-file-arch@1.0.6:
