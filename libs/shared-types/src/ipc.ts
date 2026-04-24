@@ -26,6 +26,8 @@ export type PickFolderResult =
 
 export type Story = {
   taskId: string;
+  /** Monotonically increasing project-scoped ID, assigned at first run. */
+  numericId?: number;
   title: string;
   description: string;
   acceptanceCriteria: string[];
@@ -154,6 +156,8 @@ export type ProjectState = {
   brief: string;
   plan: RefinedPlan;
   tasks: Record<string, PersistedTask>;
+  /** Monotonically increasing counter; next task created will get this value. */
+  nextTaskNum: number;
 };
 
 /**

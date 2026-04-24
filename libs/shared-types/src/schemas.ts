@@ -16,6 +16,7 @@ export const StoryCoreSchema = z.object({
 
 export const StorySchema = StoryCoreSchema.extend({
   taskId: z.string().min(1).max(80),
+  numericId: z.number().int().min(1).optional(),
 }) satisfies z.ZodType<Story>;
 
 export const DependencySchema = z.object({
@@ -88,6 +89,7 @@ export const PersistedTaskSchema = z.object({
  */
 const ProjectPlanStorySchema = z.object({
   taskId: z.string().min(1).max(80),
+  numericId: z.number().int().min(1).optional(),
   title: z.string(),
   description: z.string(),
   acceptanceCriteria: z.array(z.string()).default([]),
@@ -105,6 +107,7 @@ export const ProjectStateSchema = z.object({
   brief: z.string().default(''),
   plan: ProjectPlanSchema,
   tasks: z.record(z.string(), PersistedTaskSchema).default({}),
+  nextTaskNum: z.number().int().min(1).default(1),
 }) satisfies z.ZodType<ProjectState>;
 
 export const AdvisorReviewSchema = z.object({
