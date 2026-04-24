@@ -26,7 +26,7 @@ import {
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { buildResumePrompt, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { buildResumePrompt, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
@@ -455,6 +455,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
       let branchDeletionWarning: string | undefined;
       const persistedBranch = project.tasks[story.taskId]?.branch;
       if (persistedBranch) {
+        // Worktree must come off first — `git branch -D` fails while the
+        // branch is checked out somewhere.
+        await removeWorktreeForBranch({ repoPath: folderPath, branch: persistedBranch }).catch(() => {});
         const result = await deleteStoryBranch({ repoPath: folderPath, branch: persistedBranch });
         branchDeletionWarning = result.warning;
       }

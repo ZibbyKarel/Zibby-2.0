@@ -4,7 +4,7 @@ export { executeStory, buildResumePrompt } from './execute-story';
 export type { StoryExecutionEvent, StoryExecutionResult, ResumeContext } from './execute-story';
 export { runSingleStory, runStoryResume } from './runner';
 export type { SingleStoryHandle } from './runner';
-export { attachWorktree, createWorktree, detectBaseBranch } from './worktree';
+export { attachWorktree, createWorktree, detectBaseBranch, removeWorktreeForBranch } from './worktree';
 export type { WorktreeHandle } from './worktree';
 export { slugify, uniqueSlug } from './slug';
 export { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';

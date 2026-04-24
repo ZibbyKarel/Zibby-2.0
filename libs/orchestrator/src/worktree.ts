@@ -120,6 +120,27 @@ function buildCleanup(repoPath: string, worktreePath: string, mirroredFiles: str
 }
 
 /**
+ * Remove the worktree associated with `nightcoder/<slug>`. Used when deleting
+ * a story: `git branch -D` fails while a worktree still has the branch checked
+ * out, so callers need to run this first. Safe to call when the worktree is
+ * already gone — `git worktree prune` cleans up stale metadata.
+ */
+export async function removeWorktreeForBranch(args: {
+  repoPath: string;
+  branch: string;
+}): Promise<void> {
+  const PREFIX = 'nightcoder/';
+  const slug = args.branch.startsWith(PREFIX) ? args.branch.slice(PREFIX.length) : args.branch;
+  const worktreePath = path.join(args.repoPath, '.worktrees', slug);
+  try {
+    await execFileP('git', ['worktree', 'remove', '--force', worktreePath], { cwd: args.repoPath, ...OPTS });
+  } catch {
+    await rm(worktreePath, { recursive: true, force: true }).catch(() => undefined);
+    await execFileP('git', ['worktree', 'prune'], { cwd: args.repoPath, ...OPTS }).catch(() => undefined);
+  }
+}
+
+/**
  * Re-open an existing worktree for resume. If the worktree directory is gone
  * (cleaned up, manually deleted) but the branch still exists, recreate the
  * worktree from the branch. Throws if neither path nor branch is available.
