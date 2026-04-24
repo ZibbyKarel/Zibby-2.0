@@ -8,6 +8,8 @@ import {
   appendJournalLine,
   ensureTaskDir,
   journalPath,
+  listTaskFiles,
+  taskFilesDir,
   writePlanMd,
 } from '@nightcoder/project-state';
 import { attachWorktree, createWorktree, type WorktreeHandle } from './worktree';
@@ -38,13 +40,19 @@ export function buildResumePrompt(args: {
   story: Story;
   plan: string | null;
   journalTail: string;
+  attachedFileNames?: readonly string[];
 }): string {
-  const { story, plan, journalTail } = args;
+  const { story, plan, journalTail, attachedFileNames = [] } = args;
   const parts: string[] = [];
   parts.push(`Continue implementing this user story. A previous session made progress and was interrupted.`);
   parts.push(`# ${story.title}\n\n${story.description}`);
   if (story.acceptanceCriteria.length > 0) {
     parts.push(`## Acceptance criteria\n\n${story.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n')}`);
+  }
+  if (attachedFileNames.length > 0) {
+    parts.push(
+      `## Attached context files\n\nThese files were attached to the task (available via --add-dir): ${attachedFileNames.join(', ')}. Re-read them if relevant.`,
+    );
   }
   if (plan && plan.trim().length > 0) {
     parts.push(`## Your earlier plan (plan.md)\n\n${plan.trim()}`);
@@ -66,9 +74,12 @@ export function buildResumePrompt(args: {
   return parts.join('\n\n');
 }
 
-function buildPrompt(story: Story): string {
+function buildPrompt(story: Story, attachedFileNames: readonly string[] = []): string {
   const ac = story.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n');
   const files = story.affectedFiles.length > 0 ? `\n\nExpected files to touch: ${story.affectedFiles.join(', ')}` : '';
+  const attached = attachedFileNames.length > 0
+    ? `\n\nAttached context files (available via --add-dir): ${attachedFileNames.join(', ')}. Read them before planning.`
+    : '';
   return `Implement the following user story end-to-end in this repository.
 
 # ${story.title}
@@ -77,7 +88,7 @@ ${story.description}
 
 ## Acceptance criteria
 
-${ac}${files}
+${ac}${files}${attached}
 
 Process guidelines:
 - Before coding, output your implementation plan inside a <plan>...</plan> markdown block near the top of your response. Break the work into small subtasks so each one can be a commit.
@@ -265,11 +276,18 @@ export async function executeStory(args: {
       const journalAbs = path.resolve(journalPath(repoPath, story.taskId));
       let assistantText = '';
 
+      const attachedFiles = await listTaskFiles(repoPath, story.taskId).catch(() => []);
+      const attachedNames = attachedFiles.map((f) => f.name);
+      const addDirs = attachedFiles.length > 0 ? [taskFilesDir(repoPath, story.taskId)] : [];
+      if (addDirs.length > 0) {
+        onEvent({ kind: 'log', stream: 'info', line: `attached files: ${attachedNames.join(', ')}` });
+      }
+
       const handle = runClaudeInWorktree(
         {
           cwd: worktree.path,
-          prompt: resume ? resume.prompt : buildPrompt(story),
-          addDirs: [],
+          prompt: resume ? resume.prompt : buildPrompt(story, attachedNames),
+          addDirs,
           model: story.model,
           env: { NIGHTCODER_JOURNAL_PATH: journalAbs },
         },

@@ -341,11 +341,17 @@ function registerIpc(getWebContents: () => WebContents | null) {
       // rerunning the whole session — just redo the push + PR step.
       const pushOnly = task?.status === 'pushing';
 
-      const [plan, journalTail] = await Promise.all([
+      const [plan, journalTail, attachedFiles] = await Promise.all([
         readPlanMd(folderPath, req.taskId),
         readJournalTail(folderPath, req.taskId),
+        listTaskFiles(folderPath, req.taskId),
       ]);
-      const prompt = buildResumePrompt({ story, plan, journalTail });
+      const prompt = buildResumePrompt({
+        story,
+        plan,
+        journalTail,
+        attachedFileNames: attachedFiles.map((f) => f.name),
+      });
       const runId = `resume-${Date.now()}-${req.taskId}`;
 
       await acquireRunner();
