@@ -60,11 +60,12 @@ export const PersistedPlanSchema = z.object({
 });
 
 export const PersistedStoryRuntimeSchema = z.object({
-  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled']),
+  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted']),
   branch: z.string().nullable(),
   prUrl: z.string().nullable(),
   startedAt: z.number().nullable(),
   endedAt: z.number().nullable(),
+  limitResetsAt: z.number().nullable().optional(),
 }) satisfies z.ZodType<PersistedStoryRuntime>;
 
 export const PersistedRuntimeSchema = z.record(
@@ -74,12 +75,13 @@ export const PersistedRuntimeSchema = z.record(
 
 export const PersistedTaskSchema = z.object({
   taskId: z.string().min(1),
-  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled']),
+  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted']),
   branch: z.string().nullable(),
   prUrl: z.string().nullable(),
   startedAt: z.number().nullable(),
   endedAt: z.number().nullable(),
   sessionId: z.string().optional(),
+  limitResetsAt: z.number().nullable().optional(),
 }) satisfies z.ZodType<PersistedTask>;
 
 /**

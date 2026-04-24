@@ -25,7 +25,8 @@ export type StoryExecutionEvent =
   | { kind: 'status'; status: StoryStatus }
   | { kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
   | { kind: 'branch'; branch: string }
-  | { kind: 'pr'; url: string; branch: string };
+  | { kind: 'pr'; url: string; branch: string }
+  | { kind: 'limit-hit'; resetsAt: number | null };
 
 export type StoryExecutionResult = {
   success: boolean;
@@ -33,6 +34,9 @@ export type StoryExecutionResult = {
   branch?: string;
   error?: string;
   duplicate?: boolean;
+  /** Set when the run was paused because a Claude usage limit was hit. */
+  limitHit?: boolean;
+  limitResetsAt?: number | null;
 };
 
 /** Build a continuation prompt for resume: fresh story context + prior plan + journal tail. */
@@ -320,6 +324,17 @@ export async function executeStory(args: {
         clearInterval(cancelWatcher);
         onEvent({ kind: 'status', status: 'cancelled' });
         return { success: false, error: 'cancelled' };
+      }
+      if (result.limitHit) {
+        clearInterval(cancelWatcher);
+        onEvent({ kind: 'limit-hit', resetsAt: result.limitResetsAt ?? null });
+        onEvent({ kind: 'status', status: 'interrupted' });
+        return {
+          success: false,
+          error: 'usage limit reached',
+          limitHit: true,
+          limitResetsAt: result.limitResetsAt ?? null,
+        };
       }
       if (!result.success) {
         clearInterval(cancelWatcher);

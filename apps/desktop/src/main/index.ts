@@ -84,6 +84,139 @@ function releaseRunner(): void {
 
 const activeRuns = new Map<string, PlanRunHandle>();
 
+// ── Auto-resume scheduling for tasks paused by a usage limit ──────────────
+const RESUME_GRACE_MS = 5_000;
+const RESUME_POLL_MS = 60_000;
+let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+let resumeTimerTarget: number | null = null;
+
+function clearResumeTimer(): void {
+  if (resumeTimer) {
+    clearTimeout(resumeTimer);
+    resumeTimer = null;
+    resumeTimerTarget = null;
+  }
+}
+
+function scheduleResumeAt(
+  resetsAt: number | null | undefined,
+  getWebContents: () => WebContents | null,
+): void {
+  const now = Date.now();
+  const fallback = now + RESUME_POLL_MS;
+  // When the CLI output doesn't include a timestamp, fall back to whatever
+  // the Usage panel is already tracking — it's the same source of truth the
+  // user sees in the header.
+  const usageReset = cachedUsage?.fiveHour?.resetsAt ?? cachedUsage?.sevenDay?.resetsAt ?? null;
+  const effective = resetsAt && Number.isFinite(resetsAt)
+    ? resetsAt
+    : (usageReset && usageReset > now ? usageReset : null);
+  const target = effective ? effective + RESUME_GRACE_MS : fallback;
+  // Keep the earliest scheduled wake-up; later limit-hits with a later reset
+  // don't push the timer out.
+  if (resumeTimerTarget !== null && resumeTimerTarget <= target) return;
+  clearResumeTimer();
+  const delay = Math.max(1_000, target - now);
+  resumeTimerTarget = target;
+  resumeTimer = setTimeout(() => {
+    resumeTimer = null;
+    resumeTimerTarget = null;
+    void resumeInterruptedTasks(getWebContents).catch(() => {
+      // On failure, try again after the poll interval so we don't give up.
+      scheduleResumeAt(null, getWebContents);
+    });
+  }, delay);
+}
+
+/**
+ * Find every task with status='interrupted' in the currently opened project
+ * and kick off a Resume IPC-style flow for each. Limit has reset by the time
+ * this fires; the existing runner serialization throttles concurrency.
+ */
+async function resumeInterruptedTasks(getWebContents: () => WebContents | null): Promise<void> {
+  const userData = await loadUserData(app.getPath('userData'));
+  const folderPath = userData.lastOpenedFolder;
+  if (!folderPath) return;
+  const project = await loadProject(folderPath);
+  if (!project) return;
+
+  const interruptedIds = Object.values(project.tasks)
+    .filter((t) => t.status === 'interrupted')
+    .map((t) => t.taskId);
+  if (interruptedIds.length === 0) return;
+
+  const wc = getWebContents();
+  for (const taskId of interruptedIds) {
+    const storyIndex = project.plan.stories.findIndex((s) => s.taskId === taskId);
+    if (storyIndex < 0) continue;
+    const story = project.plan.stories[storyIndex];
+    const task = project.tasks[taskId];
+    const branch = task?.branch ?? `nightcoder/${slugify(`${story.numericId ?? storyIndex + 1}-${story.title}`)}`;
+    const pushOnly = task?.status === 'pushing';
+
+    const [plan, journalTail, attachedFiles] = await Promise.all([
+      readPlanMd(folderPath, taskId),
+      readJournalTail(folderPath, taskId),
+      listTaskFiles(folderPath, taskId),
+    ]);
+    const prompt = buildResumePrompt({
+      story,
+      plan,
+      journalTail,
+      attachedFileNames: attachedFiles.map((f) => f.name),
+    });
+    const runId = `auto-resume-${Date.now()}-${taskId}`;
+
+    await acquireRunner();
+    const handle = runStoryResume({
+      story,
+      storyIndex,
+      repoPath: folderPath,
+      resume: { branch, prompt, pushOnly },
+      onEvent: (e) => {
+        const liveWc = getWebContents();
+        if (e.kind === 'status') {
+          void persistStoryStatus(folderPath, taskId, e.status);
+          if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
+        } else if (e.kind === 'log') {
+          if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+        } else if (e.kind === 'branch') {
+          void persistStoryBranch(folderPath, taskId, e.branch);
+          if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'branch', branch: e.branch });
+        } else if (e.kind === 'pr') {
+          void persistStoryPr(folderPath, taskId, e.branch, e.url);
+          if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+        } else if (e.kind === 'limit-hit') {
+          void persistStoryLimitHit(folderPath, taskId, e.resetsAt);
+          scheduleResumeAt(e.resetsAt, getWebContents);
+          if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
+        }
+      },
+    });
+    void handle.result
+      .catch((err) => {
+        const liveWc = getWebContents();
+        if (!liveWc) return;
+        emitToRenderer(liveWc, {
+          runId,
+          storyIndex,
+          kind: 'log',
+          stream: 'stderr',
+          line: err instanceof Error ? err.message : String(err),
+        });
+      })
+      .finally(() => releaseRunner());
+  }
+
+  if (wc && !wc.isDestroyed()) {
+    wc.send(IpcEvents.RunEvent, {
+      runId: `auto-resume-batch-${Date.now()}`,
+      kind: 'run-done',
+      success: true,
+    });
+  }
+}
+
 const USAGE_POLL_INTERVAL_MS = 5 * 60 * 1000;
 let cachedUsage: Usage | null = null;
 let usagePollTimer: ReturnType<typeof setInterval> | null = null;
@@ -148,10 +281,25 @@ async function persistStoryStatus(
   const now = Date.now();
   if (status === 'running') patch.startedAt = now;
   if (TERMINAL_STATUSES.has(status)) patch.endedAt = now;
+  // When a task leaves the interrupted state (resumed or restarted), clear
+  // the stored reset time so we don't auto-resume it a second time.
+  if (status !== 'interrupted') patch.limitResetsAt = null;
   try {
     await updateTask(repoPath, taskId, patch);
   } catch {
     // Persistence failures never crash the run — the UI still sees the event.
+  }
+}
+
+async function persistStoryLimitHit(
+  repoPath: string,
+  taskId: string,
+  resetsAt: number | null,
+): Promise<void> {
+  try {
+    await updateTask(repoPath, taskId, { limitResetsAt: resetsAt });
+  } catch {
+    // ignore
   }
 }
 
@@ -260,6 +408,15 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   url: e.url,
                   branch: e.branch,
                 });
+              } else if (e.kind === 'limit-hit') {
+                if (tid) void persistStoryLimitHit(req.folderPath, tid, e.resetsAt);
+                scheduleResumeAt(e.resetsAt, getWebContents);
+                if (wc) emitToRenderer(wc, {
+                  runId: handle.runId,
+                  storyIndex: e.storyIndex,
+                  kind: 'limit-hit',
+                  resetsAt: e.resetsAt,
+                });
               }
             } else if (e.kind === 'run-done') {
               if (wc) emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
@@ -300,6 +457,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
           } else if (e.kind === 'pr') {
             if (taskId) void persistStoryPr(req.folderPath, taskId, e.branch, e.url);
             if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+          } else if (e.kind === 'limit-hit') {
+            if (taskId) void persistStoryLimitHit(req.folderPath, taskId, e.resetsAt);
+            scheduleResumeAt(e.resetsAt, getWebContents);
+            if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
           }
         },
       });
@@ -373,6 +534,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
           } else if (e.kind === 'pr') {
             void persistStoryPr(folderPath, req.taskId, e.branch, e.url);
             if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+          } else if (e.kind === 'limit-hit') {
+            void persistStoryLimitHit(folderPath, req.taskId, e.resetsAt);
+            scheduleResumeAt(e.resetsAt, getWebContents);
+            if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
           }
         },
       });
@@ -582,7 +747,33 @@ app.whenReady().then(() => {
   registerIpc(getWebContents);
   createWindow();
   startUsagePolling(getWebContents);
+  void rearmResumeScheduleFromDisk(getWebContents);
 });
+
+/**
+ * On app launch, look at the last opened project's task file. If any task is
+ * stuck in `interrupted`, pick the earliest known `limitResetsAt` and arm the
+ * auto-resume timer. Missing timestamps fall back to a short poll so we don't
+ * leave the user stranded.
+ */
+async function rearmResumeScheduleFromDisk(getWebContents: () => WebContents | null): Promise<void> {
+  try {
+    const userData = await loadUserData(app.getPath('userData'));
+    const folderPath = userData.lastOpenedFolder;
+    if (!folderPath) return;
+    const project = await loadProject(folderPath);
+    if (!project) return;
+    const interrupted = Object.values(project.tasks).filter((t) => t.status === 'interrupted');
+    if (interrupted.length === 0) return;
+    const resetTimes = interrupted
+      .map((t) => (typeof t.limitResetsAt === 'number' && Number.isFinite(t.limitResetsAt) ? t.limitResetsAt : null))
+      .filter((v): v is number => v !== null);
+    const earliest = resetTimes.length > 0 ? Math.min(...resetTimes) : null;
+    scheduleResumeAt(earliest, getWebContents);
+  } catch {
+    // Non-fatal — the user can still resume manually.
+  }
+}
 
 app.on('window-all-closed', () => {
   for (const handle of activeRuns.values()) handle.cancel();
@@ -591,6 +782,7 @@ app.on('window-all-closed', () => {
     clearInterval(usagePollTimer);
     usagePollTimer = null;
   }
+  clearResumeTimer();
   if (process.platform !== 'darwin') app.quit();
 });
 

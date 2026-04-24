@@ -83,7 +83,8 @@ export type StoryStatus =
   | 'review'
   | 'done'
   | 'failed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'interrupted';
 
 export type RunStartRequest = {
   folderPath: string;
@@ -121,6 +122,7 @@ export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
   | { runId: string; storyIndex: number; kind: 'branch'; branch: string }
   | { runId: string; storyIndex: number; kind: 'pr'; url: string; branch: string }
+  | { runId: string; storyIndex: number; kind: 'limit-hit'; resetsAt: number | null }
   | { runId: string; kind: 'run-done'; success: boolean };
 
 export type RemoveStoryPayload = {
@@ -138,6 +140,8 @@ export type PersistedStoryRuntime = {
   prUrl: string | null;
   startedAt: number | null;
   endedAt: number | null;
+  /** Epoch ms when the Claude usage limit that interrupted this task resets. */
+  limitResetsAt?: number | null;
 };
 
 /**
@@ -152,6 +156,8 @@ export type PersistedTask = {
   startedAt: number | null;
   endedAt: number | null;
   sessionId?: string;
+  /** Epoch ms when the Claude usage limit that interrupted this task resets. */
+  limitResetsAt?: number | null;
 };
 
 /** Shape of `<repo>/.nightcoder/index.json`. */

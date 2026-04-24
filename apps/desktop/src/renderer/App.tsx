@@ -65,12 +65,16 @@ export default function App() {
           const next = { ...prev };
           for (const [k, v] of Object.entries(state.runtime!)) {
             const idx = Number(k);
-            next[idx] = { ...v, logs: prev[idx]?.logs ?? [] };
+            next[idx] = {
+              ...v,
+              limitResetsAt: v.limitResetsAt ?? null,
+              logs: prev[idx]?.logs ?? [],
+            };
           }
           return next;
         });
         const interruptedIndices = Object.entries(state.runtime)
-          .filter(([, v]) => v.status === 'running' || v.status === 'pushing')
+          .filter(([, v]) => v.status === 'running' || v.status === 'pushing' || v.status === 'interrupted')
           .map(([k]) => Number(k));
         if (interruptedIndices.length > 0) setInterrupted(new Set(interruptedIndices));
       }
@@ -85,7 +89,14 @@ export default function App() {
     const persistedRuntime: Record<number, PersistedStoryRuntime> = {};
     for (const [k, v] of Object.entries(runtime)) {
       const idx = Number(k);
-      persistedRuntime[idx] = { status: v.status, branch: v.branch, prUrl: v.prUrl, startedAt: v.startedAt, endedAt: v.endedAt };
+      persistedRuntime[idx] = {
+        status: v.status,
+        branch: v.branch,
+        prUrl: v.prUrl,
+        startedAt: v.startedAt,
+        endedAt: v.endedAt,
+        limitResetsAt: v.limitResetsAt ?? null,
+      };
     }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -126,6 +137,12 @@ export default function App() {
       const idx = ev.storyIndex;
       if (ev.kind === 'status') {
         setInterrupted((prev) => {
+          if (ev.status === 'interrupted') {
+            if (prev.has(idx)) return prev;
+            const next = new Set(prev);
+            next.add(idx);
+            return next;
+          }
           if (!prev.has(idx)) return prev;
           const next = new Set(prev);
           next.delete(idx);
@@ -141,11 +158,19 @@ export default function App() {
               status: ev.status,
               startedAt: ev.status === 'running' && !cur.startedAt ? Date.now() : cur.startedAt,
               endedAt: isTerminal(ev.status) ? (cur.endedAt ?? Date.now()) : cur.endedAt,
+              // Clear the stored reset time once a new status takes over.
+              limitResetsAt: ev.status === 'interrupted' ? cur.limitResetsAt : null,
             };
             if (ev.status === 'done') {
               pushToast({ kind: 'done', title: 'Task done', desc: plan?.stories[idx]?.title });
             } else if (ev.status === 'failed') {
               pushToast({ kind: 'failed', title: 'Task failed', desc: plan?.stories[idx]?.title });
+            } else if (ev.status === 'interrupted') {
+              pushToast({
+                kind: 'info',
+                title: 'Task paused — usage limit reached',
+                desc: plan?.stories[idx]?.title,
+              });
             }
             return { ...prev, [idx]: next };
           }
@@ -161,6 +186,9 @@ export default function App() {
           case 'pr': {
             pushToast({ kind: 'done', title: 'PR opened', desc: ev.url });
             return { ...prev, [idx]: { ...cur, branch: ev.branch, prUrl: ev.url } };
+          }
+          case 'limit-hit': {
+            return { ...prev, [idx]: { ...cur, limitResetsAt: ev.resetsAt } };
           }
         }
       });
@@ -205,7 +233,9 @@ export default function App() {
     }
     const story = plan.stories[idx];
     if (!story) return;
-    if (interrupted.has(idx) && story.taskId) {
+    const currentStatus = runtime[idx]?.status;
+    const isResumable = interrupted.has(idx) || currentStatus === 'interrupted';
+    if (isResumable && story.taskId) {
       pushToast({ kind: 'info', title: 'Resuming task', desc: story.title });
       const res = await window.nightcoder.resumeTask({ taskId: story.taskId });
       if (res.kind === 'error') {
@@ -213,8 +243,7 @@ export default function App() {
       }
       return;
     }
-    const current = runtime[idx]?.status;
-    if (current === 'running' || current === 'pushing' || current === 'review' || current === 'done') {
+    if (currentStatus === 'running' || currentStatus === 'pushing' || currentStatus === 'review' || currentStatus === 'done') {
       return;
     }
     const storyRunId = `story-${Date.now()}-${idx}`;

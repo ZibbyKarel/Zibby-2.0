@@ -372,4 +372,32 @@ describe('runtimeToTasks / tasksToRuntime', () => {
     expect(rt[0].status).toBe('done');
     expect(Object.keys(rt)).toHaveLength(1);
   });
+
+  it('round-trips limitResetsAt through interrupted tasks', () => {
+    const runtime = {
+      0: {
+        status: 'interrupted' as const,
+        branch: 'nightcoder/add-login',
+        prUrl: null,
+        startedAt: 100,
+        endedAt: null,
+        limitResetsAt: 1776963600000,
+      },
+      1: {
+        status: 'pending' as const,
+        branch: null,
+        prUrl: null,
+        startedAt: null,
+        endedAt: null,
+      },
+    };
+    const tasks = runtimeToTasks(plan, runtime);
+    expect(tasks['add-login'].status).toBe('interrupted');
+    expect(tasks['add-login'].limitResetsAt).toBe(1776963600000);
+    expect(tasks['add-logout'].limitResetsAt ?? null).toBeNull();
+    const back = tasksToRuntime(plan, tasks);
+    expect(back[0].status).toBe('interrupted');
+    expect(back[0].limitResetsAt).toBe(1776963600000);
+    expect(back[1].limitResetsAt).toBeNull();
+  });
 });

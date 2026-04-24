@@ -14,10 +14,17 @@ type Props = {
   onDelete: () => void;
 };
 
+function formatResumeAt(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
 export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, onEdit, onRun, onDelete }: Props) {
   const waits = task.waitsOn.length > 0;
   const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
-  const canResume = task.interrupted && (task.status === 'running' || task.status === 'pushing');
+  const canResume =
+    task.status === 'interrupted' ||
+    (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
+  const pausedByLimit = task.status === 'interrupted' && task.limitResetsAt != null;
 
   return (
     <article
@@ -82,7 +89,12 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
         )}
         {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
         {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
-        {canResume && <Chip icon="warn" tone="warn">interrupted</Chip>}
+        {pausedByLimit && (
+          <Chip icon="clock" tone="warn">
+            paused · resumes {formatResumeAt(task.limitResetsAt!)}
+          </Chip>
+        )}
+        {canResume && !pausedByLimit && <Chip icon="warn" tone="warn">interrupted</Chip>}
       </div>
 
       <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
