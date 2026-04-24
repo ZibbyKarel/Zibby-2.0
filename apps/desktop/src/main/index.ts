@@ -32,12 +32,14 @@ import {
   type RemoveTaskFileResult,
   type GetTaskDiffRequest,
   type TaskDiffResult,
+  type SquashAndMergeTaskRequest,
+  type SquashAndMergeTaskResult,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
 import { buildResumePrompt, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
-import { deleteStoryBranch } from '@nightcoder/github';
+import { deleteStoryBranch, ghSquashAndMergePr } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
   archiveDroppedTaskFolders,
@@ -693,6 +695,43 @@ function registerIpc(getWebContents: () => WebContents | null) {
         return await getTaskDiff({ repoPath: folderPath, branch });
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.SquashAndMergeTask,
+    async (_event, req: SquashAndMergeTaskRequest): Promise<SquashAndMergeTaskResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        const project = await loadProject(folderPath);
+        if (!project) return { kind: 'error', message: 'No project state found' };
+        const storyIndex = project.plan.stories.findIndex((s) => s.taskId === req.taskId);
+        if (storyIndex < 0) return { kind: 'error', message: `Task ${req.taskId} is not in the current plan` };
+        const story = project.plan.stories[storyIndex];
+        const task = project.tasks[req.taskId];
+        const prUrl = task?.prUrl;
+        if (!prUrl) return { kind: 'error', message: 'Task has no pull request to squash-merge' };
+        const displayId = story.numericId ?? storyIndex + 1;
+        const subject = `[${displayId}]: ${story.title}`;
+        await ghSquashAndMergePr({ cwd: folderPath, prUrl, subject });
+        await updateTask(folderPath, req.taskId, { status: 'done', endedAt: Date.now() }).catch(() => {});
+        const wc = getWebContents();
+        if (wc) emitToRenderer(wc, {
+          runId: `squash-${Date.now()}-${req.taskId}`,
+          storyIndex,
+          kind: 'status',
+          status: 'done',
+        });
+        return { kind: 'ok', mergedCommitTitle: subject };
+      } catch (err) {
+        const stderr = (err as { stderr?: string }).stderr;
+        const msg = stderr && stderr.trim().length > 0
+          ? stderr.trim()
+          : err instanceof Error ? err.message : String(err);
+        return { kind: 'error', message: msg };
       }
     },
   );
