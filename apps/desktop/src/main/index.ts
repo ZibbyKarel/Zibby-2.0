@@ -23,6 +23,13 @@ import {
   type RemoveStoryPayload,
   type RemoveStoryResult,
   type StoryStatus,
+  type PickFilesToAttachResult,
+  type AddTaskFilesRequest,
+  type AddTaskFilesResult,
+  type ListTaskFilesRequest,
+  type ListTaskFilesResult,
+  type RemoveTaskFileRequest,
+  type RemoveTaskFileResult,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
@@ -32,11 +39,14 @@ import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
   archiveDroppedTaskFolders,
+  copyTaskFiles,
   initProject,
+  listTaskFiles,
   loadProject,
   mergePlanOnReplan,
   readJournalTail,
   readPlanMd,
+  removeTaskFile,
   runtimeToTasks,
   saveProject,
   tasksToRuntime,
@@ -431,6 +441,61 @@ function registerIpc(getWebContents: () => WebContents | null) {
   ipcMain.handle(IpcChannels.OpenExternal, async (_event, url: string): Promise<void> => {
     await shell.openExternal(url);
   });
+
+  ipcMain.handle(IpcChannels.PickFilesToAttach, async (): Promise<PickFilesToAttachResult> => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      title: 'Attach files to task',
+    });
+    if (result.canceled || result.filePaths.length === 0) return { kind: 'cancelled' };
+    return { kind: 'selected', paths: result.filePaths };
+  });
+
+  ipcMain.handle(
+    IpcChannels.AddTaskFiles,
+    async (_event, req: AddTaskFilesRequest): Promise<AddTaskFilesResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        if (!req.taskId) return { kind: 'error', message: 'Missing taskId' };
+        const files = await copyTaskFiles(folderPath, req.taskId, req.sourcePaths);
+        return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.ListTaskFiles,
+    async (_event, req: ListTaskFilesRequest): Promise<ListTaskFilesResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        const files = await listTaskFiles(folderPath, req.taskId);
+        return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.RemoveTaskFile,
+    async (_event, req: RemoveTaskFileRequest): Promise<RemoveTaskFileResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        const files = await removeTaskFile(folderPath, req.taskId, req.name);
+        return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
 
   ipcMain.handle(
     IpcChannels.RemoveStory,
