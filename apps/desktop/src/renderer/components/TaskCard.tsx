@@ -71,7 +71,15 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
         {task.branch && <Chip icon="git">{task.branch.replace('nightcoder/', '')}</Chip>}
-        {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
+        {task.prUrl && (
+          <button
+            onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex' }}
+            title={task.prUrl}
+          >
+            <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>
+          </button>
+        )}
         {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
         {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
         {canResume && <Chip icon="warn" tone="warn">interrupted</Chip>}
