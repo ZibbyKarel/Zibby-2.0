@@ -218,8 +218,7 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
         </EditField>
         <EditField label="Model">
           <select value={model} onChange={(e) => setModel(e.target.value)} style={{ ...inputStyle, height: 34 }}>
-            <option value="">Default (sonnet)</option>
-            <option value="sonnet">Sonnet</option>
+            <option value="">Sonnet (default)</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>
           </select>
@@ -285,7 +284,7 @@ function DetailsView({ task, onSave }: { task: TaskVM; onSave: (data: SaveData) 
       </Section>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <KV k="Model" v={task.model ?? 'sonnet (default)'} />
+        <KV k="Model" v={task.model ?? 'Sonnet (default)'} />
         <KV k="Branch" v={task.branch ?? '—'} mono />
         <KV k="Status" v={task.status} />
         <KV k="Tokens" v={task.tokens != null ? `↑${fmtNum((task.tokens as {in:number;out:number}).in)}  ↓${fmtNum((task.tokens as {in:number;out:number}).out)}` : '—'} mono />
