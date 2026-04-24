@@ -17,6 +17,7 @@ export const IpcChannels = {
   RemoveTaskFile: 'nightcoder:removeTaskFile',
   GetTaskDiff: 'nightcoder:getTaskDiff',
   SquashMergeTask: 'nightcoder:squashMergeTask',
+  SyncPrStatuses: 'nightcoder:syncPrStatuses',
 } as const;
 
 export const IpcEvents = {
@@ -268,6 +269,18 @@ export type SquashMergeTaskResult =
   | { kind: 'ok'; prUrl: string; subject: string }
   | { kind: 'error'; message: string };
 
+export type SyncPrStatusesResult =
+  | {
+      kind: 'ok';
+      /** Number of tasks whose PR was queried. */
+      checked: number;
+      /** Number of tasks newly transitioned to 'done' as a result of this sync. */
+      updated: number;
+      /** Number of tasks whose PR could not be queried (deleted, no access, gh missing). */
+      errors: number;
+    }
+  | { kind: 'error'; message: string };
+
 export type IpcApi = {
   version: string;
   pickFolder: () => Promise<PickFolderResult>;
@@ -290,4 +303,5 @@ export type IpcApi = {
   removeTaskFile: (req: RemoveTaskFileRequest) => Promise<RemoveTaskFileResult>;
   getTaskDiff: (req: GetTaskDiffRequest) => Promise<TaskDiffResult>;
   squashMergeTask: (req: SquashMergeTaskRequest) => Promise<SquashMergeTaskResult>;
+  syncPrStatuses: () => Promise<SyncPrStatusesResult>;
 };
