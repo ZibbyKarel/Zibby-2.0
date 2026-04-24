@@ -34,12 +34,13 @@ import {
   type TaskDiffResult,
   type SquashMergeTaskRequest,
   type SquashMergeTaskResult,
+  type SyncPrStatusesResult,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
 import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
-import { deleteStoryBranch, ghSquashMergePr } from '@nightcoder/github';
+import { deleteStoryBranch, ghGetPrState, ghSquashMergePr } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
   archiveDroppedTaskFolders,
@@ -732,6 +733,56 @@ function registerIpc(getWebContents: () => WebContents | null) {
         const raw = err instanceof Error ? err.message : String(err);
         const stderr = (err as { stderr?: string }).stderr;
         return { kind: 'error', message: stderr ? `${raw}\n${stderr}` : raw };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.SyncPrStatuses,
+    async (): Promise<SyncPrStatusesResult> => {
+      try {
+        const userData = await loadUserData(app.getPath('userData'));
+        const folderPath = userData.lastOpenedFolder;
+        if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+        const project = await loadProject(folderPath);
+        if (!project) return { kind: 'ok', checked: 0, updated: 0, errors: 0 };
+
+        // Only tasks that have a PR and aren't already 'done' are interesting
+        // — once 'done', the merge has already been recorded locally.
+        const candidates = project.plan.stories
+          .map((story, storyIndex) => {
+            const task = project.tasks[story.taskId];
+            if (!task || !task.prUrl || task.status === 'done') return null;
+            return { taskId: story.taskId, storyIndex, prUrl: task.prUrl };
+          })
+          .filter((c): c is { taskId: string; storyIndex: number; prUrl: string } => c !== null);
+
+        let updated = 0;
+        let errors = 0;
+        for (const { taskId, storyIndex, prUrl } of candidates) {
+          const result = await ghGetPrState({ cwd: folderPath, prUrl });
+          if (!result) {
+            errors += 1;
+            continue;
+          }
+          if (result.state === 'MERGED') {
+            await persistStoryStatus(folderPath, taskId, 'done');
+            const wc = getWebContents();
+            if (wc) {
+              emitToRenderer(wc, {
+                runId: `sync-${taskId}`,
+                storyIndex,
+                kind: 'status',
+                status: 'done',
+              });
+            }
+            updated += 1;
+          }
+        }
+
+        return { kind: 'ok', checked: candidates.length, updated, errors };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
     },
   );
