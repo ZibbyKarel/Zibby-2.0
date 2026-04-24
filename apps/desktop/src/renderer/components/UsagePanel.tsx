@@ -63,7 +63,7 @@ function UsageMini({ label, pct, resetsInMs }: { label: string; pct: number; res
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <span style={{ fontSize: 9, letterSpacing: '.14em', fontWeight: 600, color: 'var(--text-3)' }}>{label}</span>
         <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-1)' }}>
-          resets in {fmtCountdown(resetsInMs)}
+          -{fmtCountdown(resetsInMs)}
         </span>
       </div>
     </div>
