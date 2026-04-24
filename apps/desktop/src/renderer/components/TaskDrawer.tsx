@@ -106,7 +106,7 @@ export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, ru
         </nav>
 
         <div style={{ flex: 1, overflow: 'auto' }}>
-          {tab === 'logs' && <LogsView task={task} />}
+          {tab === 'logs' && <LogsView key={task.index} task={task} />}
           {tab === 'diff' && <DiffView />}
           {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
         </div>
@@ -116,10 +116,25 @@ export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, ru
 }
 
 function LogsView({ task }: { task: TaskVM }) {
-  const ref = useRef<HTMLPreElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+
   useEffect(() => {
-    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  }, [task.logs.length]);
+    if (autoScroll && containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [task.logs.length, autoScroll]);
+
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+    setAutoScroll(atBottom);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    setAutoScroll(true);
+  }, []);
 
   if (task.logs.length === 0) {
     return (
@@ -130,26 +145,54 @@ function LogsView({ task }: { task: TaskVM }) {
     );
   }
   return (
-    <pre ref={ref} style={{
-      margin: 0, padding: '14px 18px', fontSize: 12, lineHeight: 1.55,
-      fontFamily: 'var(--mono)', color: 'var(--text-1)',
-      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-      background: 'var(--bg-0)',
-    }}>
-      {task.logs.map((l, i) => {
-        const color = l.s === 'err' ? 'var(--rose)' : l.s === 'info' ? 'var(--sky)' : 'var(--text-1)';
-        const prefix = l.s === 'err' ? '✗ ' : '';
-        return (
-          <div key={i} style={{ color, display: 'flex', gap: 8 }}>
-            <span style={{ color: 'var(--text-3)', userSelect: 'none', minWidth: 28, textAlign: 'right' }}>
-              {String(i + 1).padStart(3, ' ')}
-            </span>
-            <span style={{ flex: 1 }}>{prefix}{l.l}</span>
-          </div>
-        );
-      })}
-      {task.status === 'running' && <div className="caret" style={{ color: 'var(--emerald)' }} />}
-    </pre>
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      style={{ height: '100%', overflowY: 'auto', position: 'relative' }}
+    >
+      <pre style={{
+        margin: 0, padding: '14px 18px', fontSize: 12, lineHeight: 1.55,
+        fontFamily: 'var(--mono)', color: 'var(--text-1)',
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        background: 'var(--bg-0)',
+      }}>
+        {task.logs.map((l, i) => {
+          const color = l.s === 'err' ? 'var(--rose)' : l.s === 'info' ? 'var(--sky)' : 'var(--text-1)';
+          const prefix = l.s === 'err' ? '✗ ' : '';
+          return (
+            <div key={i} style={{ color, display: 'flex', gap: 8 }}>
+              <span style={{ color: 'var(--text-3)', userSelect: 'none', minWidth: 28, textAlign: 'right' }}>
+                {String(i + 1).padStart(3, ' ')}
+              </span>
+              <span style={{ flex: 1 }}>{prefix}{l.l}</span>
+            </div>
+          );
+        })}
+        {task.status === 'running' && <div className="caret" style={{ color: 'var(--emerald)' }} />}
+      </pre>
+      {!autoScroll && (
+        <div style={{
+          position: 'sticky', bottom: 16,
+          display: 'flex', justifyContent: 'flex-end',
+          paddingRight: 16, pointerEvents: 'none',
+        }}>
+          <button
+            onClick={scrollToBottom}
+            title="Scroll to bottom"
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'var(--bg-3)', border: '1px solid var(--border)',
+              color: 'var(--text-1)', cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,.25)',
+            }}
+          >
+            <Icon name="chevronDown" size={16} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
