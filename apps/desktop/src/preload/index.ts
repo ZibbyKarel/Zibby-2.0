@@ -30,6 +30,7 @@ import {
   type TaskDiffResult,
   type SquashMergeTaskRequest,
   type SquashMergeTaskResult,
+  type SyncPrStatusesResult,
 } from '@nightcoder/shared-types/ipc';
 
 const api: IpcApi = {
@@ -78,6 +79,8 @@ const api: IpcApi = {
     ipcRenderer.invoke(IpcChannels.GetTaskDiff, req),
   squashMergeTask: (req: SquashMergeTaskRequest): Promise<SquashMergeTaskResult> =>
     ipcRenderer.invoke(IpcChannels.SquashMergeTask, req),
+  syncPrStatuses: (): Promise<SyncPrStatusesResult> =>
+    ipcRenderer.invoke(IpcChannels.SyncPrStatuses),
 };
 
 contextBridge.exposeInMainWorld('nightcoder', api);
