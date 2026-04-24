@@ -1,23 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import {
   appendJournalLine,
   archiveDroppedTaskFolders,
+  copyTaskFiles,
   ensureTaskDir,
   initProject,
   journalPath,
+  listTaskFiles,
   loadProject,
   mergePlanOnReplan,
   planPath,
   projectDir,
+  removeTaskFile,
   runtimeToTasks,
   saveProject,
   storyJsonPath,
   tasksToRuntime,
   taskDir,
+  taskFilesDir,
   updatePlan,
   updateTask,
   writePlanMd,
@@ -282,6 +286,66 @@ describe('appendJournalLine', () => {
     await appendJournalLine(repo, 'add-login', { timestamp: 200, hash: 'def456', subject: 'wire it up' });
     const contents = await readFile(journalPath(repo, 'add-login'), 'utf8');
     expect(contents).toBe('100 abc123 initial\n200 def456 wire it up\n');
+  });
+});
+
+describe('task file attachments', () => {
+  it('copies files into the task files dir and lists them', async () => {
+    await initProject(repo);
+    const src1 = path.join(repo, 'src1.txt');
+    const src2 = path.join(repo, 'src2.md');
+    await writeFile(src1, 'hello', 'utf8');
+    await writeFile(src2, '# notes\nmore content', 'utf8');
+
+    const result = await copyTaskFiles(repo, 'add-login', [src1, src2]);
+    expect(result.map((f) => f.name).sort()).toEqual(['src1.txt', 'src2.md']);
+    const sizes = Object.fromEntries(result.map((f) => [f.name, f.size]));
+    expect(sizes['src1.txt']).toBe(5);
+    expect(sizes['src2.md']).toBeGreaterThan(0);
+
+    const listed = await listTaskFiles(repo, 'add-login');
+    expect(listed.map((f) => f.name).sort()).toEqual(['src1.txt', 'src2.md']);
+
+    const filesDir = taskFilesDir(repo, 'add-login');
+    const onDisk = await readFile(path.join(filesDir, 'src1.txt'), 'utf8');
+    expect(onDisk).toBe('hello');
+  });
+
+  it('strips path components from source names when copying', async () => {
+    await initProject(repo);
+    const nestedDir = path.join(repo, 'nested');
+    await mkdir(nestedDir, { recursive: true });
+    const nested = path.join(nestedDir, 'deep.txt');
+    await writeFile(nested, 'x', 'utf8');
+
+    const result = await copyTaskFiles(repo, 'add-login', [nested]);
+    expect(result.map((f) => f.name)).toContain('deep.txt');
+    const filesDir = taskFilesDir(repo, 'add-login');
+    await expect(readFile(path.join(filesDir, 'deep.txt'), 'utf8')).resolves.toBe('x');
+  });
+
+  it('removes a single file and returns the updated list', async () => {
+    await initProject(repo);
+    const a = path.join(repo, 'a.txt');
+    const b = path.join(repo, 'b.txt');
+    await writeFile(a, 'A', 'utf8');
+    await writeFile(b, 'B', 'utf8');
+    await copyTaskFiles(repo, 'add-login', [a, b]);
+    const remaining = await removeTaskFile(repo, 'add-login', 'a.txt');
+    expect(remaining.map((f) => f.name)).toEqual(['b.txt']);
+    await expect(access(path.join(taskFilesDir(repo, 'add-login'), 'a.txt'))).rejects.toThrow();
+  });
+
+  it('removeTaskFile rejects traversal names', async () => {
+    await initProject(repo);
+    await expect(removeTaskFile(repo, 'add-login', '../evil')).rejects.toThrow();
+    await expect(removeTaskFile(repo, 'add-login', '')).rejects.toThrow();
+  });
+
+  it('listTaskFiles returns [] when no files dir exists yet', async () => {
+    await initProject(repo);
+    const result = await listTaskFiles(repo, 'add-login');
+    expect(result).toEqual([]);
   });
 });
 

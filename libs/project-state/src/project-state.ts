@@ -1,4 +1,4 @@
-import { appendFile, readFile, writeFile, rename, mkdir, access } from 'node:fs/promises';
+import { appendFile, copyFile, readFile, readdir, stat, unlink, writeFile, rename, mkdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import type {
   RefinedPlan,
@@ -7,6 +7,7 @@ import type {
   PersistedStoryRuntime,
   ProjectState,
   StoryStatus,
+  TaskFile,
 } from '@nightcoder/shared-types/ipc';
 import { ProjectStateSchema } from '@nightcoder/shared-types/schemas';
 import { assignTaskIds } from '@nightcoder/shared-types/task-id';
@@ -25,6 +26,79 @@ export function projectDir(repoPath: string): string {
 
 export function taskDir(repoPath: string, taskId: string): string {
   return path.join(projectDir(repoPath), TASKS_SUBDIR, taskId);
+}
+
+export function taskFilesDir(repoPath: string, taskId: string): string {
+  return path.join(taskDir(repoPath, taskId), 'files');
+}
+
+function sanitizeAttachmentName(name: string): string {
+  const base = path.basename(name);
+  if (!base || base === '.' || base === '..') return '';
+  if (base.includes('/') || base.includes('\\') || base.includes('\0')) return '';
+  return base;
+}
+
+function strictAttachmentName(name: string): string {
+  if (!name || name === '.' || name === '..') return '';
+  if (name.includes('/') || name.includes('\\') || name.includes('\0')) return '';
+  return name;
+}
+
+export async function listTaskFiles(repoPath: string, taskId: string): Promise<TaskFile[]> {
+  const dir = taskFilesDir(repoPath, taskId);
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    return [];
+  }
+  const out: TaskFile[] = [];
+  for (const entry of entries) {
+    const full = path.join(dir, entry);
+    try {
+      const info = await stat(full);
+      if (!info.isFile()) continue;
+      out.push({ name: entry, size: info.size });
+    } catch {
+      // Skip anything we can't stat (race with remove, permission issue).
+    }
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
+export async function copyTaskFiles(
+  repoPath: string,
+  taskId: string,
+  sourcePaths: readonly string[],
+): Promise<TaskFile[]> {
+  const dir = taskFilesDir(repoPath, taskId);
+  await mkdir(dir, { recursive: true });
+  for (const src of sourcePaths) {
+    const safe = sanitizeAttachmentName(path.basename(src));
+    if (!safe) continue;
+    const dst = path.join(dir, safe);
+    await copyFile(src, dst);
+  }
+  return listTaskFiles(repoPath, taskId);
+}
+
+export async function removeTaskFile(
+  repoPath: string,
+  taskId: string,
+  name: string,
+): Promise<TaskFile[]> {
+  const safe = strictAttachmentName(name);
+  if (!safe) throw new Error(`Invalid attachment name: ${name}`);
+  const file = path.join(taskFilesDir(repoPath, taskId), safe);
+  try {
+    await unlink(file);
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException | null)?.code;
+    if (code !== 'ENOENT') throw err;
+  }
+  return listTaskFiles(repoPath, taskId);
 }
 
 export function journalPath(repoPath: string, taskId: string): string {
