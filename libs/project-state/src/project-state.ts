@@ -44,7 +44,7 @@ function indexFile(repoPath: string): string {
 }
 
 function emptyState(): ProjectState {
-  return { version: 1, brief: '', plan: { stories: [], dependencies: [] }, tasks: {} };
+  return { version: 1, brief: '', plan: { stories: [], dependencies: [] }, tasks: {}, nextTaskNum: 1 };
 }
 
 async function fileExists(p: string): Promise<boolean> {
@@ -135,8 +135,8 @@ export async function updateTask(
   });
 }
 
-export async function updatePlan(repoPath: string, plan: RefinedPlan, brief?: string): Promise<void> {
-  await enqueue(repoPath, async () => {
+export async function updatePlan(repoPath: string, plan: RefinedPlan, brief?: string): Promise<RefinedPlan> {
+  return await enqueue(repoPath, async () => {
     const current = (await loadProject(repoPath)) ?? emptyState();
     const merged = mergePlanOnReplan(current, plan);
     const keptIds = new Set(merged.plan.stories.map((s) => s.taskId));
@@ -145,6 +145,7 @@ export async function updatePlan(repoPath: string, plan: RefinedPlan, brief?: st
       // Archive is best-effort — never block a replan on fs errors.
     });
     await writeStateRaw(repoPath, { ...merged, brief: brief ?? current.brief });
+    return merged.plan;
   });
 }
 
@@ -187,19 +188,35 @@ function freshTask(taskId: string): PersistedTask {
  * match; everything else resets to `pending`. Renamed titles produce a new
  * taskId, so their old entries get dropped (and should be archived by the
  * caller if history preservation is needed).
+ *
+ * Each new task (non-preserved) is assigned the next value of `nextTaskNum`;
+ * preserved tasks keep their `numericId` from the old plan.
  */
 export function mergePlanOnReplan(old: ProjectState, newPlan: RefinedPlan): ProjectState {
   const newPlanWithIds: RefinedPlan = { ...newPlan, stories: assignTaskIds(newPlan.stories) as Story[] };
+  const oldStoryById = new Map(old.plan.stories.map((s) => [s.taskId, s]));
   const nextTasks: Record<string, PersistedTask> = {};
-  for (const story of newPlanWithIds.stories) {
+  let nextTaskNum = old.nextTaskNum ?? 1;
+
+  const stampedStories = newPlanWithIds.stories.map((story) => {
     const prior = old.tasks[story.taskId];
+    const oldStory = oldStoryById.get(story.taskId);
     if (prior && PRESERVED_ON_REPLAN.has(prior.status)) {
       nextTasks[story.taskId] = prior;
+      return { ...story, numericId: oldStory?.numericId ?? story.numericId };
     } else {
       nextTasks[story.taskId] = freshTask(story.taskId);
+      const numericId = story.numericId ?? nextTaskNum++;
+      return { ...story, numericId };
     }
-  }
-  return { ...old, plan: newPlanWithIds, tasks: nextTasks };
+  });
+
+  return {
+    ...old,
+    nextTaskNum,
+    plan: { ...newPlanWithIds, stories: stampedStories },
+    tasks: nextTasks,
+  };
 }
 
 /** Convert the new per-task map into the legacy index-keyed runtime shape. */
