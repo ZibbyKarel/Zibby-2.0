@@ -5,6 +5,7 @@ import os from 'node:os';
 import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import {
   appendJournalLine,
+  archiveDroppedTaskFolders,
   ensureTaskDir,
   initProject,
   journalPath,
@@ -16,10 +17,12 @@ import {
   saveProject,
   storyJsonPath,
   tasksToRuntime,
+  taskDir,
   updatePlan,
   updateTask,
   writePlanMd,
 } from './project-state';
+import { readdir, access } from 'node:fs/promises';
 
 let repo: string;
 
@@ -206,6 +209,49 @@ describe('updatePlan', () => {
     await updatePlan(repo, plan);
     const loaded = await loadProject(repo);
     expect(loaded?.brief).toBe('preserved');
+  });
+
+  it('archives folders for renamed stories instead of deleting them', async () => {
+    await initProject(repo);
+    await updatePlan(repo, plan);
+    await ensureTaskDir(repo, plan.stories[0]);
+    await ensureTaskDir(repo, plan.stories[1]);
+
+    await updatePlan(repo, {
+      stories: [
+        { taskId: 'add-login', title: 'Add login', description: 'd', acceptanceCriteria: [], affectedFiles: [] },
+        { taskId: '', title: 'Add signup', description: 'x', acceptanceCriteria: [], affectedFiles: [] },
+      ],
+      dependencies: [],
+    });
+
+    await expect(access(taskDir(repo, 'add-logout'))).rejects.toThrow();
+    await expect(access(taskDir(repo, 'add-login'))).resolves.toBeUndefined();
+
+    const archiveRoot = path.join(projectDir(repo), 'archive');
+    const stamps = await readdir(archiveRoot);
+    expect(stamps.length).toBe(1);
+    const archivedIds = await readdir(path.join(archiveRoot, stamps[0]));
+    expect(archivedIds).toContain('add-logout');
+    expect(archivedIds).not.toContain('add-login');
+  });
+});
+
+describe('archiveDroppedTaskFolders', () => {
+  it('no-ops when no dropped folders exist on disk', async () => {
+    await initProject(repo);
+    const archived = await archiveDroppedTaskFolders(repo, ['ghost-a', 'ghost-b']);
+    expect(archived).toBeNull();
+  });
+
+  it('moves only the folders actually present', async () => {
+    await initProject(repo);
+    await ensureTaskDir(repo, plan.stories[0]);
+    const archived = await archiveDroppedTaskFolders(repo, ['add-login', 'does-not-exist']);
+    expect(archived).not.toBeNull();
+    const entries = await readdir(archived!);
+    expect(entries).toEqual(['add-login']);
+    await expect(access(taskDir(repo, 'add-login'))).rejects.toThrow();
   });
 });
 

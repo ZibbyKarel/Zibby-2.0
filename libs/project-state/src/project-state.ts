@@ -14,6 +14,7 @@ import { assignTaskIds } from '@nightcoder/shared-types/task-id';
 export const PROJECT_DIR = '.nightcoder';
 const INDEX_FILE = 'index.json';
 const TASKS_SUBDIR = 'tasks';
+const ARCHIVE_SUBDIR = 'archive';
 const INNER_GITIGNORE = '*\n';
 const ROOT_GITIGNORE_LINE = '.nightcoder/';
 const PRESERVED_ON_REPLAN: ReadonlySet<StoryStatus> = new Set(['review', 'done']);
@@ -138,8 +139,43 @@ export async function updatePlan(repoPath: string, plan: RefinedPlan, brief?: st
   await enqueue(repoPath, async () => {
     const current = (await loadProject(repoPath)) ?? emptyState();
     const merged = mergePlanOnReplan(current, plan);
+    const keptIds = new Set(merged.plan.stories.map((s) => s.taskId));
+    const droppedIds = Object.keys(current.tasks).filter((id) => !keptIds.has(id));
+    await archiveDroppedTaskFolders(repoPath, droppedIds).catch(() => {
+      // Archive is best-effort — never block a replan on fs errors.
+    });
     await writeStateRaw(repoPath, { ...merged, brief: brief ?? current.brief });
   });
+}
+
+/**
+ * Move per-task folders whose taskId disappeared from the plan (typically
+ * because the user renamed a story's title) into `.nightcoder/archive/<ts>/`.
+ * History is preserved; tasks/ stays clean. Best-effort — missing folders are
+ * skipped, rename errors are swallowed.
+ */
+export async function archiveDroppedTaskFolders(
+  repoPath: string,
+  droppedTaskIds: readonly string[],
+): Promise<string | null> {
+  const checks = await Promise.all(
+    droppedTaskIds.map(async (id) => ((await fileExists(taskDir(repoPath, id))) ? id : null)),
+  );
+  const present = checks.filter((id): id is string => id !== null);
+  if (present.length === 0) return null;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const archiveRoot = path.join(projectDir(repoPath), ARCHIVE_SUBDIR, stamp);
+  await mkdir(archiveRoot, { recursive: true });
+  for (const id of present) {
+    const src = taskDir(repoPath, id);
+    const dst = path.join(archiveRoot, id);
+    try {
+      await rename(src, dst);
+    } catch {
+      // Rename across devices or a race with an active writer — skip.
+    }
+  }
+  return archiveRoot;
 }
 
 function freshTask(taskId: string): PersistedTask {

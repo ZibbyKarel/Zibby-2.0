@@ -5,6 +5,7 @@ export {
   updateTask,
   updatePlan,
   mergePlanOnReplan,
+  archiveDroppedTaskFolders,
   tasksToRuntime,
   runtimeToTasks,
   ensureTaskDir,
