@@ -19,12 +19,17 @@ type SaveData = {
   model?: string;
 };
 
+export type SquashAndMergeResult =
+  | { kind: 'ok'; mergedCommitTitle: string }
+  | { kind: 'error'; message: string };
+
 type Props = {
   task: TaskVM | null;
   open: boolean;
   onClose: () => void;
   onRun: () => void;
   onSave: (data: SaveData) => void;
+  onSquashAndMerge: (task: TaskVM) => Promise<SquashAndMergeResult>;
   tab: DrawerTab;
   setTab: (t: DrawerTab) => void;
   runtimeMs: number | null;
@@ -37,6 +42,7 @@ export function TaskDrawer({
   onClose,
   onRun,
   onSave,
+  onSquashAndMerge,
   tab,
   setTab,
   runtimeMs,
@@ -233,7 +239,9 @@ export function TaskDrawer({
 
         <div style={{ flex: 1, overflow: 'auto' }}>
           {tab === 'logs' && <LogsView task={task} />}
-          {tab === 'diff' && <DiffPanel task={task} theme={theme} />}
+          {tab === 'diff' && (
+            <DiffPanel task={task} theme={theme} onSquashAndMerge={onSquashAndMerge} />
+          )}
           {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
         </div>
       </aside>
@@ -528,9 +536,18 @@ function DiffFileBlock({
   );
 }
 
-function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
+function DiffPanel({
+  task,
+  theme,
+  onSquashAndMerge,
+}: {
+  task: TaskVM;
+  theme: 'dark' | 'light';
+  onSquashAndMerge: (task: TaskVM) => Promise<SquashAndMergeResult>;
+}) {
   const [result, setResult] = useState<TaskDiffResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [squashing, setSquashing] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -538,6 +555,25 @@ function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
     setResult(r);
     setLoading(false);
   }, [task.taskId]);
+
+  const canSquashMerge = Boolean(task.prUrl) && task.status !== 'done';
+
+  const handleSquashAndMerge = useCallback(async () => {
+    const displayId = task.numericId ?? task.index + 1;
+    const subject = `[${displayId}]: ${task.title}`;
+    const confirmed = window.confirm(
+      `Squash and merge all commits on ${task.branch ?? 'this task'} into a single commit:\n\n` +
+        `${subject}\n\nThis will merge the PR into the base branch.`,
+    );
+    if (!confirmed) return;
+    setSquashing(true);
+    try {
+      await onSquashAndMerge(task);
+      await refresh();
+    } finally {
+      setSquashing(false);
+    }
+  }, [task, onSquashAndMerge, refresh]);
 
   // Re-fetch when the task changes, or when its status moves to a state that
   // likely produced new commits (running → review/done, etc.).
@@ -659,6 +695,18 @@ function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
             : result.baseBranch}
         </span>
         <div style={{ flex: 1 }} />
+        {canSquashMerge && (
+          <Btn
+            icon="git"
+            variant="primary"
+            size="sm"
+            onClick={() => void handleSquashAndMerge()}
+            disabled={squashing}
+            title={`Squash and merge PR into ${result.baseBranch}`}
+          >
+            {squashing ? 'Merging…' : 'Squash and merge'}
+          </Btn>
+        )}
         <Btn
           icon="refresh"
           variant="ghost"

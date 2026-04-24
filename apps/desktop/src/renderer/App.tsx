@@ -567,6 +567,20 @@ export default function App() {
         onClose={() => setSelectedIndex(null)}
         onRun={() => selected && void runTask(selected.index)}
         onSave={(data) => selected && editTask(selected.index, data)}
+        onSquashAndMerge={async (t) => {
+          const res = await window.nightcoder.squashAndMergeTask({ taskId: t.taskId });
+          if (res.kind === 'error') {
+            pushToast({ kind: 'failed', title: 'Squash and merge failed', desc: res.message });
+          } else {
+            pushToast({ kind: 'done', title: 'Squash and merge complete', desc: res.mergedCommitTitle });
+            setRuntime((prev) => {
+              const cur = prev[t.index];
+              if (!cur) return prev;
+              return { ...prev, [t.index]: { ...cur, status: 'done', endedAt: Date.now() } };
+            });
+          }
+          return res;
+        }}
         tab={drawerTab}
         setTab={setDrawerTab}
         runtimeMs={selected ? runtimeMs(selected) : null}
