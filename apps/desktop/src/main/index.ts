@@ -417,7 +417,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
     // RunEvents remain the source of truth for actively running tasks; this
     // pathway handles brief/plan edits and renderer-driven status tweaks.
     const current = await loadProject(state.folderPath);
-    const base = current ?? { version: 1 as const, brief: '', plan: state.plan, tasks: {} };
+    const base = current ?? { version: 1 as const, brief: '', plan: state.plan, tasks: {}, nextTaskNum: 1 };
     const nextBrief = state.brief ?? base.brief;
     const merged = mergePlanOnReplan(base, state.plan);
     const nextTasks = state.runtime ? runtimeToTasks(merged.plan, state.runtime, merged.tasks) : merged.tasks;

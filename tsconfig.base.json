@@ -16,6 +16,9 @@
     "baseUrl": ".",
     "paths": {
       "@nightcoder/shared-types": ["libs/shared-types/src/index.ts"],
+      "@nightcoder/shared-types/ipc": ["libs/shared-types/src/ipc.ts"],
+      "@nightcoder/shared-types/schemas": ["libs/shared-types/src/schemas.ts"],
+      "@nightcoder/shared-types/task-id": ["libs/shared-types/src/task-id.ts"],
       "@nightcoder/db": ["libs/db/src/index.ts"],
       "@nightcoder/github": ["libs/github/src/index.ts"],
       "@nightcoder/ai-refiner": ["libs/ai-refiner/src/index.ts"],

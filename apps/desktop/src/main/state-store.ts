@@ -94,6 +94,7 @@ export async function migrateLegacyIfNeeded(userDataDir: string): Promise<void> 
         brief,
         plan,
         tasks: runtimeToTasks(plan, runtime),
+        nextTaskNum: plan.stories.length + 1,
       });
     } catch {
       // Can't write to the folder (permission, deleted, etc.) — leave legacy
