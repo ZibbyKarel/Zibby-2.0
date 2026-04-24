@@ -51,9 +51,10 @@ const THINKING_OPTIONS: readonly { value: ThinkingLevel; label: string }[] = [
   { value: 'high',   label: 'Think deeply' },
 ];
 
+const INPUT_BORDER_COLOR = 'var(--border)';
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '8px 10px',
-  background: 'var(--bg-2)', border: '1px solid var(--border)',
+  background: 'var(--bg-2)', border: `1px solid ${INPUT_BORDER_COLOR}`,
   borderRadius: 8, color: 'var(--text-0)', fontSize: 13,
   outline: 'none', transition: 'border-color .12s',
 };
@@ -378,7 +379,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                 style={{
                   ...inputStyle,
                   resize: 'vertical',
-                  borderColor: dropActive ? 'var(--emerald)' : (inputStyle.border as string).split(' ').pop(),
+                  borderColor: dropActive ? 'var(--emerald)' : INPUT_BORDER_COLOR,
                   boxShadow: dropActive ? '0 0 0 2px rgba(16,185,129,.2)' : undefined,
                 }}
               />
