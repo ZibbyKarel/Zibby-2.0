@@ -153,6 +153,9 @@ export default function App() {
             const logs = cur.logs.length >= 2000 ? [...cur.logs.slice(1), line] : [...cur.logs, line];
             return { ...prev, [idx]: { ...cur, logs } };
           }
+          case 'branch': {
+            return { ...prev, [idx]: { ...cur, branch: ev.branch } };
+          }
           case 'pr': {
             pushToast({ kind: 'done', title: 'PR opened', desc: ev.url });
             return { ...prev, [idx]: { ...cur, branch: ev.branch, prUrl: ev.url } };

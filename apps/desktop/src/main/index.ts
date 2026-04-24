@@ -27,6 +27,7 @@ import {
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
 import { buildResumePrompt, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
@@ -151,6 +152,14 @@ async function persistStoryPr(repoPath: string, taskId: string, branch: string, 
   }
 }
 
+async function persistStoryBranch(repoPath: string, taskId: string, branch: string): Promise<void> {
+  try {
+    await updateTask(repoPath, taskId, { branch });
+  } catch {
+    // ignore
+  }
+}
+
 function registerIpc(getWebContents: () => WebContents | null) {
   ipcMain.handle(IpcChannels.PickFolder, async (): Promise<PickFolderResult> => {
     const result = await dialog.showOpenDialog({
@@ -223,6 +232,14 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   stream: e.stream,
                   line: e.line,
                 });
+              } else if (e.kind === 'branch') {
+                if (tid) void persistStoryBranch(req.folderPath, tid, e.branch);
+                if (wc) emitToRenderer(wc, {
+                  runId: handle.runId,
+                  storyIndex: e.storyIndex,
+                  kind: 'branch',
+                  branch: e.branch,
+                });
               } else if (e.kind === 'pr') {
                 if (tid) void persistStoryPr(req.folderPath, tid, e.branch, e.url);
                 if (wc) emitToRenderer(wc, {
@@ -266,6 +283,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
             if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
           } else if (e.kind === 'log') {
             if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+          } else if (e.kind === 'branch') {
+            if (taskId) void persistStoryBranch(req.folderPath, taskId, e.branch);
+            if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'branch', branch: e.branch });
           } else if (e.kind === 'pr') {
             if (taskId) void persistStoryPr(req.folderPath, taskId, e.branch, e.url);
             if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
@@ -301,9 +321,11 @@ function registerIpc(getWebContents: () => WebContents | null) {
       if (storyIndex < 0) return { kind: 'error', message: `Task ${req.taskId} is not in the current plan` };
       const story = project.plan.stories[storyIndex];
       const task = project.tasks[req.taskId];
-      if (!task?.branch) {
-        return { kind: 'error', message: `Task ${req.taskId} has no persisted branch — nothing to resume into` };
-      }
+      // Branch name is deterministic from (index+1)-<title-slug>; fall back to it
+      // when an interrupt happened before the 'branch' event was persisted.
+      // attachWorktree validates the branch/worktree actually exists and throws
+      // otherwise — so an invalid inference surfaces as a clear error downstream.
+      const branch = task?.branch ?? `nightcoder/${slugify(`${storyIndex + 1}-${story.title}`)}`;
 
       const [plan, journalTail] = await Promise.all([
         readPlanMd(folderPath, req.taskId),
@@ -317,7 +339,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
         story,
         storyIndex,
         repoPath: folderPath,
-        resume: { branch: task.branch, prompt },
+        resume: { branch, prompt },
         onEvent: (e) => {
           const wc = getWebContents();
           if (e.kind === 'status') {
@@ -325,6 +347,9 @@ function registerIpc(getWebContents: () => WebContents | null) {
             if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
           } else if (e.kind === 'log') {
             if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+          } else if (e.kind === 'branch') {
+            void persistStoryBranch(folderPath, req.taskId, e.branch);
+            if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'branch', branch: e.branch });
           } else if (e.kind === 'pr') {
             void persistStoryPr(folderPath, req.taskId, e.branch, e.url);
             if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });

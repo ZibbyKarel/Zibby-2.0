@@ -112,6 +112,7 @@ export type ResumeTaskResult =
 export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'status'; status: StoryStatus }
   | { runId: string; storyIndex: number; kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
+  | { runId: string; storyIndex: number; kind: 'branch'; branch: string }
   | { runId: string; storyIndex: number; kind: 'pr'; url: string; branch: string }
   | { runId: string; kind: 'run-done'; success: boolean };
 

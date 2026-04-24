@@ -22,6 +22,7 @@ const PLAN_BLOCK_RE = /<plan>([\s\S]*?)<\/plan>/i;
 export type StoryExecutionEvent =
   | { kind: 'status'; status: StoryStatus }
   | { kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
+  | { kind: 'branch'; branch: string }
   | { kind: 'pr'; url: string; branch: string };
 
 export type StoryExecutionResult = {
@@ -222,6 +223,7 @@ export async function executeStory(args: {
       });
     }
     onEvent({ kind: 'log', stream: 'info', line: `worktree ${worktree.path} (branch ${worktree.branch})` });
+    onEvent({ kind: 'branch', branch: worktree.branch });
 
     const hookResult = await installPostCommitHook(repoPath).catch((e) => {
       onEvent({
