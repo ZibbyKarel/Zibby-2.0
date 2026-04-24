@@ -17,6 +17,7 @@ type Props = {
 export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, onEdit, onRun, onDelete }: Props) {
   const waits = task.waitsOn.length > 0;
   const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
+  const canResume = task.interrupted && task.status === 'running';
 
   return (
     <article
@@ -73,6 +74,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
         {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
         {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
         {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
+        {canResume && <Chip icon="warn" tone="warn">interrupted</Chip>}
       </div>
 
       <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -99,7 +101,21 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {canRun && (
+          {canResume && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRun(); }}
+              style={{
+                background: 'var(--accent-soft)', border: '1px solid var(--accent-ring)',
+                borderRadius: 6, padding: '2px 8px', color: 'var(--amber)',
+                cursor: 'pointer', fontSize: 11, fontFamily: 'var(--mono)',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}
+              title="Resume this interrupted task"
+            >
+              <Icon name="play" size={11} /> resume
+            </button>
+          )}
+          {canRun && !canResume && (
             <button
               onClick={(e) => { e.stopPropagation(); onRun(); }}
               style={{

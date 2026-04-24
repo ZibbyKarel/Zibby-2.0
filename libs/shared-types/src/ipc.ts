@@ -4,6 +4,7 @@ export const IpcChannels = {
   Advise: 'nightcoder:advise',
   StartRun: 'nightcoder:startRun',
   RunStory: 'nightcoder:runStory',
+  ResumeTask: 'nightcoder:resumeTask',
   CancelRun: 'nightcoder:cancelRun',
   LoadState: 'nightcoder:loadState',
   SaveState: 'nightcoder:saveState',
@@ -100,6 +101,14 @@ export type RunStoryResult =
   | { kind: 'ok' }
   | { kind: 'error'; message: string };
 
+export type ResumeTaskRequest = {
+  taskId: string;
+};
+
+export type ResumeTaskResult =
+  | { kind: 'ok'; runId: string }
+  | { kind: 'error'; message: string };
+
 export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'status'; status: StoryStatus }
   | { runId: string; storyIndex: number; kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
@@ -182,6 +191,7 @@ export type IpcApi = {
   advise: (req: AdviseRequest) => Promise<AdviseResult>;
   startRun: (req: RunStartRequest) => Promise<RunStartResult>;
   runStory: (req: RunStoryRequest) => Promise<RunStoryResult>;
+  resumeTask: (req: ResumeTaskRequest) => Promise<ResumeTaskResult>;
   cancelRun: (runId: string) => Promise<void>;
   onRunEvent: (handler: (event: RunEvent) => void) => () => void;
   loadState: () => Promise<LoadedAppState>;

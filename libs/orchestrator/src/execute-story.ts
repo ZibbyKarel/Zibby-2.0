@@ -10,7 +10,7 @@ import {
   journalPath,
   writePlanMd,
 } from '@nightcoder/project-state';
-import { createWorktree, type WorktreeHandle } from './worktree';
+import { attachWorktree, createWorktree, type WorktreeHandle } from './worktree';
 import { slugify, uniqueSlug } from './slug';
 import { tryClaimStory } from './active-stories';
 import { installPostCommitHook } from './post-commit-hook';
@@ -31,6 +31,39 @@ export type StoryExecutionResult = {
   error?: string;
   duplicate?: boolean;
 };
+
+/** Build a continuation prompt for resume: fresh story context + prior plan + journal tail. */
+export function buildResumePrompt(args: {
+  story: Story;
+  plan: string | null;
+  journalTail: string;
+}): string {
+  const { story, plan, journalTail } = args;
+  const parts: string[] = [];
+  parts.push(`Continue implementing this user story. A previous session made progress and was interrupted.`);
+  parts.push(`# ${story.title}\n\n${story.description}`);
+  if (story.acceptanceCriteria.length > 0) {
+    parts.push(`## Acceptance criteria\n\n${story.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n')}`);
+  }
+  if (plan && plan.trim().length > 0) {
+    parts.push(`## Your earlier plan (plan.md)\n\n${plan.trim()}`);
+  }
+  if (journalTail.trim().length > 0) {
+    parts.push(
+      `## Commits made so far (journal tail, oldest first)\n\n\`\`\`\n${journalTail.trim()}\n\`\`\`\n\n` +
+        `Inspect the worktree's current state (\`git log\`, file contents) and resume from where the journal ends. Do not redo work that is already committed.`,
+    );
+  } else {
+    parts.push(`No commits have been journaled yet. Inspect the worktree's current state and continue.`);
+  }
+  parts.push(
+    `Process guidelines:\n` +
+      `- After each additional logical subtask, run \`git add -A && git commit -m "<concise subject>"\` so the journal continues to grow.\n` +
+      `- Keep existing tests/lint/typecheck green.\n` +
+      `- When every acceptance criterion is met, make a final commit and stop — the outer tool will push and open a PR.`,
+  );
+  return parts.join('\n\n');
+}
 
 function buildPrompt(story: Story): string {
   const ac = story.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n');
@@ -131,6 +164,13 @@ function startCommitPoller(args: {
   };
 }
 
+export type ResumeContext = {
+  /** Branch to attach (or recreate a worktree for). Shaped like `nightcoder/<slug>`. */
+  branch: string;
+  /** Full prompt body — callers should build this via `buildResumePrompt()`. */
+  prompt: string;
+};
+
 export async function executeStory(args: {
   story: Story;
   storyIndex: number;
@@ -139,8 +179,10 @@ export async function executeStory(args: {
   usedSlugs: Set<string>;
   onEvent: (event: StoryExecutionEvent) => void;
   signal: { cancelled: boolean };
+  /** When set, attach to an existing worktree and use the continuation prompt. */
+  resume?: ResumeContext;
 }): Promise<StoryExecutionResult> {
-  const { story, repoPath, baseBranch, usedSlugs, onEvent, signal } = args;
+  const { story, repoPath, baseBranch, usedSlugs, onEvent, signal, resume } = args;
   const slugBase = slugify(`${args.storyIndex + 1}-${story.title}`);
 
   const release = tryClaimStory(repoPath, slugBase);
@@ -153,9 +195,6 @@ export async function executeStory(args: {
     return { success: false, error: 'already running', duplicate: true };
   }
 
-  const slug = uniqueSlug(slugBase, usedSlugs);
-  usedSlugs.add(slug);
-
   onEvent({ kind: 'status', status: 'running' });
 
   let worktree: WorktreeHandle | null = null;
@@ -166,12 +205,22 @@ export async function executeStory(args: {
       onEvent({ kind: 'log', stream: 'stderr', line: `task dir prep failed: ${e instanceof Error ? e.message : String(e)}` });
     });
 
-    worktree = await createWorktree({
-      repoPath,
-      slug,
-      baseBranch,
-      onInfo: (msg) => onEvent({ kind: 'log', stream: 'info', line: msg }),
-    });
+    if (resume) {
+      worktree = await attachWorktree({
+        repoPath,
+        branch: resume.branch,
+        onInfo: (msg) => onEvent({ kind: 'log', stream: 'info', line: msg }),
+      });
+    } else {
+      const slug = uniqueSlug(slugBase, usedSlugs);
+      usedSlugs.add(slug);
+      worktree = await createWorktree({
+        repoPath,
+        slug,
+        baseBranch,
+        onInfo: (msg) => onEvent({ kind: 'log', stream: 'info', line: msg }),
+      });
+    }
     onEvent({ kind: 'log', stream: 'info', line: `worktree ${worktree.path} (branch ${worktree.branch})` });
 
     const hookResult = await installPostCommitHook(repoPath).catch((e) => {
@@ -211,7 +260,7 @@ export async function executeStory(args: {
     const handle = runClaudeInWorktree(
       {
         cwd: worktree.path,
-        prompt: buildPrompt(story),
+        prompt: resume ? resume.prompt : buildPrompt(story),
         addDirs: [],
         model: story.model,
         env: { NIGHTCODER_JOURNAL_PATH: journalAbs },

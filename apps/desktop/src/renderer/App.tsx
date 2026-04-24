@@ -35,6 +35,7 @@ export default function App() {
 
   const [runId, setRunId] = useState<string | null>(null);
   const [runtime, setRuntime] = useState<Record<number, StoryRuntime>>({});
+  const [interrupted, setInterrupted] = useState<Set<number>>(() => new Set());
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [drawerTab, setDrawerTab] = useState<DrawerTab>('logs');
@@ -66,6 +67,10 @@ export default function App() {
           }
           return next;
         });
+        const interruptedIndices = Object.entries(state.runtime)
+          .filter(([, v]) => v.status === 'running')
+          .map(([k]) => Number(k));
+        if (interruptedIndices.length > 0) setInterrupted(new Set(interruptedIndices));
       }
       hydrated.current = true;
     }).catch(() => { hydrated.current = true; });
@@ -117,6 +122,14 @@ export default function App() {
         return;
       }
       const idx = ev.storyIndex;
+      if (ev.kind === 'status') {
+        setInterrupted((prev) => {
+          if (!prev.has(idx)) return prev;
+          const next = new Set(prev);
+          next.delete(idx);
+          return next;
+        });
+      }
       setRuntime((prev) => {
         const cur = prev[idx] ?? emptyRuntime();
         switch (ev.kind) {
@@ -157,7 +170,7 @@ export default function App() {
     setTimeout(() => setToasts((arr) => arr.filter((x) => x.id !== id)), 5000);
   }, []);
 
-  const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime), [plan, runtime]);
+  const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime, interrupted), [plan, runtime, interrupted]);
 
   const visible = useMemo(() => {
     const q = search.toLowerCase();
@@ -185,17 +198,27 @@ export default function App() {
       pushToast({ kind: 'failed', title: 'No folder selected' });
       return;
     }
+    const story = plan.stories[idx];
+    if (!story) return;
+    if (interrupted.has(idx) && story.taskId) {
+      pushToast({ kind: 'info', title: 'Resuming task', desc: story.title });
+      const res = await window.nightcoder.resumeTask({ taskId: story.taskId });
+      if (res.kind === 'error') {
+        pushToast({ kind: 'failed', title: 'Resume error', desc: res.message });
+      }
+      return;
+    }
     const current = runtime[idx]?.status;
     if (current === 'running' || current === 'pushing' || current === 'review' || current === 'done') {
       return;
     }
     const storyRunId = `story-${Date.now()}-${idx}`;
-    pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
+    pushToast({ kind: 'info', title: 'Task started', desc: story.title });
     const res = await window.nightcoder.runStory({ runId: storyRunId, storyIndex: idx, folderPath: folder.path, plan });
     if (res.kind === 'error') {
       pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
     }
-  }, [plan, folder, runtime, pushToast]);
+  }, [plan, folder, runtime, interrupted, pushToast]);
 
   const runAll = useCallback(async () => {
     if (!plan || !folder) {
@@ -282,6 +305,15 @@ export default function App() {
       Object.entries(prev).forEach(([k, v]) => {
         const n = Number(k);
         if (n !== idx) next[n > idx ? n - 1 : n] = v;
+      });
+      return next;
+    });
+    setInterrupted((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<number>();
+      prev.forEach((n) => {
+        if (n === idx) return;
+        next.add(n > idx ? n - 1 : n);
       });
       return next;
     });

@@ -9,6 +9,8 @@ export {
   runtimeToTasks,
   ensureTaskDir,
   writePlanMd,
+  readPlanMd,
+  readJournalTail,
   appendJournalLine,
   projectDir,
   taskDir,

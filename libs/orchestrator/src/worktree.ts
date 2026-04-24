@@ -102,6 +102,65 @@ async function nextFreeName(repoPath: string, baseSlug: string): Promise<{ slug:
   }
 }
 
+function buildCleanup(repoPath: string, worktreePath: string, mirroredFiles: string[]): () => Promise<void> {
+  return async () => {
+    for (const rel of mirroredFiles) {
+      await rm(path.join(worktreePath, rel), { force: true }).catch(() => undefined);
+    }
+    try {
+      await execFileP('git', ['worktree', 'remove', '--force', worktreePath], {
+        cwd: repoPath,
+        ...OPTS,
+      });
+    } catch {
+      await rm(worktreePath, { recursive: true, force: true });
+      await execFileP('git', ['worktree', 'prune'], { cwd: repoPath, ...OPTS }).catch(() => undefined);
+    }
+  };
+}
+
+/**
+ * Re-open an existing worktree for resume. If the worktree directory is gone
+ * (cleaned up, manually deleted) but the branch still exists, recreate the
+ * worktree from the branch. Throws if neither path nor branch is available.
+ */
+export async function attachWorktree(args: {
+  repoPath: string;
+  branch: string;
+  onInfo?: (msg: string) => void;
+}): Promise<WorktreeHandle> {
+  const PREFIX = 'nightcoder/';
+  const slug = args.branch.startsWith(PREFIX) ? args.branch.slice(PREFIX.length) : args.branch;
+  const worktreePath = path.join(args.repoPath, '.worktrees', slug);
+
+  if (await exists(worktreePath)) {
+    args.onInfo?.(`reusing existing worktree at ${worktreePath}`);
+  } else {
+    if (!(await refExists(args.repoPath, `refs/heads/${args.branch}`))) {
+      throw new Error(
+        `cannot resume task: neither worktree ${worktreePath} nor branch ${args.branch} exists`,
+      );
+    }
+    await execFileP('git', ['worktree', 'add', worktreePath, args.branch], {
+      cwd: args.repoPath,
+      ...OPTS,
+    });
+    args.onInfo?.(`recreated worktree at ${worktreePath} from branch ${args.branch}`);
+  }
+
+  const mirroredFiles = await mirrorLocalAiSettings(args.repoPath, worktreePath, args.onInfo);
+  if (mirroredFiles.length > 0) {
+    args.onInfo?.(`mirrored local AI settings: ${mirroredFiles.join(', ')}`);
+  }
+
+  return {
+    path: worktreePath,
+    branch: args.branch,
+    mirroredFiles,
+    cleanup: buildCleanup(args.repoPath, worktreePath, mirroredFiles),
+  };
+}
+
 export async function createWorktree(args: {
   repoPath: string;
   slug: string;
@@ -156,19 +215,6 @@ export async function createWorktree(args: {
     path: worktreePath,
     branch,
     mirroredFiles,
-    cleanup: async () => {
-      for (const rel of mirroredFiles) {
-        await rm(path.join(worktreePath, rel), { force: true }).catch(() => undefined);
-      }
-      try {
-        await execFileP('git', ['worktree', 'remove', '--force', worktreePath], {
-          cwd: args.repoPath,
-          ...OPTS,
-        });
-      } catch {
-        await rm(worktreePath, { recursive: true, force: true });
-        await execFileP('git', ['worktree', 'prune'], { cwd: args.repoPath, ...OPTS }).catch(() => undefined);
-      }
-    },
+    cleanup: buildCleanup(args.repoPath, worktreePath, mirroredFiles),
   };
 }

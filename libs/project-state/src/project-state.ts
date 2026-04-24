@@ -202,6 +202,29 @@ export async function writePlanMd(repoPath: string, taskId: string, content: str
   await writeFile(planPath(repoPath, taskId), content.endsWith('\n') ? content : content + '\n', 'utf8');
 }
 
+export async function readPlanMd(repoPath: string, taskId: string): Promise<string | null> {
+  try {
+    return await readFile(planPath(repoPath, taskId), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+/** Return the last `maxLines` lines of the task journal, or '' if missing. */
+export async function readJournalTail(
+  repoPath: string,
+  taskId: string,
+  maxLines = 100,
+): Promise<string> {
+  try {
+    const raw = await readFile(journalPath(repoPath, taskId), 'utf8');
+    const lines = raw.split('\n').filter((l) => l.trim().length > 0);
+    return lines.slice(-maxLines).join('\n');
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Append one journal entry. Used by the polling fallback when the repo has a
  * foreign post-commit hook we can't replace. The hook itself writes entries

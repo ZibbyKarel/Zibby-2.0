@@ -1,11 +1,12 @@
 export { startPlanRun } from './run-plan';
 export type { PlanEvent, PlanRunHandle } from './run-plan';
-export { executeStory } from './execute-story';
-export type { StoryExecutionEvent, StoryExecutionResult } from './execute-story';
-export { runSingleStory } from './runner';
+export { executeStory, buildResumePrompt } from './execute-story';
+export type { StoryExecutionEvent, StoryExecutionResult, ResumeContext } from './execute-story';
+export { runSingleStory, runStoryResume } from './runner';
 export type { SingleStoryHandle } from './runner';
-export { createWorktree, detectBaseBranch } from './worktree';
+export { attachWorktree, createWorktree, detectBaseBranch } from './worktree';
 export type { WorktreeHandle } from './worktree';
 export { slugify, uniqueSlug } from './slug';
 export { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
 export type { DagNode } from './dag';
+export { installPostCommitHook, isNightcoderHook, NIGHTCODER_HOOK_MARKER } from './post-commit-hook';

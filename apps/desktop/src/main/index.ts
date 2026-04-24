@@ -15,6 +15,8 @@ import {
   type RunStartResult,
   type RunStoryRequest,
   type RunStoryResult,
+  type ResumeTaskRequest,
+  type ResumeTaskResult,
   type RunEvent,
   type PersistedState,
   type LoadedAppState,
@@ -24,13 +26,15 @@ import {
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { startPlanRun, runSingleStory, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { buildResumePrompt, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { deleteStoryBranch } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
   initProject,
   loadProject,
   mergePlanOnReplan,
+  readJournalTail,
+  readPlanMd,
   runtimeToTasks,
   saveProject,
   tasksToRuntime,
@@ -283,6 +287,65 @@ function registerIpc(getWebContents: () => WebContents | null) {
         .finally(() => releaseRunner());
       return { kind: 'ok' };
     }
+  );
+
+  ipcMain.handle(
+    IpcChannels.ResumeTask,
+    async (_event, req: ResumeTaskRequest): Promise<ResumeTaskResult> => {
+      const userData = await loadUserData(app.getPath('userData'));
+      const folderPath = userData.lastOpenedFolder;
+      if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
+      const project = await loadProject(folderPath);
+      if (!project) return { kind: 'error', message: 'No project state found to resume from' };
+      const storyIndex = project.plan.stories.findIndex((s) => s.taskId === req.taskId);
+      if (storyIndex < 0) return { kind: 'error', message: `Task ${req.taskId} is not in the current plan` };
+      const story = project.plan.stories[storyIndex];
+      const task = project.tasks[req.taskId];
+      if (!task?.branch) {
+        return { kind: 'error', message: `Task ${req.taskId} has no persisted branch — nothing to resume into` };
+      }
+
+      const [plan, journalTail] = await Promise.all([
+        readPlanMd(folderPath, req.taskId),
+        readJournalTail(folderPath, req.taskId),
+      ]);
+      const prompt = buildResumePrompt({ story, plan, journalTail });
+      const runId = `resume-${Date.now()}-${req.taskId}`;
+
+      await acquireRunner();
+      const handle = runStoryResume({
+        story,
+        storyIndex,
+        repoPath: folderPath,
+        resume: { branch: task.branch, prompt },
+        onEvent: (e) => {
+          const wc = getWebContents();
+          if (e.kind === 'status') {
+            void persistStoryStatus(folderPath, req.taskId, e.status);
+            if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'status', status: e.status });
+          } else if (e.kind === 'log') {
+            if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'log', stream: e.stream, line: e.line });
+          } else if (e.kind === 'pr') {
+            void persistStoryPr(folderPath, req.taskId, e.branch, e.url);
+            if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'pr', url: e.url, branch: e.branch });
+          }
+        },
+      });
+      void handle.result
+        .catch((err) => {
+          const wc = getWebContents();
+          if (!wc) return;
+          emitToRenderer(wc, {
+            runId,
+            storyIndex,
+            kind: 'log',
+            stream: 'stderr',
+            line: err instanceof Error ? err.message : String(err),
+          });
+        })
+        .finally(() => releaseRunner());
+      return { kind: 'ok', runId };
+    },
   );
 
   ipcMain.handle(IpcChannels.CancelRun, async (_event, runId: string): Promise<void> => {

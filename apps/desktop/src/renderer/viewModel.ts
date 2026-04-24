@@ -13,6 +13,7 @@ export type StoryRuntime = {
 
 export type TaskVM = {
   id: string;
+  taskId: string;
   index: number;
   title: string;
   description: string;
@@ -28,6 +29,8 @@ export type TaskVM = {
   logs: LogLine[];
   diff: null;
   waitsOn: number[];
+  /** Task was `running` when the app last loaded — Resume is the right action. */
+  interrupted: boolean;
 };
 
 export type TaskColumn = 'queue' | 'running' | 'review' | 'done';
@@ -42,6 +45,7 @@ export function statusToCol(status: StoryStatus): TaskColumn {
 export function toTasks(
   plan: RefinedPlan,
   runtime: Record<number, StoryRuntime>,
+  interruptedIndices: ReadonlySet<number> = new Set(),
 ): TaskVM[] {
   return plan.stories.map((story, idx) => {
     const rt = runtime[idx];
@@ -50,6 +54,7 @@ export function toTasks(
       .map((d) => d.from);
     return {
       id: String(idx),
+      taskId: story.taskId,
       index: idx,
       title: story.title,
       description: story.description,
@@ -65,6 +70,7 @@ export function toTasks(
       logs: rt?.logs ?? [],
       diff: null,
       waitsOn,
+      interrupted: interruptedIndices.has(idx),
     };
   });
 }
