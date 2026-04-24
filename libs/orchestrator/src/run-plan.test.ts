@@ -16,7 +16,7 @@ describe('startPlanRun completedIndices seeding', () => {
     const events: PlanEvent[] = [];
     const handle = startPlanRun({
       plan,
-      repoPath: '/tmp/zibby-runplan-seed-test',
+      repoPath: '/tmp/nightcoder-runplan-seed-test',
       baseBranch: 'main',
       completedIndices: [0, 1, 2],
       onEvent: (e) => events.push(e),

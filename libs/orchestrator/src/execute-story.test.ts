@@ -13,7 +13,7 @@ const story: Story = {
 
 describe('executeStory duplicate guard', () => {
   it('bails out when the slug is already claimed, without touching git', async () => {
-    const repoPath = '/tmp/zibby-executestory-dedup-test';
+    const repoPath = '/tmp/nightcoder-executestory-dedup-test';
     const slugBase = slugify(`${0 + 1}-${story.title}`);
 
     const release = tryClaimStory(repoPath, slugBase);
