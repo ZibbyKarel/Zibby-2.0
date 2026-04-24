@@ -76,7 +76,7 @@ export async function copyTaskFiles(
   const dir = taskFilesDir(repoPath, taskId);
   await mkdir(dir, { recursive: true });
   for (const src of sourcePaths) {
-    const safe = sanitizeAttachmentName(path.basename(src));
+    const safe = sanitizeAttachmentName(src);
     if (!safe) continue;
     const dst = path.join(dir, safe);
     await copyFile(src, dst);
