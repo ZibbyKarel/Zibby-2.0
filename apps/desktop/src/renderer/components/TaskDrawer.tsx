@@ -4,8 +4,6 @@ import type {
   TaskDiffResult,
   TaskFile,
 } from '@nightcoder/shared-types/ipc';
-import { DiffView, DiffModeEnum } from '@git-diff-view/react';
-import '@git-diff-view/react/styles/diff-view.css';
 import { Icon } from './icons';
 import { Btn, StatusPill, Chip, fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
@@ -28,7 +26,6 @@ type Props = {
   tab: DrawerTab;
   setTab: (t: DrawerTab) => void;
   runtimeMs: number | null;
-  theme: 'dark' | 'light';
 };
 
 export function TaskDrawer({
@@ -40,7 +37,6 @@ export function TaskDrawer({
   tab,
   setTab,
   runtimeMs,
-  theme,
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -246,7 +242,7 @@ export function TaskDrawer({
 
         <div style={{ flex: 1, overflow: 'auto' }}>
           {tab === 'logs' && <LogsView task={task} />}
-          {tab === 'diff' && <DiffPanel task={task} theme={theme} />}
+          {tab === 'diff' && <DiffPanel task={task} />}
           {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
         </div>
       </aside>
@@ -418,13 +414,136 @@ function changeKindTone(kind: TaskDiffFile['changeKind']): string {
   }
 }
 
-function DiffFileBlock({
-  file,
-  theme,
-}: {
-  file: TaskDiffFile;
-  theme: 'dark' | 'light';
-}) {
+type HunkLine =
+  | { kind: 'header'; text: string }
+  | { kind: 'add'; text: string; newLine: number }
+  | { kind: 'del'; text: string; oldLine: number }
+  | { kind: 'context'; text: string; oldLine: number; newLine: number }
+  | { kind: 'other'; text: string };
+
+function parseHunkLines(hunk: string): HunkLine[] {
+  const out: HunkLine[] = [];
+  const lines = hunk.split('\n');
+  let oldLine = 0;
+  let newLine = 0;
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      const m = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+      if (m) {
+        oldLine = Number(m[1]);
+        newLine = Number(m[2]);
+      }
+      out.push({ kind: 'header', text: line });
+    } else if (line.startsWith('+') && !line.startsWith('+++')) {
+      out.push({ kind: 'add', text: line.slice(1), newLine });
+      newLine++;
+    } else if (line.startsWith('-') && !line.startsWith('---')) {
+      out.push({ kind: 'del', text: line.slice(1), oldLine });
+      oldLine++;
+    } else if (line.startsWith(' ')) {
+      out.push({ kind: 'context', text: line.slice(1), oldLine, newLine });
+      oldLine++;
+      newLine++;
+    } else if (line.length > 0) {
+      // e.g. `\ No newline at end of file`
+      out.push({ kind: 'other', text: line });
+    }
+  }
+  return out;
+}
+
+function DiffHunks({ hunks }: { hunks: string[] }) {
+  const rows: HunkLine[] = [];
+  for (const h of hunks) rows.push(...parseHunkLines(h));
+
+  const gutterStyle: React.CSSProperties = {
+    display: 'inline-block',
+    width: 40,
+    textAlign: 'right',
+    paddingRight: 8,
+    color: 'var(--text-3)',
+    userSelect: 'none',
+    flexShrink: 0,
+  };
+
+  return (
+    <div
+      style={{
+        fontFamily: 'var(--mono)',
+        fontSize: 12,
+        lineHeight: 1.55,
+        overflowX: 'auto',
+        background: 'var(--bg-0)',
+      }}
+    >
+      {rows.map((r, i) => {
+        const styles = rowStyle(r.kind);
+        const sign =
+          r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : r.kind === 'header' ? '' : ' ';
+        const oldN =
+          r.kind === 'del' ? r.oldLine : r.kind === 'context' ? r.oldLine : '';
+        const newN =
+          r.kind === 'add' ? r.newLine : r.kind === 'context' ? r.newLine : '';
+        return (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              whiteSpace: 'pre',
+              padding: '0 10px',
+              ...styles,
+            }}
+          >
+            {r.kind === 'header' ? (
+              <span style={{ flex: 1, color: 'var(--text-3)' }}>{r.text}</span>
+            ) : (
+              <>
+                <span style={gutterStyle}>{oldN}</span>
+                <span style={gutterStyle}>{newN}</span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: 14,
+                    color:
+                      r.kind === 'add'
+                        ? 'var(--emerald)'
+                        : r.kind === 'del'
+                          ? 'var(--rose)'
+                          : 'var(--text-3)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {sign}
+                </span>
+                <span style={{ color: 'var(--text-0)' }}>{r.text}</span>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function rowStyle(kind: HunkLine['kind']): React.CSSProperties {
+  switch (kind) {
+    case 'add':
+      return { background: 'rgba(16,185,129,.12)' };
+    case 'del':
+      return { background: 'rgba(244,63,94,.12)' };
+    case 'header':
+      return {
+        background: 'var(--bg-2)',
+        borderTop: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
+        padding: '2px 10px',
+      };
+    default:
+      return {};
+  }
+}
+
+function DiffFileBlock({ file }: { file: TaskDiffFile }) {
   const [collapsed, setCollapsed] = useState(false);
   const { adds, dels } = diffSummary(file);
   const label = filePathLabel(file);
@@ -518,30 +637,13 @@ function DiffFileBlock({
               : 'No textual changes in this file.'}
           </div>
         ) : (
-          <DiffView
-            data={{
-              oldFile: {
-                fileName: file.oldPath ?? undefined,
-                fileLang: file.lang ?? undefined,
-              },
-              newFile: {
-                fileName: file.newPath ?? undefined,
-                fileLang: file.lang ?? undefined,
-              },
-              hunks: file.hunks,
-            }}
-            diffViewMode={DiffModeEnum.Unified}
-            diffViewTheme={theme}
-            diffViewHighlight
-            diffViewWrap={false}
-            diffViewFontSize={12}
-          />
+          <DiffHunks hunks={file.hunks} />
         ))}
     </div>
   );
 }
 
-function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
+function DiffPanel({ task }: { task: TaskVM }) {
   const [result, setResult] = useState<TaskDiffResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [merging, setMerging] = useState(false);
@@ -738,7 +840,6 @@ function DiffPanel({ task, theme }: { task: TaskVM; theme: 'dark' | 'light' }) {
         <DiffFileBlock
           key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
           file={f}
-          theme={theme}
         />
       ))}
     </div>
