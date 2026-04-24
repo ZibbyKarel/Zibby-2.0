@@ -158,7 +158,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           >
             <Icon name="trash" size={12} />
           </button>
-          <StatusPill status={task.status} />
+          {(task.status !== 'pending' || task.startedAt !== null) && <StatusPill status={task.status} />}
         </div>
       </footer>
     </article>
