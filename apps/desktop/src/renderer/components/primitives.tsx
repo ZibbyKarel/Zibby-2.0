@@ -60,14 +60,15 @@ import type { StoryStatus } from '@nightcoder/shared-types/ipc';
 
 type PillCfg = { label: string; color: string; bg: string; dot: string; pulse?: boolean };
 const pillMap: Record<StoryStatus, PillCfg> = {
-  pending:   { label: 'pending',   color: 'var(--text-2)',  bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
-  blocked:   { label: 'blocked',   color: 'var(--text-2)',  bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
-  running:   { label: 'running',   color: 'var(--emerald)', bg: 'rgba(16,185,129,.12)', dot: 'var(--emerald)', pulse: true },
-  pushing:   { label: 'pushing',   color: 'var(--sky)',     bg: 'rgba(56,189,248,.12)', dot: 'var(--sky)',     pulse: true },
-  review:    { label: 'review',    color: 'var(--violet)',  bg: 'rgba(167,139,250,.12)', dot: 'var(--violet)' },
-  done:      { label: 'done',      color: 'var(--emerald)', bg: 'rgba(16,185,129,.10)', dot: 'var(--emerald)' },
-  failed:    { label: 'failed',    color: 'var(--rose)',    bg: 'rgba(244,63,94,.10)',  dot: 'var(--rose)' },
-  cancelled: { label: 'cancelled', color: 'var(--amber)',   bg: 'rgba(245,158,11,.10)', dot: 'var(--amber)' },
+  pending:     { label: 'pending',     color: 'var(--text-2)',  bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
+  blocked:     { label: 'blocked',     color: 'var(--text-2)',  bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
+  running:     { label: 'running',     color: 'var(--emerald)', bg: 'rgba(16,185,129,.12)', dot: 'var(--emerald)', pulse: true },
+  pushing:     { label: 'pushing',     color: 'var(--sky)',     bg: 'rgba(56,189,248,.12)', dot: 'var(--sky)',     pulse: true },
+  review:      { label: 'review',      color: 'var(--violet)',  bg: 'rgba(167,139,250,.12)', dot: 'var(--violet)' },
+  done:        { label: 'done',        color: 'var(--emerald)', bg: 'rgba(16,185,129,.10)', dot: 'var(--emerald)' },
+  failed:      { label: 'failed',      color: 'var(--rose)',    bg: 'rgba(244,63,94,.10)',  dot: 'var(--rose)' },
+  cancelled:   { label: 'cancelled',   color: 'var(--amber)',   bg: 'rgba(245,158,11,.10)', dot: 'var(--amber)' },
+  interrupted: { label: 'interrupted', color: 'var(--amber)',   bg: 'rgba(245,158,11,.12)', dot: 'var(--amber)',   pulse: true },
 };
 
 export function StatusPill({ status }: { status: StoryStatus }) {

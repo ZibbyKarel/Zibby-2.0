@@ -306,6 +306,7 @@ export function tasksToRuntime(
       prUrl: t.prUrl,
       startedAt: t.startedAt,
       endedAt: t.endedAt,
+      limitResetsAt: t.limitResetsAt ?? null,
     };
   });
   return out;
@@ -385,6 +386,7 @@ export function runtimeToTasks(
       prUrl: rt.prUrl,
       startedAt: rt.startedAt,
       endedAt: rt.endedAt,
+      limitResetsAt: rt.limitResetsAt ?? null,
     };
   });
   return out;

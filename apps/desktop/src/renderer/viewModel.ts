@@ -9,6 +9,8 @@ export type StoryRuntime = {
   prUrl: string | null;
   startedAt: number | null;
   endedAt: number | null;
+  /** Epoch ms when the usage limit that paused this task resets. */
+  limitResetsAt: number | null;
 };
 
 export type TaskVM = {
@@ -33,6 +35,8 @@ export type TaskVM = {
   waitsOn: number[];
   /** Task was `running` when the app last loaded — Resume is the right action. */
   interrupted: boolean;
+  /** Epoch ms when a usage-limit-induced pause resets. */
+  limitResetsAt: number | null;
 };
 
 export type TaskColumn = 'queue' | 'running' | 'review' | 'done';
@@ -41,7 +45,7 @@ export function statusToCol(status: StoryStatus): TaskColumn {
   if (status === 'running' || status === 'pushing') return 'running';
   if (status === 'review') return 'review';
   if (status === 'done' || status === 'failed' || status === 'cancelled') return 'done';
-  return 'queue'; // pending | blocked
+  return 'queue'; // pending | blocked | interrupted
 }
 
 export function toTasks(
@@ -54,6 +58,7 @@ export function toTasks(
     const waitsOn = plan.dependencies
       .filter((d) => d.to === idx)
       .map((d) => d.from);
+    const status = rt?.status ?? 'pending';
     return {
       id: String(idx),
       taskId: story.taskId,
@@ -64,7 +69,7 @@ export function toTasks(
       acceptance: story.acceptanceCriteria,
       affectedFiles: story.affectedFiles,
       model: story.model ?? null,
-      status: rt?.status ?? 'pending',
+      status,
       branch: rt?.branch ?? null,
       prUrl: rt?.prUrl ?? null,
       startedAt: rt?.startedAt ?? null,
@@ -73,7 +78,8 @@ export function toTasks(
       logs: rt?.logs ?? [],
       diff: null,
       waitsOn,
-      interrupted: interruptedIndices.has(idx),
+      interrupted: interruptedIndices.has(idx) || status === 'interrupted',
+      limitResetsAt: rt?.limitResetsAt ?? null,
     };
   });
 }
@@ -86,6 +92,7 @@ export function emptyRuntime(): StoryRuntime {
     prUrl: null,
     startedAt: null,
     endedAt: null,
+    limitResetsAt: null,
   };
 }
 
