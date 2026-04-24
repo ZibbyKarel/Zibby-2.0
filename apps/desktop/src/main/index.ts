@@ -34,12 +34,15 @@ import {
   type TaskDiffResult,
   type SquashMergeTaskRequest,
   type SquashMergeTaskResult,
+  type SyncTaskStatesRequest,
+  type SyncTaskStatesResult,
+  type SyncTaskStateUpdate,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
 import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
-import { deleteStoryBranch, ghSquashMergePr } from '@nightcoder/github';
+import { deleteStoryBranch, ghSquashMergePr, ghGetPrState } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
 import {
   archiveDroppedTaskFolders,
@@ -732,6 +735,65 @@ function registerIpc(getWebContents: () => WebContents | null) {
         const raw = err instanceof Error ? err.message : String(err);
         const stderr = (err as { stderr?: string }).stderr;
         return { kind: 'error', message: stderr ? `${raw}\n${stderr}` : raw };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.SyncTaskStates,
+    async (_event, req: SyncTaskStatesRequest): Promise<SyncTaskStatesResult> => {
+      try {
+        const project = await loadProject(req.folderPath);
+        if (!project) {
+          return { kind: 'ok', checked: 0, mergedCount: 0, updates: [] };
+        }
+
+        // Skip live statuses — active runs own their status updates over IPC
+        // events; clobbering them here would race with the runner.
+        const LIVE_STATUSES: ReadonlySet<StoryStatus> = new Set(['running', 'pushing']);
+
+        type Candidate = { storyIndex: number; taskId: string; prUrl: string; branch: string | null; status: StoryStatus };
+        const candidates: Candidate[] = [];
+        project.plan.stories.forEach((story, storyIndex) => {
+          const task = project.tasks[story.taskId];
+          if (!task) return;
+          if (!task.prUrl) return;
+          if (task.status === 'done') return;
+          if (LIVE_STATUSES.has(task.status)) return;
+          candidates.push({
+            storyIndex,
+            taskId: story.taskId,
+            prUrl: task.prUrl,
+            branch: task.branch,
+            status: task.status,
+          });
+        });
+
+        const results = await Promise.allSettled(
+          candidates.map((c) => ghGetPrState({ cwd: req.folderPath, prUrl: c.prUrl })),
+        );
+
+        const updates: SyncTaskStateUpdate[] = [];
+        let mergedCount = 0;
+        for (let i = 0; i < candidates.length; i++) {
+          const c = candidates[i];
+          const r = results[i];
+          if (r.status !== 'fulfilled' || r.value === null) continue;
+          if (r.value.state !== 'MERGED') continue;
+          mergedCount++;
+          await persistStoryStatus(req.folderPath, c.taskId, 'done');
+          updates.push({
+            storyIndex: c.storyIndex,
+            taskId: c.taskId,
+            status: 'done',
+            prUrl: c.prUrl,
+            branch: c.branch,
+          });
+        }
+
+        return { kind: 'ok', checked: candidates.length, mergedCount, updates };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
     },
   );
