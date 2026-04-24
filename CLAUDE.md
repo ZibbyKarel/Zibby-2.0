@@ -16,8 +16,10 @@ Package manager is **pnpm** (enforced via `packageManager` in `package.json`); n
 | Full test suite | `pnpm test` (wraps `vitest run`) |
 | Single test file | `pnpm vitest run libs/orchestrator/src/dag.test.ts` |
 | Tests matching a name | `pnpm vitest run -t "cycle detection"` |
+| Storybook (dev) | `pnpm storybook` (serves on http://localhost:6006) |
+| Storybook (static build) | `pnpm build-storybook` |
 
-`vitest.config.ts` only picks up `libs/**/*.{test,spec}.ts` — tests under `apps/desktop` are not wired up. `pnpm dev` relies on `wait-on` to hold Electron until Vite's dev server is listening on `http://localhost:5173`; if Vite binds to a different port, `dev:main` will hang.
+`vitest.config.ts` picks up `libs/**/*.{test,spec}.{ts,tsx}` — tests under `apps/desktop` are not wired up. Component tests (`.tsx`) must opt into the DOM via the `// @vitest-environment jsdom` docblock at the top of the file; everything else runs under Node. The shared setup at `vitest.setup.ts` registers `@testing-library/jest-dom` matchers and calls `cleanup()` after every test. `pnpm dev` relies on `wait-on` to hold Electron until Vite's dev server is listening on `http://localhost:5173`; if Vite binds to a different port, `dev:main` will hang.
 
 Nx was removed (commit `e1def662`) — there is no `nx` CLI and no `project.json` files. Do not reintroduce them.
 
@@ -55,6 +57,18 @@ The flow crosses every layer, so tracing a bug usually means reading all of thes
 - **External binaries required on PATH:** `claude`, `gh`, `git`. A missing `gh` will only surface at PR-creation time.
 - **Persisted state** lives in Electron's `userData` dir (`state-store.ts`) — `folderPath`, `brief`, and the last `plan`. Writes are debounced 500 ms in the renderer.
 - **Electron security posture:** `contextIsolation: true`, `nodeIntegration: false`, `sandbox: false`. The preload script is the only bridge — renderer code must not import Node APIs directly.
+
+## Design system components
+
+Every component that lives under `libs/design-system/src/` MUST ship with both a test file and a Storybook stories file, co-located with the component:
+
+- `libs/design-system/src/<Name>.tsx` — the component
+- `libs/design-system/src/<Name>.test.tsx` — Vitest + React Testing Library tests. Start the file with `// @vitest-environment jsdom`. Cover: rendering, ref forwarding (if the component uses `forwardRef`), `className` merging, prop-driven visual states (disabled/readOnly/invalid/etc.), and at least one user-interaction assertion.
+- `libs/design-system/src/<Name>.stories.tsx` — Storybook stories. Exactly two stories are required in this order:
+  1. **`Overview`** — renders the component in **every** supported variant side-by-side (empty, placeholder/filled, disabled, read-only, invalid, required, each relevant `type`/`size`/`variant`, custom `className`, …). This is the visual-regression reference.
+  2. **`Playground`** — exposes **every** configurable prop through `args` + `argTypes` so reviewers can drive the component entirely from the Storybook controls panel. Event-like props should use `{ action: '<name>' }`; enum-like props should use `{ control: 'select', options: [...] }`.
+
+The stories file is not optional and `Overview` must come before `Playground` in the file — Storybook renders them in source order. A new design-system component without both files should not be merged.
 
 ## graphify
 
