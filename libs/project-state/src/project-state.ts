@@ -202,7 +202,7 @@ export function mergePlanOnReplan(old: ProjectState, newPlan: RefinedPlan): Proj
     if (prior && PRESERVED_ON_REPLAN.has(prior.status)) {
       nextTasks[story.taskId] = prior;
       const oldStory = old.plan.stories.find((s: Story) => s.taskId === story.taskId);
-      return { ...story, numericId: oldStory?.numericId ?? story.numericId };
+      return { ...story, numericId: oldStory?.numericId ?? story.numericId ?? nextTaskNum++ };
     } else {
       nextTasks[story.taskId] = freshTask(story.taskId);
       return { ...story, numericId: story.numericId ?? nextTaskNum++ };
