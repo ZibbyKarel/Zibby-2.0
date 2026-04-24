@@ -10,6 +10,7 @@ export const IpcChannels = {
   SaveState: 'nightcoder:saveState',
   RemoveStory: 'nightcoder:removeStory',
   GetUsage: 'nightcoder:getUsage',
+  OpenExternal: 'nightcoder:openExternal',
 } as const;
 
 export const IpcEvents = {
@@ -200,4 +201,5 @@ export type IpcApi = {
   removeStory: (storyIndex: number) => Promise<RemoveStoryResult>;
   getUsage: () => Promise<Usage | null>;
   onUsageUpdate: (handler: (usage: Usage | null) => void) => () => void;
+  openExternal: (url: string) => Promise<void>;
 };

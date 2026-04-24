@@ -54,6 +54,7 @@ const api: IpcApi = {
       ipcRenderer.removeListener(IpcEvents.UsageUpdate, listener);
     };
   },
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IpcChannels.OpenExternal, url),
 };
 
 contextBridge.exposeInMainWorld('nightcoder', api);

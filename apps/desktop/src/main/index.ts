@@ -428,6 +428,10 @@ function registerIpc(getWebContents: () => WebContents | null) {
     return refreshUsage(getWebContents);
   });
 
+  ipcMain.handle(IpcChannels.OpenExternal, async (_event, url: string): Promise<void> => {
+    await shell.openExternal(url);
+  });
+
   ipcMain.handle(
     IpcChannels.RemoveStory,
     async (_event, payload: RemoveStoryPayload): Promise<RemoveStoryResult> => {
