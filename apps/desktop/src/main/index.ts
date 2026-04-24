@@ -104,9 +104,14 @@ function scheduleResumeAt(
 ): void {
   const now = Date.now();
   const fallback = now + RESUME_POLL_MS;
-  // If we don't know the reset time, poll again in a minute — we'll learn it
-  // from the usage endpoint or another limit-hit event by then.
-  const target = resetsAt && Number.isFinite(resetsAt) ? resetsAt + RESUME_GRACE_MS : fallback;
+  // When the CLI output doesn't include a timestamp, fall back to whatever
+  // the Usage panel is already tracking — it's the same source of truth the
+  // user sees in the header.
+  const usageReset = cachedUsage?.fiveHour?.resetsAt ?? cachedUsage?.sevenDay?.resetsAt ?? null;
+  const effective = resetsAt && Number.isFinite(resetsAt)
+    ? resetsAt
+    : (usageReset && usageReset > now ? usageReset : null);
+  const target = effective ? effective + RESUME_GRACE_MS : fallback;
   // Keep the earliest scheduled wake-up; later limit-hits with a later reset
   // don't push the timer out.
   if (resumeTimerTarget !== null && resumeTimerTarget <= target) return;
