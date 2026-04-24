@@ -1,4 +1,4 @@
-import type { Story } from '@zibby/shared-types/ipc';
+import type { Story } from '@nightcoder/shared-types/ipc';
 import { executeStory, type StoryExecutionEvent } from './execute-story';
 import { detectBaseBranch } from './worktree';
 

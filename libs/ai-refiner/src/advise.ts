@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { z } from 'zod';
-import { AdvisorReviewSchema } from '@zibby/shared-types/schemas';
-import type { AdvisorReview, RefinedPlan } from '@zibby/shared-types/ipc';
+import { AdvisorReviewSchema } from '@nightcoder/shared-types/schemas';
+import type { AdvisorReview, RefinedPlan } from '@nightcoder/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
 import { optimizeContext } from './context-optimizer';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@zibby/ai-refiner",
+  "name": "@nightcoder/ai-refiner",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@zibby/shared-types": "workspace:*",
+    "@nightcoder/shared-types": "workspace:*",
     "zod": "^4.3.6"
   }
 }

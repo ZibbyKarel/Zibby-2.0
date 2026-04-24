@@ -1,4 +1,4 @@
-import type { RefinedPlan, StoryStatus } from '@zibby/shared-types/ipc';
+import type { RefinedPlan, StoryStatus } from '@nightcoder/shared-types/ipc';
 
 export type LogLine = { s: 'out' | 'err' | 'info'; l: string };
 

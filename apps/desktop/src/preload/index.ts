@@ -17,7 +17,7 @@ import {
   type LoadedAppState,
   type RemoveStoryResult,
   type Usage,
-} from '@zibby/shared-types/ipc';
+} from '@nightcoder/shared-types/ipc';
 
 const api: IpcApi = {
   version: '0.0.1',

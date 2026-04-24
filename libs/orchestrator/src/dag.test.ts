@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDag, collectTransitiveSuccessors, removeStoryFromPlan } from './dag';
-import type { RefinedPlan } from '@zibby/shared-types/ipc';
+import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 
 describe('buildDag', () => {
   it('returns empty-waitingFor nodes when there are no dependencies', () => {

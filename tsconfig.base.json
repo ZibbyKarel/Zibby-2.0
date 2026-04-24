@@ -15,14 +15,14 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@zibby/shared-types": ["libs/shared-types/src/index.ts"],
-      "@zibby/db": ["libs/db/src/index.ts"],
-      "@zibby/github": ["libs/github/src/index.ts"],
-      "@zibby/ai-refiner": ["libs/ai-refiner/src/index.ts"],
-      "@zibby/orchestrator": ["libs/orchestrator/src/index.ts"],
-      "@zibby/claude-runner": ["libs/claude-runner/src/index.ts"],
-      "@zibby/usage": ["libs/usage/src/index.ts"],
-      "@zibby/ui": ["libs/ui/src/index.ts"]
+      "@nightcoder/shared-types": ["libs/shared-types/src/index.ts"],
+      "@nightcoder/db": ["libs/db/src/index.ts"],
+      "@nightcoder/github": ["libs/github/src/index.ts"],
+      "@nightcoder/ai-refiner": ["libs/ai-refiner/src/index.ts"],
+      "@nightcoder/orchestrator": ["libs/orchestrator/src/index.ts"],
+      "@nightcoder/claude-runner": ["libs/claude-runner/src/index.ts"],
+      "@nightcoder/usage": ["libs/usage/src/index.ts"],
+      "@nightcoder/ui": ["libs/ui/src/index.ts"]
     }
   }
 }

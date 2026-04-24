@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RefinedPlan } from '@zibby/shared-types/ipc';
+import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import { startPlanRun, type PlanEvent } from './run-plan';
 
 const plan: RefinedPlan = {

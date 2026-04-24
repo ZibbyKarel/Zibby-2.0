@@ -1,4 +1,4 @@
-import type { Dependency, RefinedPlan } from '@zibby/shared-types/ipc';
+import type { Dependency, RefinedPlan } from '@nightcoder/shared-types/ipc';
 
 export type DagNode = {
   index: number;

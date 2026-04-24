@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Story } from '@zibby/shared-types/ipc';
+import type { Story } from '@nightcoder/shared-types/ipc';
 import { tryClaimStory } from './active-stories';
 import { executeStory, type StoryExecutionEvent } from './execute-story';
 import { slugify } from './slug';

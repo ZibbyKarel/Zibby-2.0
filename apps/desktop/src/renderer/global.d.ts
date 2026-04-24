@@ -1,4 +1,4 @@
-import type { IpcApi } from '@zibby/shared-types';
+import type { IpcApi } from '@nightcoder/shared-types';
 
 declare global {
   interface Window {

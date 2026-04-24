@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { RefinedPlanSchema } from '@zibby/shared-types/schemas';
-import type { RefinedPlan } from '@zibby/shared-types/ipc';
+import { RefinedPlanSchema } from '@nightcoder/shared-types/schemas';
+import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import { collectRepoContext, renderContextForPrompt } from './repo-context';
 import { optimizeContext } from './context-optimizer';
 import { runClaudeCli, parseClaudeOutput } from './claude-cli';

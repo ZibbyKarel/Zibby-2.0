@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { Usage } from '@zibby/shared-types/ipc';
+import type { Usage } from '@nightcoder/shared-types/ipc';
 import { UsageRing, fmtCountdown } from './primitives';
 
 type ViewUsage = {

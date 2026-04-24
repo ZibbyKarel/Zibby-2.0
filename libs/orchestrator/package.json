@@ -1,5 +1,5 @@
 {
-  "name": "@zibby/orchestrator",
+  "name": "@nightcoder/orchestrator",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@zibby/shared-types": "workspace:*",
-    "@zibby/claude-runner": "workspace:*",
-    "@zibby/github": "workspace:*"
+    "@nightcoder/shared-types": "workspace:*",
+    "@nightcoder/claude-runner": "workspace:*",
+    "@nightcoder/github": "workspace:*"
   }
 }

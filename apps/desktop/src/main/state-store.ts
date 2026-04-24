@@ -1,7 +1,7 @@
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { PersistedPlanSchema, PersistedRuntimeSchema } from '@zibby/shared-types/schemas';
-import type { PersistedState } from '@zibby/shared-types/ipc';
+import { PersistedPlanSchema, PersistedRuntimeSchema } from '@nightcoder/shared-types/schemas';
+import type { PersistedState } from '@nightcoder/shared-types/ipc';
 
 const FILE_NAME = 'nightcoder-state.json';
 

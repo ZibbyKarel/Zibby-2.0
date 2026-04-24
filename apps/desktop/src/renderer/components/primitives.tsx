@@ -56,7 +56,7 @@ export function Btn({ variant = 'ghost', size = 'md', icon, children, style, onM
 }
 
 // ── StatusPill ───────────────────────────────────────────────
-import type { StoryStatus } from '@zibby/shared-types/ipc';
+import type { StoryStatus } from '@nightcoder/shared-types/ipc';
 
 type PillCfg = { label: string; color: string; bg: string; dot: string; pulse?: boolean };
 const pillMap: Record<StoryStatus, PillCfg> = {

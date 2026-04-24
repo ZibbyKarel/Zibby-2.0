@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@zibby/shared-types/ipc';
+import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 
 import { Icon } from './components/icons';
 import { Btn, Chip } from './components/primitives';

@@ -20,12 +20,12 @@ import {
   type LoadedAppState,
   type RemoveStoryPayload,
   type RemoveStoryResult,
-} from '@zibby/shared-types/ipc';
-import type { Usage } from '@zibby/shared-types/ipc';
-import { refine, advise } from '@zibby/ai-refiner';
-import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@zibby/orchestrator';
-import { deleteStoryBranch } from '@zibby/github';
-import { fetchUsage } from '@zibby/usage';
+} from '@nightcoder/shared-types/ipc';
+import type { Usage } from '@nightcoder/shared-types/ipc';
+import { refine, advise } from '@nightcoder/ai-refiner';
+import { startPlanRun, runSingleStory, removeStoryFromPlan, slugify, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { deleteStoryBranch } from '@nightcoder/github';
+import { fetchUsage } from '@nightcoder/usage';
 import { loadPersisted, savePersisted } from './state-store';
 
 const execFileP = promisify(execFile);

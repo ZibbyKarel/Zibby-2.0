@@ -87,22 +87,22 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@zibby/ai-refiner':
+      '@nightcoder/ai-refiner':
         specifier: workspace:*
         version: link:../../libs/ai-refiner
-      '@zibby/orchestrator':
+      '@nightcoder/orchestrator':
         specifier: workspace:*
         version: link:../../libs/orchestrator
-      '@zibby/shared-types':
+      '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
-      '@zibby/usage':
+      '@nightcoder/usage':
         specifier: workspace:*
         version: link:../../libs/usage
 
   libs/ai-refiner:
     dependencies:
-      '@zibby/shared-types':
+      '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../shared-types
       zod:
@@ -111,7 +111,7 @@ importers:
 
   libs/claude-runner:
     dependencies:
-      '@zibby/shared-types':
+      '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../shared-types
 
@@ -119,13 +119,13 @@ importers:
 
   libs/orchestrator:
     dependencies:
-      '@zibby/claude-runner':
+      '@nightcoder/claude-runner':
         specifier: workspace:*
         version: link:../claude-runner
-      '@zibby/github':
+      '@nightcoder/github':
         specifier: workspace:*
         version: link:../github
-      '@zibby/shared-types':
+      '@nightcoder/shared-types':
         specifier: workspace:*
         version: link:../shared-types
 

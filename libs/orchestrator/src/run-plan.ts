@@ -1,4 +1,4 @@
-import type { RefinedPlan } from '@zibby/shared-types/ipc';
+import type { RefinedPlan } from '@nightcoder/shared-types/ipc';
 import { detectBaseBranch } from './worktree';
 import { executeStory, type StoryExecutionEvent } from './execute-story';
 import { buildDag, collectTransitiveSuccessors, type DagNode } from './dag';

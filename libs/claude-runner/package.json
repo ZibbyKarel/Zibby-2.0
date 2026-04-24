@@ -1,5 +1,5 @@
 {
-  "name": "@zibby/claude-runner",
+  "name": "@nightcoder/claude-runner",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,6 +9,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@zibby/shared-types": "workspace:*"
+    "@nightcoder/shared-types": "workspace:*"
   }
 }

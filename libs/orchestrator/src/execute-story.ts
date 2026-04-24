@@ -1,6 +1,6 @@
-import type { Story, StoryStatus } from '@zibby/shared-types/ipc';
-import { runClaudeInWorktree } from '@zibby/claude-runner';
-import { commitAllIfDirty, gitPush, ghCreatePr } from '@zibby/github';
+import type { Story, StoryStatus } from '@nightcoder/shared-types/ipc';
+import { runClaudeInWorktree } from '@nightcoder/claude-runner';
+import { commitAllIfDirty, gitPush, ghCreatePr } from '@nightcoder/github';
 import { createWorktree, type WorktreeHandle } from './worktree';
 import { slugify, uniqueSlug } from './slug';
 import { tryClaimStory } from './active-stories';
