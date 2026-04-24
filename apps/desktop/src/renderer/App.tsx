@@ -52,7 +52,7 @@ export default function App() {
   // ── Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-    window.zibby.loadState().then((state) => {
+    window.nightcoder.loadState().then((state) => {
       if (cancelled) return;
       if (state.folder?.kind === 'selected') setFolder(state.folder);
       setPlan(state.plan ?? { stories: [], dependencies: [] });
@@ -81,7 +81,7 @@ export default function App() {
     }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      window.zibby.saveState({ folderPath: folder?.path, plan: plan ?? undefined, runtime: persistedRuntime }).catch(() => {});
+      window.nightcoder.saveState({ folderPath: folder?.path, plan: plan ?? undefined, runtime: persistedRuntime }).catch(() => {});
     }, 500);
   }, [folder, plan, runtime]);
 
@@ -109,7 +109,7 @@ export default function App() {
 
   // ── RunEvent subscription ──────────────────────────────────
   useEffect(() => {
-    const unsub = window.zibby.onRunEvent((ev) => {
+    const unsub = window.nightcoder.onRunEvent((ev) => {
       if (ev.kind === 'run-done') {
         setRunId((current) => (current === ev.runId ? null : current));
         pushToast({ kind: ev.success ? 'done' : 'failed', title: ev.success ? 'Run finished' : 'Run failed' });
@@ -175,7 +175,7 @@ export default function App() {
 
   // ── Actions ────────────────────────────────────────────────
   const pickFolder = async () => {
-    const result = await window.zibby.pickFolder();
+    const result = await window.nightcoder.pickFolder();
     if (result.kind === 'selected') setFolder(result);
   };
 
@@ -190,7 +190,7 @@ export default function App() {
     }
     const storyRunId = `story-${Date.now()}-${idx}`;
     pushToast({ kind: 'info', title: 'Task started', desc: plan.stories[idx]?.title });
-    const res = await window.zibby.runStory({ runId: storyRunId, storyIndex: idx, folderPath: folder.path, plan });
+    const res = await window.nightcoder.runStory({ runId: storyRunId, storyIndex: idx, folderPath: folder.path, plan });
     if (res.kind === 'error') {
       pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
     }
@@ -206,7 +206,7 @@ export default function App() {
       .filter(([, v]) => v.status === 'done' || v.status === 'review')
       .map(([k]) => Number(k));
     const started = (async () => {
-      const res = await window.zibby.startRun({ folderPath: folder.path, plan, completedIndices });
+      const res = await window.nightcoder.startRun({ folderPath: folder.path, plan, completedIndices });
       if (res.kind === 'error') {
         pushToast({ kind: 'failed', title: 'Run error', desc: res.message });
         return;

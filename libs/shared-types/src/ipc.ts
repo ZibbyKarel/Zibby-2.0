@@ -1,19 +1,19 @@
 export const IpcChannels = {
-  PickFolder: 'zibby:pickFolder',
-  Refine: 'zibby:refine',
-  Advise: 'zibby:advise',
-  StartRun: 'zibby:startRun',
-  RunStory: 'zibby:runStory',
-  CancelRun: 'zibby:cancelRun',
-  LoadState: 'zibby:loadState',
-  SaveState: 'zibby:saveState',
-  RemoveStory: 'zibby:removeStory',
-  GetUsage: 'zibby:getUsage',
+  PickFolder: 'nightcoder:pickFolder',
+  Refine: 'nightcoder:refine',
+  Advise: 'nightcoder:advise',
+  StartRun: 'nightcoder:startRun',
+  RunStory: 'nightcoder:runStory',
+  CancelRun: 'nightcoder:cancelRun',
+  LoadState: 'nightcoder:loadState',
+  SaveState: 'nightcoder:saveState',
+  RemoveStory: 'nightcoder:removeStory',
+  GetUsage: 'nightcoder:getUsage',
 } as const;
 
 export const IpcEvents = {
-  RunEvent: 'zibby:runEvent',
-  UsageUpdate: 'zibby:usageUpdate',
+  RunEvent: 'nightcoder:runEvent',
+  UsageUpdate: 'nightcoder:usageUpdate',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

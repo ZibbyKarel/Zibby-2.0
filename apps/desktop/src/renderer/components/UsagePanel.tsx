@@ -20,11 +20,11 @@ export function UsagePanel({ tick: _tick }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    window.zibby.getUsage().then((u) => {
+    window.nightcoder.getUsage().then((u) => {
       if (cancelled) return;
       applyUsage(u);
     }).catch(() => {});
-    const unsub = window.zibby.onUsageUpdate((u) => { if (!cancelled) applyUsage(u); });
+    const unsub = window.nightcoder.onUsageUpdate((u) => { if (!cancelled) applyUsage(u); });
     return () => { cancelled = true; unsub(); };
   }, []);
 

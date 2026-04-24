@@ -52,4 +52,4 @@ const api: IpcApi = {
   },
 };
 
-contextBridge.exposeInMainWorld('zibby', api);
+contextBridge.exposeInMainWorld('nightcoder', api);
