@@ -151,6 +151,39 @@ export async function ghSquashMergePr(args: SquashMergeArgs): Promise<void> {
   });
 }
 
+export type GhPrState = 'OPEN' | 'CLOSED' | 'MERGED';
+
+export type GhPrStateResult = {
+  state: GhPrState;
+  /** Epoch ms when GitHub recorded the merge, or null when not merged. */
+  mergedAt: number | null;
+};
+
+/**
+ * Query the current GitHub state of an existing PR. Returns `null` when `gh`
+ * cannot resolve the URL — e.g. the PR was deleted or the user lost access.
+ */
+export async function ghGetPrState(args: {
+  cwd: string;
+  prUrl: string;
+  signal?: AbortSignal;
+}): Promise<GhPrStateResult | null> {
+  try {
+    const { stdout } = await execFileP(
+      'gh',
+      ['pr', 'view', args.prUrl, '--json', 'state,mergedAt'],
+      { cwd: args.cwd, ...OPTS, signal: args.signal },
+    );
+    const parsed = JSON.parse(stdout) as { state?: string; mergedAt?: string | null };
+    const rawState = (parsed.state ?? '').toUpperCase();
+    const state: GhPrState = rawState === 'MERGED' || rawState === 'CLOSED' ? rawState : 'OPEN';
+    const mergedAt = parsed.mergedAt ? Date.parse(parsed.mergedAt) : null;
+    return { state, mergedAt: Number.isFinite(mergedAt) ? mergedAt : null };
+  } catch {
+    return null;
+  }
+}
+
 export async function ghAuthStatus(): Promise<{ ok: boolean; stdout: string }> {
   try {
     const { stdout } = await execFileP('gh', ['auth', 'status'], OPTS);
