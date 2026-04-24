@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
 
-import { Icon, NightCoderMark } from './components/icons';
+import { Icon, BrandMark } from './components/icons';
 import { Btn, Chip } from './components/primitives';
 import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
@@ -425,9 +425,9 @@ export default function App() {
         background: 'var(--bg-1)', display: 'flex', alignItems: 'center', gap: 16,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <NightCoderMark size={30} />
+          <BrandMark theme={theme} size={30} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>NightCoder</div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>{theme === 'light' ? 'DayCoder' : 'NightCoder'}</div>
             <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>multi-agent coding workflow</div>
           </div>
         </div>
