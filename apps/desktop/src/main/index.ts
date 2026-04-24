@@ -220,7 +220,24 @@ async function resumeInterruptedTasks(getWebContents: () => WebContents | null):
 const USAGE_POLL_INTERVAL_MS = 5 * 60 * 1000;
 let cachedUsage: Usage | null = null;
 let usagePollTimer: ReturnType<typeof setInterval> | null = null;
+let usageResetTimer: ReturnType<typeof setTimeout> | null = null;
 let usageInFlight: Promise<Usage | null> | null = null;
+
+function scheduleResetRefetch(getWebContents: () => WebContents | null, usage: Usage): void {
+  if (usageResetTimer) {
+    clearTimeout(usageResetTimer);
+    usageResetTimer = null;
+  }
+  const now = Date.now();
+  const futureTimes = [usage.fiveHour?.resetsAt, usage.sevenDay?.resetsAt]
+    .filter((t): t is number => typeof t === 'number' && t > now);
+  if (futureTimes.length === 0) return;
+  const delay = Math.min(...futureTimes) - now;
+  usageResetTimer = setTimeout(() => {
+    usageResetTimer = null;
+    void refreshUsage(getWebContents);
+  }, delay);
+}
 
 async function refreshUsage(getWebContents: () => WebContents | null): Promise<Usage | null> {
   if (usageInFlight) return usageInFlight;
@@ -228,6 +245,7 @@ async function refreshUsage(getWebContents: () => WebContents | null): Promise<U
     try {
       const usage = await fetchUsage();
       cachedUsage = usage;
+      if (usage) scheduleResetRefetch(getWebContents, usage);
       const wc = getWebContents();
       if (wc && !wc.isDestroyed()) wc.send(IpcEvents.UsageUpdate, usage);
       return usage;
@@ -781,6 +799,10 @@ app.on('window-all-closed', () => {
   if (usagePollTimer) {
     clearInterval(usagePollTimer);
     usagePollTimer = null;
+  }
+  if (usageResetTimer) {
+    clearTimeout(usageResetTimer);
+    usageResetTimer = null;
   }
   clearResumeTimer();
   if (process.platform !== 'darwin') app.quit();
