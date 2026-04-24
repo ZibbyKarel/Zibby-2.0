@@ -44,7 +44,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
 
       <header style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
         <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)', marginTop: 2 }}>
-          #{task.index}
+          #{task.numericId ?? task.index + 1}
         </span>
         <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-0)', lineHeight: 1.35, flex: 1, letterSpacing: '-.005em' }}>
           {task.title}

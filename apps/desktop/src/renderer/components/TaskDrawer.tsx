@@ -53,7 +53,7 @@ export function TaskDrawer({ task, open, onClose, onRun, onSave, tab, setTab, ru
       }}>
         <header style={{ padding: '14px 18px 12px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>#{task.index}</span>
+            <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>#{task.numericId ?? task.index + 1}</span>
             <StatusPill status={task.status} />
             {task.status === 'running' && runtimeMs != null && (
               <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--emerald)' }}>
