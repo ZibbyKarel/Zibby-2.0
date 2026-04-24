@@ -8,7 +8,7 @@ import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
 import { TaskDrawer } from './components/TaskDrawer';
 import type { DrawerTab } from './components/TaskDrawer';
-import { AddTaskDialog } from './components/AddTaskDialog';
+import { AddTaskDialog, type AddTaskPayload, type BlockerCandidate } from './components/AddTaskDialog';
 import { CommandPalette } from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
@@ -307,12 +307,17 @@ export default function App() {
     }
   }, [tasks, runTask, pushToast, setRuntime]);
 
-  const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string; attachedFilePaths: string[] }) => {
+  const addTask = useCallback((data: AddTaskPayload) => {
     let newTaskId: string | null = null;
     setPlan((prev) => {
       const stories = prev?.stories ?? [];
+      const existingDeps = prev?.dependencies ?? [];
       const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
       newTaskId = taskId;
+      const newIndex = stories.length;
+      const nextDeps = data.blockingIndex !== null && data.blockingIndex >= 0 && data.blockingIndex < stories.length
+        ? [...existingDeps, { from: data.blockingIndex, to: newIndex, reason: 'user: blocks this task' }]
+        : existingDeps;
       return {
         stories: [...stories, {
           taskId,
@@ -321,8 +326,9 @@ export default function App() {
           acceptanceCriteria: data.acceptance,
           affectedFiles: [],
           model: data.model,
+          agents: data.agents,
         }],
-        dependencies: prev?.dependencies ?? [],
+        dependencies: nextDeps,
       };
     });
     setAddOpen(false);
@@ -338,6 +344,19 @@ export default function App() {
       })();
     }
   }, [pushToast]);
+
+  const blockerCandidates = useMemo<BlockerCandidate[]>(() => {
+    // Only non-terminal tasks can serve as blockers — branching off a cancelled
+    // or failed task's branch would reuse stale state.
+    return tasks
+      .filter((t) => t.status !== 'cancelled' && t.status !== 'failed')
+      .map((t) => ({
+        index: t.index,
+        title: t.title,
+        numericId: t.numericId,
+        status: t.status,
+      }));
+  }, [tasks]);
 
   const editTask = useCallback((idx: number, data: { title: string; description: string; acceptance: string[]; model?: string }) => {
     setPlan((prev) => {
@@ -574,7 +593,13 @@ export default function App() {
         runtimeMs={selected ? runtimeMs(selected) : null}
       />
 
-      <AddTaskDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addTask} />
+      <AddTaskDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={addTask}
+        blockerCandidates={blockerCandidates}
+        folderPath={folder?.path ?? null}
+      />
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
 
