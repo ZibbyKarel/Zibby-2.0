@@ -12,3 +12,4 @@ export type { DagNode } from './dag';
 export { installPostCommitHook, isNightcoderHook, NIGHTCODER_HOOK_MARKER } from './post-commit-hook';
 export { getTaskDiff, parseUnifiedDiff } from './task-diff';
 export type { GetTaskDiffArgs, GetTaskDiffOutcome } from './task-diff';
+export { formatSquashCommitTitle } from './squash-merge';
