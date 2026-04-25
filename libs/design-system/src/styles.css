@@ -1,0 +1,106 @@
+/*
+ * Global styles imported as a side-effect by `DesignSystemProvider`.
+ *
+ * Design-token *values* live in `tokens.ts`. The provider emits the matching
+ * CSS custom properties on its wrapping element at runtime, so this stylesheet
+ * never declares them itself — consumers don't need a `:root { --bg-0: … }`
+ * block in their own CSS for design-system components to render correctly.
+ */
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* Scoped under .ds-root so we don't restyle host pages outside the provider. */
+.ds-root {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ds-root *::-webkit-scrollbar { width: 10px; height: 10px; }
+.ds-root *::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.ds-root *::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.ds-root button:focus-visible,
+.ds-root input:focus-visible,
+.ds-root textarea:focus-visible,
+.ds-root select:focus-visible,
+.ds-root [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+.ds-mono    { font-family: var(--mono); }
+.ds-tabular { font-variant-numeric: tabular-nums; }
+
+@keyframes ds-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+@keyframes ds-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes ds-slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+@keyframes ds-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ds-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ds-caret { 50% { opacity: 0; } }
+
+.ds-dot-running {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 0 0 var(--accent-ring);
+  animation: ds-pulse-dot 1.4s ease-in-out infinite;
+}
+
+.ds-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--border-2); border-top-color: var(--emerald);
+  animation: ds-spin .8s linear infinite;
+}
+
+.ds-shimmer-bar {
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,.25), transparent);
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.8s linear infinite;
+}
+
+.ds-caret::after {
+  content: '▊';
+  color: var(--emerald);
+  margin-left: 2px;
+  animation: ds-caret 1s steps(1) infinite;
+}
+
+.ds-drop-hint {
+  border: 1.5px dashed var(--accent-ring) !important;
+  background: var(--accent-soft) !important;
+}

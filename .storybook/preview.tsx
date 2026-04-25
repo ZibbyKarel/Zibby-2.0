@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
-import '../apps/desktop/src/renderer/index.css';
+import { DesignSystemProvider } from '../libs/design-system/src/index';
 
 const preview: Preview = {
   parameters: {
@@ -34,15 +34,11 @@ const preview: Preview = {
   },
   decorators: [
     (Story, context) => {
-      const theme = context.globals.theme ?? 'dark';
-      const bg = theme === 'light' ? '#f6f6f4' : '#0a0b0d';
+      const theme = (context.globals.theme ?? 'dark') as 'dark' | 'light';
       return (
-        <div
-          className={theme === 'light' ? 'theme-light zb' : 'zb'}
-          style={{ background: bg, padding: '1.5rem', minHeight: '100vh' }}
-        >
+        <DesignSystemProvider theme={theme} style={{ padding: '1.5rem', minHeight: '100vh' }}>
           <Story />
-        </div>
+        </DesignSystemProvider>
       );
     },
   ],

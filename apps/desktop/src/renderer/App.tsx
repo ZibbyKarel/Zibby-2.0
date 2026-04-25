@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
 
+import { DesignSystemProvider } from '@nightcoder/design-system';
 import { Icon, BrandMark } from './components/icons';
 import { Btn, Chip } from './components/primitives';
 import { TaskCard } from './components/TaskCard';
@@ -498,10 +499,15 @@ export default function App() {
   const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? Date.now() - t.startedAt : null;
 
   return (
-    <div className={`zb${theme === 'light' ? ' theme-light' : ''}`} style={{
-      minHeight: '100%', background: 'var(--bg-0)', color: 'var(--text-0)',
-      display: 'flex', flexDirection: 'column', fontSize: 13,
-    }}>
+    <DesignSystemProvider
+      theme={theme}
+      style={{
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        fontSize: 13,
+      }}
+    >
       {/* Top bar */}
       <header style={{
         padding: '14px 20px', borderBottom: '1px solid var(--border)',
@@ -677,6 +683,6 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
 
       <Toasts toasts={toasts} onDismiss={(id) => setToasts((arr) => arr.filter((t) => t.id !== id))} />
-    </div>
+    </DesignSystemProvider>
   );
 }
