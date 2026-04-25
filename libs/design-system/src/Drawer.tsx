@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { Icon, IconName } from './Icon';
 
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
 
@@ -85,9 +86,7 @@ export function Drawer({
                 onClick={onClose}
                 className="flex cursor-pointer items-center border-none bg-transparent p-1 text-[var(--text-3)] hover:text-[var(--text-1)]"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <path d="M3 3l8 8M11 3l-8 8" />
-                </svg>
+                <Icon value={IconName.X} size={14} strokeWidth={2} />
               </button>
             )}
           </header>

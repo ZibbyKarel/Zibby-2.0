@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { Icon, IconName } from './Icon';
 
 export type SnackbarSeverity = 'info' | 'success' | 'warning' | 'error';
 
@@ -25,35 +26,12 @@ const accent: Record<SnackbarSeverity, string> = {
   error:   'var(--rose)',
 };
 
-const DefaultIcon = ({ severity }: { severity: SnackbarSeverity }) => {
-  if (severity === 'success') {
-    return (
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 8l3 3 6-7" />
-      </svg>
-    );
-  }
-  if (severity === 'error' || severity === 'warning') {
-    return (
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M7.5 1.5l6.5 12h-13l6.5-12z" />
-        <path d="M7.5 6v3.5M7.5 11.5v.01" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="7.5" cy="7.5" r="6" />
-      <path d="M7.5 5v3.5M7.5 11v.01" />
-    </svg>
-  );
+const defaultIconFor: Record<SnackbarSeverity, IconName> = {
+  info:    IconName.Info,
+  success: IconName.CheckCircle,
+  warning: IconName.AlertTriangle,
+  error:   IconName.AlertCircle,
 };
-
-const Close = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-    <path d="M3 3l6 6M9 3l-6 6" />
-  </svg>
-);
 
 export function Snackbar({
   open,
@@ -86,7 +64,7 @@ export function Snackbar({
       }}
     >
       <span style={{ color }} className="mt-0.5 flex shrink-0">
-        {icon ?? <DefaultIcon severity={severity} />}
+        {icon ?? <Icon value={defaultIconFor[severity]} size={15} />}
       </span>
       <div className="flex-1 min-w-0">
         {title && <div className="text-xs font-semibold text-[var(--text-0)]">{title}</div>}
@@ -101,7 +79,7 @@ export function Snackbar({
           onClick={onClose}
           className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
         >
-          <Close />
+          <Icon value={IconName.X} size={12} />
         </button>
       )}
     </div>

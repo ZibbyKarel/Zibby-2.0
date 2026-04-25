@@ -1,15 +1,8 @@
 import { type ReactNode } from 'react';
+import { useStatusTokens } from './DesignSystemContext';
+import type { StatusKey } from './tokens';
 
-export type BadgeStatus =
-  | 'pending'
-  | 'blocked'
-  | 'running'
-  | 'pushing'
-  | 'review'
-  | 'done'
-  | 'failed'
-  | 'cancelled'
-  | 'interrupted';
+export type BadgeStatus = StatusKey;
 
 export type BadgeProps = {
   /** When supplied, picks colors and the pulsing dot from the built-in status palette. */
@@ -27,20 +20,6 @@ export type BadgeProps = {
   className?: string;
 };
 
-type Cfg = { label: string; color: string; bg: string; dot: string; pulse?: boolean };
-
-const statusMap: Record<BadgeStatus, Cfg> = {
-  pending:     { label: 'pending',     color: 'var(--text-2)',  bg: 'var(--bg-3)',           dot: 'var(--text-3)' },
-  blocked:     { label: 'blocked',     color: 'var(--text-2)',  bg: 'var(--bg-3)',           dot: 'var(--text-3)' },
-  running:     { label: 'running',     color: 'var(--emerald)', bg: 'rgba(16,185,129,.12)',  dot: 'var(--emerald)', pulse: true },
-  pushing:     { label: 'pushing',     color: 'var(--sky)',     bg: 'rgba(56,189,248,.12)',  dot: 'var(--sky)',     pulse: true },
-  review:      { label: 'review',      color: 'var(--violet)',  bg: 'rgba(167,139,250,.12)', dot: 'var(--violet)' },
-  done:        { label: 'done',        color: 'var(--emerald)', bg: 'rgba(16,185,129,.10)',  dot: 'var(--emerald)' },
-  failed:      { label: 'failed',      color: 'var(--rose)',    bg: 'rgba(244,63,94,.10)',   dot: 'var(--rose)' },
-  cancelled:   { label: 'cancelled',   color: 'var(--amber)',   bg: 'rgba(245,158,11,.10)',  dot: 'var(--amber)' },
-  interrupted: { label: 'interrupted', color: 'var(--amber)',   bg: 'rgba(245,158,11,.12)',  dot: 'var(--amber)',   pulse: true },
-};
-
 const PULSE_KEYFRAMES = '@keyframes nc-badge-pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }';
 
 export function Badge({
@@ -52,7 +31,11 @@ export function Badge({
   background,
   className = '',
 }: BadgeProps) {
-  const cfg = status ? statusMap[status] : undefined;
+  // Hooks must be called unconditionally; default to `pending` when no status
+  // is supplied so we still get a valid palette for the fallback path.
+  const statusTokens = useStatusTokens(status ?? 'pending');
+  const cfg = status ? statusTokens : undefined;
+
   const fg = color ?? cfg?.color ?? 'var(--text-1)';
   const bg = background ?? cfg?.bg ?? 'var(--bg-3)';
   const dotColor = cfg?.dot ?? fg;

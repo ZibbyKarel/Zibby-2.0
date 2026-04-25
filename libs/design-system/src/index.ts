@@ -29,3 +29,34 @@ export {
   type StackAlign,
   type StackJustify,
 } from './Stack';
+export { Icon, IconName, type IconProps } from './Icon';
+export {
+  DesignSystemProvider,
+  useTokens,
+  useTextColors,
+  useAccentColors,
+  useSizeTokens,
+  useStatusTokens,
+  useChipTokens,
+  type DesignSystemProviderProps,
+} from './DesignSystemContext';
+export {
+  defaultTokens,
+  defaultColorTokens,
+  defaultSizeTokens,
+  defaultFontTokens,
+  defaultStatusTokens,
+  defaultChipToneTokens,
+  mergeTokens,
+  type DesignTokens,
+  type PartialDesignTokens,
+  type ColorTokens,
+  type SizeTokens,
+  type FontTokens,
+  type StatusTokens,
+  type StatusPalette,
+  type StatusKey,
+  type ChipToneTokens,
+  type ChipTonePalette,
+  type ChipToneKey,
+} from './tokens';

@@ -1,4 +1,5 @@
 import { forwardRef, useId, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { Icon, IconName } from './Icon';
 
 export type SelectOption<T extends string = string> = {
   value: T;
@@ -27,18 +28,9 @@ const sizeClasses = {
 } as const;
 
 const Caret = () => (
-  <svg
-    aria-hidden
-    viewBox="0 0 12 12"
-    className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-3)]"
-    width="10"
-    height="10"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-  >
-    <path d="M3 5l3 3 3-3" />
-  </svg>
+  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-3)]">
+    <Icon value={IconName.ChevronDown} size={14} />
+  </span>
 );
 
 function SelectInner<T extends string>(

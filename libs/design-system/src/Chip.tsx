@@ -1,6 +1,9 @@
 import { type ReactNode, type MouseEvent } from 'react';
+import { Icon, IconName } from './Icon';
+import { useChipTokens } from './DesignSystemContext';
+import type { ChipToneKey } from './tokens';
 
-export type ChipTone = 'neutral' | 'accent' | 'violet' | 'warn' | 'sky' | 'rose';
+export type ChipTone = ChipToneKey;
 export type ChipSize = 'sm' | 'md';
 
 export type ChipProps = {
@@ -17,25 +20,10 @@ export type ChipProps = {
   title?: string;
 };
 
-const tones: Record<ChipTone, { c: string; bg: string; b: string }> = {
-  neutral: { c: 'var(--text-1)',   bg: 'var(--bg-3)',               b: 'var(--border)'         },
-  accent:  { c: 'var(--emerald)',  bg: 'rgba(16,185,129,.08)',      b: 'rgba(16,185,129,.25)'  },
-  violet:  { c: 'var(--violet)',   bg: 'rgba(167,139,250,.10)',     b: 'rgba(167,139,250,.25)' },
-  warn:    { c: 'var(--amber)',    bg: 'rgba(245,158,11,.10)',      b: 'rgba(245,158,11,.25)'  },
-  sky:     { c: 'var(--sky)',      bg: 'rgba(56,189,248,.10)',      b: 'rgba(56,189,248,.25)'  },
-  rose:    { c: 'var(--rose)',     bg: 'rgba(244,63,94,.10)',       b: 'rgba(244,63,94,.25)'   },
+const sizes: Record<ChipSize, { h: string; px: string; gap: string; text: string; icon: number }> = {
+  sm: { h: 'h-5',         px: 'px-1.5', gap: 'gap-1',   text: 'text-[10px]', icon: 9 },
+  md: { h: 'h-[22px]',    px: 'px-2',   gap: 'gap-1.5', text: 'text-[11px]', icon: 11 },
 };
-
-const sizes: Record<ChipSize, { h: string; px: string; gap: string; text: string }> = {
-  sm: { h: 'h-5',  px: 'px-1.5', gap: 'gap-1',   text: 'text-[10px]' },
-  md: { h: 'h-[22px]', px: 'px-2', gap: 'gap-1.5', text: 'text-[11px]' },
-};
-
-const Close = () => (
-  <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
-    <path d="M2 2l5 5M7 2l-5 5" />
-  </svg>
-);
 
 export function Chip({
   children,
@@ -47,7 +35,7 @@ export function Chip({
   className = '',
   title,
 }: ChipProps) {
-  const t = tones[tone];
+  const t = useChipTokens(tone);
   const s = sizes[size];
   const interactive = !!onClick;
 
@@ -68,7 +56,7 @@ export function Chip({
       }
       title={title}
       className={`inline-flex items-center rounded-md border font-mono font-medium ${s.h} ${s.px} ${s.gap} ${s.text} ${interactive ? 'cursor-pointer hover:opacity-80' : ''} ${className}`.trim()}
-      style={{ color: t.c, background: t.bg, borderColor: t.b }}
+      style={{ color: t.color, background: t.bg, borderColor: t.border }}
     >
       {icon && <span className="flex items-center">{icon}</span>}
       <span className="truncate">{children}</span>
@@ -81,9 +69,9 @@ export function Chip({
             onDelete(e);
           }}
           className="ml-0.5 inline-flex cursor-pointer items-center border-none bg-transparent p-0 text-current opacity-70 hover:opacity-100"
-          style={{ color: t.c }}
+          style={{ color: t.color }}
         >
-          <Close />
+          <Icon value={IconName.X} size={s.icon} strokeWidth={2} />
         </button>
       )}
     </span>

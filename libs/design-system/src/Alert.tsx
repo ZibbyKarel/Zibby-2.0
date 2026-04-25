@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { Icon, IconName } from './Icon';
 
 export type AlertSeverity = 'info' | 'success' | 'warning' | 'error';
 
@@ -13,42 +14,12 @@ export type AlertProps = {
   className?: string;
 };
 
-const palette: Record<AlertSeverity, { color: string; bg: string; border: string }> = {
-  info:    { color: 'var(--sky)',     bg: 'rgba(56,189,248,.10)',  border: 'rgba(56,189,248,.30)' },
-  success: { color: 'var(--emerald)', bg: 'rgba(16,185,129,.10)',  border: 'rgba(16,185,129,.30)' },
-  warning: { color: 'var(--amber)',   bg: 'rgba(245,158,11,.10)',  border: 'rgba(245,158,11,.30)' },
-  error:   { color: 'var(--rose)',    bg: 'rgba(244,63,94,.10)',   border: 'rgba(244,63,94,.30)'  },
+const palette: Record<AlertSeverity, { color: string; bg: string; border: string; icon: IconName }> = {
+  info:    { color: 'var(--sky)',     bg: 'rgba(56,189,248,.10)',  border: 'rgba(56,189,248,.30)', icon: IconName.Info          },
+  success: { color: 'var(--emerald)', bg: 'rgba(16,185,129,.10)',  border: 'rgba(16,185,129,.30)', icon: IconName.CheckCircle   },
+  warning: { color: 'var(--amber)',   bg: 'rgba(245,158,11,.10)',  border: 'rgba(245,158,11,.30)', icon: IconName.AlertTriangle },
+  error:   { color: 'var(--rose)',    bg: 'rgba(244,63,94,.10)',   border: 'rgba(244,63,94,.30)',  icon: IconName.AlertCircle   },
 };
-
-const DefaultIcon = ({ severity }: { severity: AlertSeverity }) => {
-  if (severity === 'success') {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 8l3.5 3.5L13 5" />
-      </svg>
-    );
-  }
-  if (severity === 'error' || severity === 'warning') {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M8 1.5l7 13H1l7-13z" />
-        <path d="M8 6.5v3.5M8 12.5v.01" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="8" cy="8" r="6.5" />
-      <path d="M8 5v3.5M8 11v.01" />
-    </svg>
-  );
-};
-
-const Close = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-    <path d="M3 3l6 6M9 3l-6 6" />
-  </svg>
-);
 
 export function Alert({
   severity = 'info',
@@ -65,7 +36,9 @@ export function Alert({
       className={`flex items-start gap-2.5 rounded-[var(--radius-sm)] border p-2.5 ${className}`.trim()}
       style={{ borderColor: p.border, background: p.bg, color: p.color }}
     >
-      <span className="mt-0.5 flex shrink-0">{icon ?? <DefaultIcon severity={severity} />}</span>
+      <span className="mt-0.5 flex shrink-0">
+        {icon ?? <Icon value={p.icon} size={16} />}
+      </span>
       <div className="flex-1 min-w-0 text-[var(--text-0)]">
         {title && <div className="text-xs font-semibold" style={{ color: p.color }}>{title}</div>}
         {children && (
@@ -79,7 +52,7 @@ export function Alert({
           onClick={onClose}
           className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
         >
-          <Close />
+          <Icon value={IconName.X} size={12} />
         </button>
       )}
     </div>
