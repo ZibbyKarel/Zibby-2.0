@@ -2,9 +2,22 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
 
-import { DesignSystemProvider } from '@nightcoder/design-system';
+import {
+  Alert,
+  Button,
+  Chip as DsChip,
+  DesignSystemProvider,
+  Divider,
+  FilterChip,
+  IconButton,
+  Kbd,
+  SearchField,
+  Spacer,
+  Stack,
+  Surface,
+  Text,
+} from '@nightcoder/design-system';
 import { Icon, BrandMark } from './components/icons';
-import { Btn, Chip } from './components/primitives';
 import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
 import { TaskDrawer } from './components/TaskDrawer';
@@ -23,10 +36,10 @@ import type { StoryRuntime, LogLine, TaskVM } from './viewModel';
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
 
 const COLS = [
-  { id: 'queue'   as const, title: 'Queued',  accent: 'var(--amber)' },
-  { id: 'running' as const, title: 'Running', accent: 'var(--emerald)' },
-  { id: 'review'  as const, title: 'Review',  accent: 'var(--violet)' },
-  { id: 'done'    as const, title: 'Done',    accent: 'var(--sky)' },
+  { id: 'queue'   as const, title: 'Queued',  accent: 'amber'   as const },
+  { id: 'running' as const, title: 'Running', accent: 'emerald' as const },
+  { id: 'review'  as const, title: 'Review',  accent: 'violet'  as const },
+  { id: 'done'    as const, title: 'Done',    accent: 'sky'     as const },
 ];
 
 export default function App() {
@@ -499,136 +512,138 @@ export default function App() {
   const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? Date.now() - t.startedAt : null;
 
   return (
-    <DesignSystemProvider
-      theme={theme}
-      style={{
-        minHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        fontSize: 13,
-      }}
-    >
+    <DesignSystemProvider theme={theme} layout="column">
       {/* Top bar */}
-      <header style={{
-        padding: '14px 20px', borderBottom: '1px solid var(--border)',
-        background: 'var(--bg-1)', display: 'flex', alignItems: 'center', gap: 16,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <BrandMark theme={theme} size={30} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.01em' }}>{theme === 'light' ? 'DayCoder' : 'NightCoder'}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>multi-agent coding workflow</div>
-          </div>
-        </div>
+      <Surface as="header" background="bg1" bordered={{ bottom: true }} paddingX={20} paddingY={14}>
+        <Stack direction="row" align="center" gap={16}>
+          <Stack direction="row" align="center" gap={10}>
+            <BrandMark theme={theme} size={30} />
+            <Stack direction="column">
+              <Text size="md" weight="semibold" tracking="tight">
+                {theme === 'light' ? 'DayCoder' : 'NightCoder'}
+              </Text>
+              <Text size="xxs" tone="faint" mono>multi-agent coding workflow</Text>
+            </Stack>
+          </Stack>
 
-        {/* Folder chip */}
-        {folder && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8 }}>
-            <Icon name="folder" size={13} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-1)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {folder.path}
-            </span>
-            <div style={{ width: 1, height: 14, background: 'var(--border)', margin: '0 4px' }} />
-            <Chip icon="git" tone="accent" style={{ height: 20 }}>main</Chip>
-            <button
+          {folder ? (
+            <Surface background="bg2" bordered radius="sm" paddingX={10} paddingY={6}>
+              <Stack direction="row" align="center" gap={6}>
+                <Icon name="folder" size={13} />
+                <Surface maxWidth={260}>
+                  <Text size="sm" mono tone="muted" truncate>{folder.path}</Text>
+                </Surface>
+                <Divider orientation="vertical" />
+                <DsChip tone="accent" size="sm" icon={<Icon name="git" size={11} />}>main</DsChip>
+                <IconButton
+                  aria-label="Change folder"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void pickFolder()}
+                  icon={<Icon name="chevronDown" size={12} />}
+                />
+              </Stack>
+            </Surface>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
               onClick={() => void pickFolder()}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, display: 'flex', marginLeft: 2 }}
-            >
-              <Icon name="chevronDown" size={12} />
-            </button>
-          </div>
-        )}
-        {!folder && (
-          <Btn icon="folder" variant="secondary" size="sm" onClick={() => void pickFolder()}>Pick folder</Btn>
-        )}
+              startIcon={<Icon name="folder" size={13} />}
+              label="Pick folder"
+            />
+          )}
 
-        <div style={{ flex: 1 }} />
+          <Spacer />
 
-        {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, minWidth: 220 }}>
-          <Icon name="search" size={13} />
-          <input
+          <SearchField
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tasks"
-            style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-0)', fontSize: 12, outline: 'none' }}
+            startAdornment={<Icon name="search" size={13} />}
+            endAdornment={<Kbd>⌘K</Kbd>}
           />
-          <kbd style={{ fontFamily: 'var(--mono)', fontSize: 10, padding: '1px 5px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-3)' }}>⌘K</kbd>
-        </div>
 
-        <UsagePanel tick={tick} />
+          <UsagePanel tick={tick} />
 
-        <button
-          onClick={() => setTheme((t) => t === 'dark' ? 'light' : 'dark')}
-          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: 'var(--text-1)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          title="Toggle theme"
-        >
-          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />
-        </button>
-      </header>
+          <IconButton
+            aria-label="Toggle theme"
+            title="Toggle theme"
+            variant="secondary"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            icon={<Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />}
+          />
+        </Stack>
+      </Surface>
 
       {/* Sub-bar */}
-      <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-0)', borderBottom: '1px solid var(--border)' }}>
-        <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
-          {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
-        </span>
-        <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
-        {([
-          { key: 'interrupted' as const,     label: 'Interrupted',      activeColor: 'var(--amber)',  activeBg: 'rgba(245,158,11,.12)',  activeBorder: 'rgba(245,158,11,.3)' },
-          { key: 'cancelled_error' as const, label: 'Cancelled / Error', activeColor: 'var(--rose)',   activeBg: 'rgba(244,63,94,.12)',   activeBorder: 'rgba(244,63,94,.3)'  },
-          { key: 'pending' as const,         label: 'Pending',          activeColor: 'var(--sky)',    activeBg: 'rgba(56,189,248,.12)',  activeBorder: 'rgba(56,189,248,.3)' },
-        ] as const).map(({ key, label, activeColor, activeBg, activeBorder }) => {
-          const isActive = activeFilters.has(key);
-          return (
-            <button
+      <Surface background="bg0" bordered={{ bottom: true }} paddingX={20} paddingY={12}>
+        <Stack direction="row" align="center" gap={10}>
+          <Text size="xs" tone="faint" mono>
+            {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
+          </Text>
+          <Divider orientation="vertical" />
+          {([
+            { key: 'interrupted'     as const, label: 'Interrupted',         tone: 'warn'   as const },
+            { key: 'cancelled_error' as const, label: 'Cancelled / Error',   tone: 'rose'   as const },
+            { key: 'pending'         as const, label: 'Pending',             tone: 'sky'    as const },
+          ]).map(({ key, label, tone }) => (
+            <FilterChip
               key={key}
-              onClick={() => toggleFilter(key)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 9px',
-                borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer',
-                fontFamily: 'var(--mono)', whiteSpace: 'nowrap', transition: 'background .12s, border-color .12s, color .12s',
-                color: isActive ? activeColor : 'var(--text-2)',
-                background: isActive ? activeBg : 'transparent',
-                border: `1px solid ${isActive ? activeBorder : 'var(--border)'}`,
-              }}
+              tone={tone}
+              size="md"
+              active={activeFilters.has(key)}
+              onToggle={() => toggleFilter(key)}
             >
               {label}
-            </button>
-          );
-        })}
-        <div style={{ flex: 1 }} />
-        <Btn
-          icon="refresh"
-          variant="secondary"
-          size="sm"
-          disabled={!folder || syncing}
-          onClick={() => void syncTaskStates()}
-          title="Synchronize task states with their pull requests"
-        >
-          {syncing ? 'Synchronizing…' : 'Synchronize'}
-        </Btn>
-        <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add task</Btn>
-        <Btn
-          icon="play" variant="primary" size="sm"
-          disabled={!hasRunnableTasks}
-          onClick={() => void runAll()}
-        >
-          Run all
-        </Btn>
-      </div>
+            </FilterChip>
+          ))}
+          <Spacer />
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!folder || syncing}
+            onClick={() => void syncTaskStates()}
+            title="Synchronize task states with their pull requests"
+            startIcon={<Icon name="refresh" size={13} />}
+            label={syncing ? 'Synchronizing…' : 'Synchronize'}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setAddOpen(true)}
+            startIcon={<Icon name="plus" size={13} />}
+            label="Add task"
+          />
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={!hasRunnableTasks}
+            onClick={() => void runAll()}
+            startIcon={<Icon name="play" size={13} />}
+            label="Run all"
+          />
+        </Stack>
+      </Surface>
 
       {error && (
-        <div style={{ padding: '10px 20px', background: 'rgba(244,63,94,.08)', borderBottom: '1px solid rgba(244,63,94,.2)', color: 'var(--rose)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon name="warn" size={14} /> {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer' }}>
-            <Icon name="x" size={14} />
-          </button>
-        </div>
+        <Surface paddingX={20} paddingY={10}>
+          <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
+        </Surface>
       )}
 
       {/* Main body */}
-      <main style={{ flex: 1, padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', gap: 14, flex: 1 }}>
+      <Surface
+        as="main"
+        grow
+        direction="column"
+        gap={16}
+        paddingX={20}
+        paddingTop={16}
+        paddingBottom={24}
+        overflowY="auto"
+      >
+        <Stack direction="row" gap={14} grow>
           {COLS.map((col) => (
             <Column
               key={col.id}
@@ -658,8 +673,8 @@ export default function App() {
               ))}
             </Column>
           ))}
-        </div>
-      </main>
+        </Stack>
+      </Surface>
 
       <TaskDrawer
         task={selected}

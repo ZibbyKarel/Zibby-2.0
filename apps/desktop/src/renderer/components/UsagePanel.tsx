@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Usage } from '@nightcoder/shared-types/ipc';
-import { UsageRing, fmtCountdown } from './primitives';
+import { CircularProgress, Divider, Stack, Surface, Text } from '@nightcoder/design-system';
+import { fmtCountdown } from './primitives';
 
 type ViewUsage = {
   usedPct: number;
@@ -38,34 +39,35 @@ export function UsagePanel({ tick: _tick }: Props) {
   const now = Date.now();
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 14,
-      padding: '8px 12px', background: 'var(--bg-1)',
-      border: '1px solid var(--border)', borderRadius: 10,
-    }}>
+    <Surface
+      background="bg1"
+      bordered
+      radius="md"
+      paddingX={12}
+      paddingY={8}
+      direction="row"
+      align="center"
+      gap={14}
+    >
       {fiveHour && (
         <UsageMini label="5H" pct={fiveHour.usedPct} resetsInMs={Math.max(0, fiveHour.resetsAt - now)} />
       )}
-      {fiveHour && weekly && (
-        <div style={{ width: 1, height: 30, background: 'var(--border)' }} />
-      )}
+      {fiveHour && weekly && <Divider orientation="vertical" />}
       {weekly && (
         <UsageMini label="WEEK" pct={weekly.usedPct} resetsInMs={Math.max(0, weekly.resetsAt - now)} />
       )}
-    </div>
+    </Surface>
   );
 }
 
 function UsageMini({ label, pct, resetsInMs }: { label: string; pct: number; resetsInMs: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <UsageRing pct={pct} size={34} stroke={3} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <span style={{ fontSize: 9, letterSpacing: '.14em', fontWeight: 600, color: 'var(--text-3)' }}>{label}</span>
-        <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-1)' }}>
-          -{fmtCountdown(resetsInMs)}
-        </span>
-      </div>
-    </div>
+    <Stack direction="row" align="center" gap={8}>
+      <CircularProgress value={pct} size={34} thickness={3} />
+      <Stack direction="column" gap={1}>
+        <Text size="xxs" weight="semibold" tone="faint" tracking="wider">{label}</Text>
+        <Text size="xxs" mono tone="muted">-{fmtCountdown(resetsInMs)}</Text>
+      </Stack>
+    </Stack>
   );
 }

@@ -27,6 +27,12 @@ export type DesignSystemProviderProps = {
    * default — so most consumers only set the handful of accents they care about.
    */
   tokens?: PartialDesignTokens;
+  /**
+   * When `'column'` (the typical case for app shells) the provider's wrapping
+   * element is a flex column with `min-height: 100%`. When `'row'` it's a
+   * flex row. When `'block'` (default) the wrapper has no flex layout.
+   */
+  layout?: 'column' | 'row' | 'block';
   /** Extra class name appended to the wrapping element. */
   className?: string;
   /** Inline styles forwarded to the wrapping element. */
@@ -37,15 +43,21 @@ export type DesignSystemProviderProps = {
 export function DesignSystemProvider({
   theme = 'dark',
   tokens,
+  layout = 'block',
   className,
   style,
   children,
 }: DesignSystemProviderProps) {
   const merged = useMemo(() => mergeTokens(tokensForTheme(theme), tokens), [theme, tokens]);
   const cssVars = useMemo(() => tokensToCssVars(merged), [merged]);
+  const layoutStyle = useMemo<CSSProperties>(() => {
+    if (layout === 'column') return { display: 'flex', flexDirection: 'column', minHeight: '100%' };
+    if (layout === 'row')    return { display: 'flex', flexDirection: 'row',    minHeight: '100%' };
+    return {};
+  }, [layout]);
   const wrapperStyle = useMemo(
-    () => ({ ...cssVars, ...style }) as CSSProperties,
-    [cssVars, style],
+    () => ({ ...cssVars, ...layoutStyle, ...style }) as CSSProperties,
+    [cssVars, layoutStyle, style],
   );
   const wrapperClass = ['ds-root', className].filter(Boolean).join(' ');
 

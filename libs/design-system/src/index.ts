@@ -38,6 +38,26 @@ export {
   type StackAlign,
   type StackJustify,
 } from './Stack';
+export {
+  Surface,
+  type SurfaceProps,
+  type SurfaceBackground,
+  type SurfaceBorderEdges,
+  type SurfaceBorderTone,
+  type SurfaceRadius,
+  type SurfaceShadow,
+} from './Surface';
+export { Spacer, type SpacerProps, type SpacerAxis } from './Spacer';
+export {
+  Text,
+  type TextProps,
+  type TextSize,
+  type TextWeight,
+  type TextTone,
+  type TextTransform,
+  type TextTracking,
+  type TextAlign,
+} from './Text';
 export { Icon, IconName, type IconProps } from './Icon';
 export {
   DesignSystemProvider,
