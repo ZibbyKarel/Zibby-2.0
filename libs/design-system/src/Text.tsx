@@ -24,6 +24,7 @@ export type TextTone =
 export type TextTransform = 'none' | 'uppercase';
 export type TextTracking = 'normal' | 'tight' | 'wide' | 'wider';
 export type TextAlign = 'start' | 'center' | 'end' | 'justify';
+export type TextWhitespace = 'normal' | 'pre' | 'pre-wrap' | 'pre-line' | 'nowrap' | 'break-word';
 
 export type TextProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   /** Token-driven font size. */
@@ -42,10 +43,14 @@ export type TextProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   align?: TextAlign;
   /** Single-line ellipsis truncation. */
   truncate?: boolean;
+  /** Multi-line clamp (CSS `-webkit-line-clamp`). Wins over `truncate`. */
+  lineClamp?: number;
   /** Tabular numerals for tables/clocks. */
   tabular?: boolean;
   /** Italic font style. */
   italic?: boolean;
+  /** White-space handling. Wins over `truncate`'s implicit `nowrap`. */
+  whitespace?: TextWhitespace;
   /** Render as a different HTML element. Defaults to `span`. */
   as?: ElementType;
   children?: ReactNode;
@@ -88,8 +93,10 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
     transform,
     align,
     truncate,
+    lineClamp,
     tabular,
     italic,
+    whitespace,
     as,
     style,
     className = '',
@@ -127,9 +134,13 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
     textAlign:   align === 'start' ? 'left' : align === 'end' ? 'right' : align,
     fontVariantNumeric: tabular ? 'tabular-nums' : undefined,
     fontStyle:    italic ? 'italic' : undefined,
-    overflow:     truncate ? 'hidden' : undefined,
+    overflow:     truncate || lineClamp ? 'hidden' : undefined,
     textOverflow: truncate ? 'ellipsis' : undefined,
-    whiteSpace:   truncate ? 'nowrap' : undefined,
+    whiteSpace:   whitespace === 'break-word' ? 'normal' : whitespace ?? (truncate ? 'nowrap' : undefined),
+    wordBreak:    whitespace === 'break-word' ? 'break-word' : undefined,
+    display:      lineClamp ? '-webkit-box' : undefined,
+    WebkitLineClamp: lineClamp,
+    WebkitBoxOrient: lineClamp ? 'vertical' : undefined,
     ...style,
   };
 

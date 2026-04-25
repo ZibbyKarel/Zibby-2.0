@@ -83,4 +83,21 @@ describe('Text', () => {
     render(<Text tone="inherit">x</Text>);
     expect(screen.getByText('x').style.color).toBe('');
   });
+
+  it('whitespace="pre" preserves whitespace literally', () => {
+    render(<Text whitespace="pre">a  b</Text>);
+    expect(
+      screen.getByText('a  b', { normalizer: (s) => s }).style.whiteSpace,
+    ).toBe('pre');
+  });
+
+  it('whitespace overrides truncate\'s implicit nowrap', () => {
+    render(<Text truncate whitespace="pre-wrap">a</Text>);
+    expect(screen.getByText('a').style.whiteSpace).toBe('pre-wrap');
+  });
+
+  it('whitespace="break-word" sets word-break: break-word', () => {
+    render(<Text whitespace="break-word">x</Text>);
+    expect(screen.getByText('x').style.wordBreak).toBe('break-word');
+  });
 });

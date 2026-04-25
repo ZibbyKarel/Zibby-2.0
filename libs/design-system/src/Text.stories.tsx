@@ -76,6 +76,14 @@ export const Overview: Story = {
         </div>
       </div>
       <div>
+        <div style={label}>Whitespace</div>
+        <Stack direction="column" gap={6}>
+          <Text whitespace="pre" mono size="sm" as="div">{'  preserves   spaces'}</Text>
+          <Text whitespace="pre-wrap" mono size="sm" as="div">{'a long line\nthat\npreserves newlines'}</Text>
+          <Text whitespace="nowrap" as="div">no wrap forces a single line of text content</Text>
+        </Stack>
+      </div>
+      <div>
         <div style={label}>Element override</div>
         <Stack direction="column" gap={4}>
           <Text as="h1" size="xl" weight="bold">h1 heading</Text>
@@ -109,9 +117,12 @@ export const Playground: Story = {
     tracking:  { control: 'select', options: ['normal', 'tight', 'wide', 'wider'] },
     transform: { control: 'select', options: ['none', 'uppercase'] },
     align:     { control: 'select', options: ['start', 'center', 'end', 'justify'] },
+    whitespace: { control: 'select', options: ['normal', 'pre', 'pre-wrap', 'pre-line', 'nowrap', 'break-word'] },
     mono:     { control: 'boolean' },
     truncate: { control: 'boolean' },
     tabular:  { control: 'boolean' },
+    italic:   { control: 'boolean' },
+    lineClamp: { control: 'number' },
     as:       { control: 'select', options: ['span', 'p', 'div', 'h1', 'h2', 'h3', 'code', 'pre'] },
   },
 };

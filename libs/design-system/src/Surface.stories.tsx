@@ -29,8 +29,19 @@ export const Overview: Story = {
     <div style={wrap}>
       <div>
         <div style={label}>Backgrounds</div>
-        <Stack direction="row" gap={8}>
+        <Stack direction="row" gap={8} wrap>
           {(['bg0', 'bg1', 'bg2', 'bg3', 'hover', 'transparent'] as const).map((bg) => (
+            <Surface key={bg} background={bg} bordered radius="sm" padding={12}>
+              {bg}
+            </Surface>
+          ))}
+        </Stack>
+      </div>
+
+      <div>
+        <div style={label}>Tinted backgrounds</div>
+        <Stack direction="row" gap={8} wrap>
+          {(['emeraldTint', 'roseTint', 'amberTint', 'skyTint', 'violetTint', 'accentSoft', 'backdrop'] as const).map((bg) => (
             <Surface key={bg} background={bg} bordered radius="sm" padding={12}>
               {bg}
             </Surface>
@@ -106,7 +117,7 @@ export const Playground: Story = {
     children: 'Playground content',
   },
   argTypes: {
-    background: { control: 'select', options: ['bg0', 'bg1', 'bg2', 'bg3', 'hover', 'transparent'] },
+    background: { control: 'select', options: ['bg0', 'bg1', 'bg2', 'bg3', 'hover', 'emerald', 'rose', 'amber', 'sky', 'violet', 'emeraldTint', 'roseTint', 'amberTint', 'skyTint', 'violetTint', 'accentSoft', 'backdrop', 'transparent'] },
     borderTone: { control: 'select', options: ['default', 'strong', 'accent', 'rose', 'amber', 'sky', 'violet'] },
     bordered:   { control: 'boolean' },
     radius:     { control: 'select', options: ['none', 'sm', 'md', 'pill'] },

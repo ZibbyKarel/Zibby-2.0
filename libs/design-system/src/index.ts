@@ -3,6 +3,7 @@ export { IconButton, type IconButtonProps, type IconButtonVariant, type IconButt
 export { Input, type InputProps } from './Input';
 export { SearchField, type SearchFieldProps } from './SearchField';
 export { TextField, type TextFieldProps } from './TextField';
+export { Textarea, type TextareaProps } from './Textarea';
 export { Kbd, type KbdProps, type KbdSize } from './Kbd';
 export {
   FilterChip,
@@ -57,6 +58,7 @@ export {
   type TextTransform,
   type TextTracking,
   type TextAlign,
+  type TextWhitespace,
 } from './Text';
 export { Icon, IconName, type IconProps } from './Icon';
 export {

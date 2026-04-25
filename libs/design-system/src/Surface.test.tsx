@@ -106,4 +106,16 @@ describe('Surface', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.style.paddingTop).toBe('20px');
   });
+
+  it('emeraldTint background renders the rgba tint', () => {
+    const { container } = render(<Surface background="emeraldTint">x</Surface>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.background).toBe('rgba(16, 185, 129, 0.12)');
+  });
+
+  it('roseTint background renders the rgba tint', () => {
+    const { container } = render(<Surface background="roseTint">x</Surface>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.background).toBe('rgba(244, 63, 94, 0.12)');
+  });
 });

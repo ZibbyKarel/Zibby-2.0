@@ -1,6 +1,15 @@
 import React from 'react';
+import {
+  Badge,
+  Button,
+  Chip,
+  IconButton,
+  Stack,
+  Surface,
+  Text,
+} from '@nightcoder/design-system';
 import { Icon } from './icons';
-import { StatusPill, Chip, fmtDuration } from './primitives';
+import { fmtDuration } from './primitives';
 import type { TaskVM } from '../viewModel';
 
 type Props = {
@@ -25,142 +34,148 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
     task.status === 'interrupted' ||
     (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
   const pausedByLimit = task.status === 'interrupted' && task.limitResetsAt != null;
+  const tokens = task.tokens as { in: number; out: number } | null | undefined;
 
   return (
-    <article
-      {...dragHandlers}
+    <Surface
+      as="article"
+      background="bg2"
+      bordered
+      radius="md"
+      padding={12}
+      interactive
+      cursor="pointer"
+      opacity={isDragging ? 0.4 : 1}
+      position="relative"
       onClick={onOpen}
-      style={{
-        background: 'var(--bg-2)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        padding: 12,
-        cursor: 'pointer',
-        transition: 'border-color .12s, box-shadow .12s',
-        opacity: isDragging ? 0.4 : 1,
-        position: 'relative',
-      }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-2)'; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+      {...dragHandlers}
     >
       {task.status === 'running' && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, borderRadius: '10px 10px 0 0', overflow: 'hidden' }}>
-          <div className="shimmer-bar" style={{ height: '100%', width: '100%' }} />
-        </div>
+        <Surface
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          height={2}
+          overflowY="hidden"
+          className="ds-shimmer-bar"
+        />
       )}
 
-      <header style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)', marginTop: 2 }}>
-          #{task.numericId ?? task.index + 1}
-        </span>
-        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-0)', lineHeight: 1.35, flex: 1, letterSpacing: '-.005em' }}>
-          {task.title}
-        </h3>
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, borderRadius: 4, display: 'flex' }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-0)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-3)'; }}
+      <Stack as="header" direction="row" align="start" gap={8}>
+        <Text size="xs" mono tone="faint">#{task.numericId ?? task.index + 1}</Text>
+        <Surface grow>
+          <Text as="h3" size="md" weight="semibold" tracking="tight">{task.title}</Text>
+        </Surface>
+        <IconButton
+          aria-label="Edit task"
           title="Details"
-        >
-          <Icon name="more" size={14} />
-        </button>
-      </header>
+          size="sm"
+          variant="ghost"
+          icon={<Icon name="more" size={14} />}
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+        />
+      </Stack>
 
       {task.description && (
-        <p style={{
-          margin: '0 0 10px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>
-          {task.description}
-        </p>
+        <Surface paddingTop={2} paddingBottom={10}>
+          <Text size="sm" tone="muted" lineClamp={2}>{task.description}</Text>
+        </Surface>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
-        {task.branch && <Chip icon="git">{task.branch.replace('nightcoder/', '')}</Chip>}
-        {task.prUrl && (
-          <button
-            onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex' }}
-            title={task.prUrl}
-          >
-            <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>
-          </button>
+      <Stack direction="row" wrap gap={5}>
+        {task.branch && (
+          <Chip icon={<Icon name="git" size={11} />}>
+            {task.branch.replace('nightcoder/', '')}
+          </Chip>
         )}
-        {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
-        {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
+        {task.prUrl && (
+          <Chip
+            tone="accent"
+            icon={<Icon name="github" size={11} />}
+            title={task.prUrl}
+            onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
+          >
+            PR #{task.prUrl.split('/').pop()}
+          </Chip>
+        )}
+        {task.model && (
+          <Chip tone="violet" icon={<Icon name="sparkle" size={11} />}>{task.model}</Chip>
+        )}
+        {waits && (
+          <Chip tone="warn" icon={<Icon name="clock" size={11} />}>
+            waits #{task.waitsOn.join(', #')}
+          </Chip>
+        )}
         {pausedByLimit && (
-          <Chip icon="clock" tone="warn">
+          <Chip tone="warn" icon={<Icon name="clock" size={11} />}>
             paused · resumes {formatResumeAt(task.limitResetsAt!)}
           </Chip>
         )}
-        {canResume && !pausedByLimit && <Chip icon="warn" tone="warn">interrupted</Chip>}
-      </div>
+        {canResume && !pausedByLimit && (
+          <Chip tone="warn" icon={<Icon name="warn" size={11} />}>interrupted</Chip>
+        )}
+      </Stack>
 
-      <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>
+      <Surface paddingTop={10} direction="row" align="center" justify="between" gap={8}>
+        <Stack direction="row" align="center" gap={10}>
           {task.status === 'running' && runtimeMs != null && (
-            <span style={{ color: 'var(--emerald)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span className="dot-running" /> {fmtDuration(runtimeMs)}
-            </span>
+            <Stack direction="row" align="center" gap={4}>
+              <span className="ds-dot-running" />
+              <Text size="xs" mono tone="emerald">{fmtDuration(runtimeMs)}</Text>
+            </Stack>
           )}
           {task.status === 'done' && task.endedAt && task.startedAt && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Icon name="check" size={11} /> {fmtDuration(task.endedAt - task.startedAt)}
-            </span>
+            <Stack direction="row" align="center" gap={4}>
+              <Icon name="check" size={11} />
+              <Text size="xs" mono tone="faint">{fmtDuration(task.endedAt - task.startedAt)}</Text>
+            </Stack>
           )}
           {task.status === 'failed' && task.endedAt && task.startedAt && (
-            <span style={{ color: 'var(--rose)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Icon name="warn" size={11} /> {fmtDuration(task.endedAt - task.startedAt)}
-            </span>
+            <Stack direction="row" align="center" gap={4}>
+              <Icon name="warn" size={11} />
+              <Text size="xs" mono tone="rose">{fmtDuration(task.endedAt - task.startedAt)}</Text>
+            </Stack>
           )}
-          {task.tokens != null && (
-            <span title="tokens in / out">
-              ↑{((task.tokens as {in:number;out:number}).in / 1000).toFixed(1)}k ↓{((task.tokens as {in:number;out:number}).out / 1000).toFixed(1)}k
-            </span>
+          {tokens != null && (
+            <Text size="xs" mono tone="faint" title="tokens in / out">
+              ↑{(tokens.in / 1000).toFixed(1)}k ↓{(tokens.out / 1000).toFixed(1)}k
+            </Text>
           )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        </Stack>
+        <Stack direction="row" align="center" gap={6}>
           {canResume && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRun(); }}
-              style={{
-                background: 'var(--accent-soft)', border: '1px solid var(--accent-ring)',
-                borderRadius: 6, padding: '2px 8px', color: 'var(--amber)',
-                cursor: 'pointer', fontSize: 11, fontFamily: 'var(--mono)',
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}
+            <Button
+              size="sm"
+              variant="secondary"
+              label="resume"
+              startIcon={<Icon name="play" size={11} />}
               title="Resume this interrupted task"
-            >
-              <Icon name="play" size={11} /> resume
-            </button>
+              onClick={(e) => { e.stopPropagation(); onRun(); }}
+            />
           )}
-          <button
+          <Button
+            size="sm"
+            variant="primary"
+            label="run"
             disabled={!canRun}
-            onClick={(e) => { e.stopPropagation(); onRun(); }}
-            style={{
-              background: 'var(--accent-soft)', border: '1px solid var(--accent-ring)',
-              borderRadius: 6, padding: '2px 8px', color: 'var(--emerald)',
-              cursor: canRun ? 'pointer' : 'not-allowed', fontSize: 11, fontFamily: 'var(--mono)',
-              display: 'flex', alignItems: 'center', gap: 4,
-              opacity: canRun ? 1 : 0.4,
-            }}
+            startIcon={<Icon name="play" size={11} />}
             title={canRun ? 'Run this task' : 'Task is not in a runnable state'}
-          >
-            <Icon name="play" size={11} /> run
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, borderRadius: 4, display: 'flex' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--rose)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-3)'; }}
+            onClick={(e) => { e.stopPropagation(); onRun(); }}
+          />
+          <IconButton
+            aria-label="Remove task"
             title="Remove"
-          >
-            <Icon name="trash" size={12} />
-          </button>
-          {(task.status !== 'pending' || task.startedAt !== null) && <StatusPill status={task.status} />}
-        </div>
-      </footer>
-    </article>
+            size="sm"
+            variant="ghost"
+            icon={<Icon name="trash" size={12} />}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          />
+          {(task.status !== 'pending' || task.startedAt !== null) && (
+            <Badge status={task.status} />
+          )}
+        </Stack>
+      </Surface>
+    </Surface>
   );
 }

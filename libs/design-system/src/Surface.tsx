@@ -10,6 +10,9 @@ import { useTokens } from './DesignSystemContext';
 export type SurfaceBackground =
   | 'bg0' | 'bg1' | 'bg2' | 'bg3' | 'hover'
   | 'emerald' | 'rose' | 'amber' | 'sky' | 'violet'
+  | 'emeraldTint' | 'roseTint' | 'amberTint' | 'skyTint' | 'violetTint'
+  | 'accentSoft'
+  | 'backdrop'
   | 'transparent';
 export type SurfaceRadius = 'none' | 'sm' | 'md' | 'pill';
 export type SurfaceShadow = 'none' | '1' | '2';
@@ -67,6 +70,14 @@ export type SurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   zIndex?: number;
   /** Pointer-events override (use `'none'` for click-through containers). */
   pointerEvents?: 'auto' | 'none';
+  /** Cursor style. */
+  cursor?: 'auto' | 'default' | 'pointer' | 'not-allowed' | 'grab' | 'grabbing' | 'text';
+  /** When true, applies a hover-driven border-color bump (default → strong). */
+  interactive?: boolean;
+  /** Opacity (e.g. 0.4 while dragging). */
+  opacity?: number;
+  /** Text alignment, useful when rendering as a `<button>`. */
+  textAlign?: 'left' | 'center' | 'right';
   /** Fixed width — px when a number. */
   width?: number | string;
   /** Fixed height — px when a number. */
@@ -93,6 +104,10 @@ export type SurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
   /** Render as a different HTML element. Defaults to `div`. */
   as?: ElementType;
+  /** Forwarded `type` attribute when rendering as a `<button>`. */
+  type?: 'button' | 'submit' | 'reset';
+  /** Forwarded `disabled` attribute when rendering as a `<button>`. */
+  disabled?: boolean;
   children?: ReactNode;
 };
 
@@ -139,6 +154,10 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
     left,
     zIndex,
     pointerEvents,
+    cursor,
+    interactive,
+    opacity,
+    textAlign,
     width,
     height,
     maxWidth,
@@ -174,6 +193,13 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
       case 'amber':       return tokens.color.accent.amber;
       case 'sky':         return tokens.color.accent.sky;
       case 'violet':      return tokens.color.accent.violet;
+      case 'emeraldTint': return 'rgba(16,185,129,.12)';
+      case 'roseTint':    return 'rgba(244,63,94,.12)';
+      case 'amberTint':   return 'rgba(245,158,11,.12)';
+      case 'skyTint':     return 'rgba(56,189,248,.12)';
+      case 'violetTint':  return 'rgba(167,139,250,.12)';
+      case 'accentSoft':  return tokens.color.surface.accentSoft;
+      case 'backdrop':    return 'rgba(0,0,0,.55)';
       case 'transparent': return undefined;
     }
   })();
@@ -249,6 +275,9 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
     left:   left   === undefined ? undefined : px(left),
     zIndex,
     pointerEvents,
+    cursor,
+    opacity,
+    textAlign,
     display:        direction ? 'flex' : undefined,
     flexDirection:  direction,
     gap:            gap === undefined ? undefined : (typeof gap === 'number' ? `${gap}px` : gap),
@@ -257,8 +286,10 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
     ...style,
   };
 
+  const cls = ['ds-surface', interactive && 'ds-surface-interactive', className].filter(Boolean).join(' ');
+
   return (
-    <Tag ref={ref} className={className} style={computed} {...rest}>
+    <Tag ref={ref} className={cls} style={computed} {...rest}>
       {children}
     </Tag>
   );
