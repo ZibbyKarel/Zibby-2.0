@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Story } from '@nightcoder/shared-types/ipc';
 import { tryClaimStory } from './active-stories';
-import { executeStory, type StoryExecutionEvent } from './execute-story';
+import { executeStory, implementationModelFor, implementationThinkingFor, thinkingPreamble, type StoryExecutionEvent } from './execute-story';
 import { slugify } from './slug';
 
 const story: Story = {
@@ -39,5 +39,48 @@ describe('executeStory duplicate guard', () => {
     } finally {
       release!();
     }
+  });
+});
+
+describe('phase model resolution', () => {
+  it('prefers phaseModels.implementation.model over legacy story.model', () => {
+    const s: Story = {
+      taskId: 't',
+      title: 't',
+      description: 'd',
+      acceptanceCriteria: ['x'],
+      affectedFiles: [],
+      model: 'haiku',
+      phaseModels: { implementation: { model: 'opus' } },
+    };
+    expect(implementationModelFor(s)).toBe('opus');
+  });
+
+  it('falls back to legacy story.model when no phase config is set', () => {
+    const s: Story = {
+      taskId: 't',
+      title: 't',
+      description: 'd',
+      acceptanceCriteria: ['x'],
+      affectedFiles: [],
+      model: 'haiku',
+    };
+    expect(implementationModelFor(s)).toBe('haiku');
+    expect(implementationThinkingFor(s)).toBeUndefined();
+  });
+
+  it('returns undefined when nothing is set — runner uses its env default', () => {
+    const s: Story = {
+      taskId: 't', title: 't', description: 'd', acceptanceCriteria: ['x'], affectedFiles: [],
+    };
+    expect(implementationModelFor(s)).toBeUndefined();
+  });
+
+  it('thinking preamble is empty for off / undefined, non-empty for low/medium/high', () => {
+    expect(thinkingPreamble(undefined)).toBe('');
+    expect(thinkingPreamble('off')).toBe('');
+    expect(thinkingPreamble('low').length).toBeGreaterThan(0);
+    expect(thinkingPreamble('medium').length).toBeGreaterThan(0);
+    expect(thinkingPreamble('high').length).toBeGreaterThan(0);
   });
 });

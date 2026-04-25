@@ -8,7 +8,7 @@ import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
 import { TaskDrawer } from './components/TaskDrawer';
 import type { DrawerTab } from './components/TaskDrawer';
-import { AddTaskDialog } from './components/AddTaskDialog';
+import { AddTaskDialog, type BlockerOption, type NewTaskData } from './components/AddTaskDialog';
 import { CommandPalette } from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
@@ -206,6 +206,14 @@ export default function App() {
   }, []);
 
   const tasks = useMemo(() => toTasks(plan ?? { stories: [], dependencies: [] }, runtime, interrupted), [plan, runtime, interrupted]);
+  const blockerOptions = useMemo<BlockerOption[]>(
+    () => tasks.map((t) => ({
+      taskId: t.taskId,
+      title: t.title,
+      hint: t.numericId ? `#${t.numericId}` : `#${t.index + 1}`,
+    })),
+    [tasks],
+  );
   const hasRunnableTasks = tasks.some(t => t.status !== 'done' && t.status !== 'review');
 
   const toggleFilter = useCallback((key: 'interrupted' | 'cancelled_error' | 'pending') => {
@@ -356,23 +364,43 @@ export default function App() {
     }
   }, [tasks, runTask, pushToast, setRuntime]);
 
-  const addTask = useCallback((data: { title: string; description: string; acceptance: string[]; model?: string; attachedFilePaths: string[] }) => {
+  const addTask = useCallback((data: NewTaskData) => {
     let newTaskId: string | null = null;
     setPlan((prev) => {
       const stories = prev?.stories ?? [];
       const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
       newTaskId = taskId;
-      return {
-        stories: [...stories, {
-          taskId,
-          title: data.title,
-          description: data.description,
-          acceptanceCriteria: data.acceptance,
-          affectedFiles: [],
-          model: data.model,
-        }],
-        dependencies: prev?.dependencies ?? [],
-      };
+      const nextStories = [...stories, {
+        taskId,
+        title: data.title,
+        description: data.description,
+        acceptanceCriteria: data.acceptance,
+        affectedFiles: [],
+        model: data.model,
+        phaseModels: data.phaseModels,
+        blockerTaskId: data.blockerTaskId,
+      }];
+      // If the user picked a blocker, mirror it into the DAG as a
+      // dependency edge so the board, run ordering, and block cascade
+      // behave as the UI implies. blockerTaskId on the story is the
+      // source of truth for branch/PR-target resolution; the edge is
+      // derived data.
+      const nextDeps = prev?.dependencies ? [...prev.dependencies] : [];
+      if (data.blockerTaskId) {
+        const blockerIndex = stories.findIndex((s) => s.taskId === data.blockerTaskId);
+        const newIndex = nextStories.length - 1;
+        if (blockerIndex >= 0) {
+          const already = nextDeps.some((d) => d.from === blockerIndex && d.to === newIndex);
+          if (!already) {
+            nextDeps.push({
+              from: blockerIndex,
+              to: newIndex,
+              reason: `blocks ${data.title}`,
+            });
+          }
+        }
+      }
+      return { stories: nextStories, dependencies: nextDeps };
     });
     setAddOpen(false);
     if (data.attachedFilePaths.length > 0 && newTaskId) {
@@ -638,7 +666,13 @@ export default function App() {
         runtimeMs={selected ? runtimeMs(selected) : null}
       />
 
-      <AddTaskDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addTask} />
+      <AddTaskDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={addTask}
+        folderPath={folder?.path ?? null}
+        blockerOptions={blockerOptions}
+      />
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
 

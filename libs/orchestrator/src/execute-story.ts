@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
-import type { Story, StoryStatus } from '@nightcoder/shared-types/ipc';
+import type { Story, StoryStatus, ThinkingLevel } from '@nightcoder/shared-types/ipc';
 import { runClaudeInWorktree } from '@nightcoder/claude-runner';
 import { commitAllIfDirty, gitPush, ghCreatePr, ghFindPrForBranch } from '@nightcoder/github';
 import {
@@ -78,13 +78,51 @@ export function buildResumePrompt(args: {
   return parts.join('\n\n');
 }
 
+/**
+ * Model alias used for the single claude run. `phaseModels.implementation`
+ * wins if set (new config path from the AddTask dialog); falls back to the
+ * legacy flat `story.model`; finally to the runner's default.
+ */
+export function implementationModelFor(story: Story): string | undefined {
+  return story.phaseModels?.implementation?.model ?? story.model;
+}
+
+/**
+ * Thinking level used for the single claude run. Only the Implementation
+ * phase applies today; Planning/QA are persisted but not yet executed. See
+ * `thinkingPreamble()` for how this is surfaced to claude.
+ */
+export function implementationThinkingFor(story: Story): ThinkingLevel | undefined {
+  return story.phaseModels?.implementation?.thinking;
+}
+
+/**
+ * Translate a thinking level into a short prompt preamble. The claude CLI has
+ * no native "thinking level" flag today, so we piggy-back on the prompt. 'off'
+ * and undefined both emit no preamble.
+ */
+export function thinkingPreamble(level: ThinkingLevel | undefined): string {
+  switch (level) {
+    case 'low':
+      return 'Think briefly before acting.';
+    case 'medium':
+      return 'Think carefully before acting. Break the problem into steps.';
+    case 'high':
+      return 'Think very carefully before acting. Reason step by step, consider edge cases, and double-check your plan before writing code.';
+    default:
+      return '';
+  }
+}
+
 function buildPrompt(story: Story, attachedFileNames: readonly string[] = []): string {
   const ac = story.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n');
   const files = story.affectedFiles.length > 0 ? `\n\nExpected files to touch: ${story.affectedFiles.join(', ')}` : '';
   const attached = attachedFileNames.length > 0
     ? `\n\nAttached context files (available via --add-dir): ${attachedFileNames.join(', ')}. Read them before planning.`
     : '';
-  return `Implement the following user story end-to-end in this repository.
+  const thinking = thinkingPreamble(implementationThinkingFor(story));
+  const preamble = thinking.length > 0 ? `${thinking}\n\n` : '';
+  return `${preamble}Implement the following user story end-to-end in this repository.
 
 # ${story.title}
 
@@ -292,7 +330,7 @@ export async function executeStory(args: {
           cwd: worktree.path,
           prompt: resume ? resume.prompt : buildPrompt(story, attachedNames),
           addDirs,
-          model: story.model,
+          model: implementationModelFor(story),
           env: { NIGHTCODER_JOURNAL_PATH: journalAbs },
         },
         {

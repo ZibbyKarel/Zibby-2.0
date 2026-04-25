@@ -18,6 +18,7 @@ export const IpcChannels = {
   GetTaskDiff: 'nightcoder:getTaskDiff',
   SquashMergeTask: 'nightcoder:squashMergeTask',
   SyncTaskStates: 'nightcoder:syncTaskStates',
+  ListRepoTree: 'nightcoder:listRepoTree',
 } as const;
 
 export const IpcEvents = {
@@ -31,6 +32,28 @@ export type PickFolderResult =
   | { kind: 'cancelled' }
   | { kind: 'selected'; path: string; isGitRepo: boolean; hasOrigin: boolean };
 
+/** How hard the model should "think" during a phase. Stored only — claude CLI
+ * has no thinking flag today, so 'off' is a no-op and higher levels prepend a
+ * preamble to the prompt ("Think carefully before acting."). */
+export type ThinkingLevel = 'off' | 'low' | 'medium' | 'high';
+
+export type PhaseModel = {
+  /** Claude model alias (e.g. 'sonnet', 'opus', 'haiku'). */
+  model?: string;
+  thinking?: ThinkingLevel;
+};
+
+/**
+ * Per-phase execution configuration. The orchestrator currently does one
+ * claude run per story — for that single run we use `implementation`. Planning
+ * and QA are persisted for forward-compat with a future multi-phase executor.
+ */
+export type PhaseModels = {
+  planning?: PhaseModel;
+  implementation?: PhaseModel;
+  qa?: PhaseModel;
+};
+
 export type Story = {
   taskId: string;
   /** Monotonically increasing project-scoped ID, assigned at first run. */
@@ -40,6 +63,18 @@ export type Story = {
   acceptanceCriteria: string[];
   affectedFiles: string[];
   model?: string;
+  /**
+   * Per-phase model + thinking config. If present,
+   * `phaseModels.implementation.model` is used for the single claude run,
+   * falling back to `model` and then the env default.
+   */
+  phaseModels?: PhaseModels;
+  /**
+   * taskId of another story that must finish before this one. When set, the
+   * new task's worktree is branched off the blocker's branch and the resulting
+   * PR targets that branch instead of the repo's default base.
+   */
+  blockerTaskId?: string;
 };
 
 export type Dependency = {
@@ -283,6 +318,26 @@ export type SyncTaskStateUpdate = {
   branch: string | null;
 };
 
+/**
+ * One entry in the repo file tree. `children` is present only for directories;
+ * leaf files omit it (undefined). `path` is relative to the repo root and uses
+ * forward slashes regardless of OS.
+ */
+export type RepoTreeEntry = {
+  name: string;
+  path: string;
+  kind: 'file' | 'dir';
+  children?: RepoTreeEntry[];
+};
+
+export type ListRepoTreeRequest = {
+  folderPath: string;
+};
+
+export type ListRepoTreeResult =
+  | { kind: 'ok'; tree: RepoTreeEntry[] }
+  | { kind: 'error'; message: string };
+
 export type SyncTaskStatesResult =
   | {
       kind: 'ok';
@@ -317,4 +372,5 @@ export type IpcApi = {
   getTaskDiff: (req: GetTaskDiffRequest) => Promise<TaskDiffResult>;
   squashMergeTask: (req: SquashMergeTaskRequest) => Promise<SquashMergeTaskResult>;
   syncTaskStates: (req: SyncTaskStatesRequest) => Promise<SyncTaskStatesResult>;
+  listRepoTree: (req: ListRepoTreeRequest) => Promise<ListRepoTreeResult>;
 };

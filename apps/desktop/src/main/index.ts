@@ -37,10 +37,13 @@ import {
   type SyncTaskStatesRequest,
   type SyncTaskStatesResult,
   type SyncTaskStateUpdate,
+  type ListRepoTreeRequest,
+  type ListRepoTreeResult,
+  type RepoTreeEntry,
 } from '@nightcoder/shared-types/ipc';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { refine, advise } from '@nightcoder/ai-refiner';
-import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
+import { buildResumePrompt, formatSquashCommitTitle, getTaskDiff, removeWorktreeForBranch, resolveBlockerBaseBranch, runSingleStory, runStoryResume, startPlanRun, removeStoryFromPlan, type PlanRunHandle } from '@nightcoder/orchestrator';
 import { slugify } from '@nightcoder/shared-types/task-id';
 import { deleteStoryBranch, ghSquashMergePr, ghGetPrState } from '@nightcoder/github';
 import { fetchUsage } from '@nightcoder/usage';
@@ -65,6 +68,97 @@ import { loadUserData, saveUserData, migrateLegacyIfNeeded } from './state-store
 const execFileP = promisify(execFile);
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 const isDev = Boolean(DEV_URL);
+
+const REPO_TREE_SKIP_DIRS: ReadonlySet<string> = new Set([
+  '.git',
+  'node_modules',
+  '.worktrees',
+  '.nightcoder',
+]);
+const REPO_TREE_MAX_ENTRIES = 20_000;
+
+/**
+ * Enumerate the repo file tree for the AddTask dialog's picker.
+ *
+ * Uses `git ls-files -z -co --exclude-standard` when available — gives us the
+ * union of tracked + untracked-not-ignored paths for free. Falls back to a
+ * filesystem walk (skipping common noisy directories) for non-git folders.
+ */
+async function buildRepoTree(repoPath: string): Promise<RepoTreeEntry[]> {
+  const paths = await collectRepoPaths(repoPath);
+  paths.sort();
+  const root: RepoTreeEntry[] = [];
+  const dirIndex = new Map<string, RepoTreeEntry>();
+  for (const rel of paths) {
+    if (!rel) continue;
+    const parts = rel.split('/');
+    let parentChildren = root;
+    let prefix = '';
+    for (let i = 0; i < parts.length; i++) {
+      const name = parts[i];
+      const isLast = i === parts.length - 1;
+      prefix = prefix ? `${prefix}/${name}` : name;
+      if (isLast) {
+        parentChildren.push({ name, path: prefix, kind: 'file' });
+      } else {
+        let dir = dirIndex.get(prefix);
+        if (!dir) {
+          dir = { name, path: prefix, kind: 'dir', children: [] };
+          dirIndex.set(prefix, dir);
+          parentChildren.push(dir);
+        }
+        parentChildren = dir.children!;
+      }
+    }
+  }
+  const sortTree = (nodes: RepoTreeEntry[]): void => {
+    nodes.sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    for (const n of nodes) if (n.children) sortTree(n.children);
+  };
+  sortTree(root);
+  return root;
+}
+
+async function collectRepoPaths(repoPath: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileP(
+      'git',
+      ['ls-files', '-z', '-co', '--exclude-standard'],
+      { cwd: repoPath, maxBuffer: 16 * 1024 * 1024 },
+    );
+    const list = stdout.split('\0').filter((s) => s.length > 0);
+    return list.length > REPO_TREE_MAX_ENTRIES ? list.slice(0, REPO_TREE_MAX_ENTRIES) : list;
+  } catch {
+    // Not a git repo (or git missing) — fall back to a filesystem walk.
+    const out: string[] = [];
+    await walkRepo(repoPath, '', out);
+    return out;
+  }
+}
+
+async function walkRepo(root: string, rel: string, out: string[]): Promise<void> {
+  if (out.length >= REPO_TREE_MAX_ENTRIES) return;
+  const { readdir } = await import('node:fs/promises');
+  let entries: import('node:fs').Dirent[];
+  try {
+    entries = await readdir(path.join(root, rel), { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (out.length >= REPO_TREE_MAX_ENTRIES) return;
+    if (REPO_TREE_SKIP_DIRS.has(entry.name)) continue;
+    const childRel = rel ? `${rel}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      await walkRepo(root, childRel, out);
+    } else if (entry.isFile()) {
+      out.push(childRel);
+    }
+  }
+}
 
 const MAX_PARALLEL_RUNNERS = Math.max(1, Number(process.env.MAX_PARALLEL_RUNNERS ?? 3));
 let activeRunnerCount = 0;
@@ -391,11 +485,30 @@ function registerIpc(getWebContents: () => WebContents | null) {
       try {
         const stampedPlan = await updatePlan(req.folderPath, req.plan).catch(() => req.plan);
         const taskIdFor = (idx: number): string | undefined => stampedPlan.stories[idx]?.taskId;
+        // Snapshot persisted tasks once so per-story blocker lookups don't
+        // hammer disk. We deliberately don't refresh mid-run: within a plan
+        // run the blocker either already has a branch (captured here) or it
+        // runs before its dependents and the topological ordering in
+        // startPlanRun guarantees it pushes before we read its branch from
+        // the live event stream. Reading once keeps the resolver sync.
+        const projectForResolve = await loadProject(req.folderPath).catch(() => null);
+        const liveBranches = new Map<number, string>();
         const handle = startPlanRun({
           plan: stampedPlan,
           repoPath: req.folderPath,
           baseBranch: req.baseBranch,
           completedIndices: req.completedIndices,
+          baseBranchFor: (storyIndex) => {
+            const story = stampedPlan.stories[storyIndex];
+            if (!story?.blockerTaskId) return null;
+            const blockerIdx = stampedPlan.stories.findIndex((s) => s.taskId === story.blockerTaskId);
+            // Prefer an in-run branch captured from the blocker's `branch`
+            // event — it reflects what the blocker's worktree actually used,
+            // even if disk state is stale.
+            const live = blockerIdx >= 0 ? liveBranches.get(blockerIdx) : undefined;
+            if (live) return live;
+            return resolveBlockerBaseBranch({ story, tasks: projectForResolve?.tasks });
+          },
           onEvent: (e) => {
             const wc = getWebContents();
             if ('storyIndex' in e) {
@@ -417,6 +530,7 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   line: e.line,
                 });
               } else if (e.kind === 'branch') {
+                liveBranches.set(e.storyIndex, e.branch);
                 if (tid) void persistStoryBranch(req.folderPath, tid, e.branch);
                 if (wc) emitToRenderer(wc, {
                   runId: handle.runId,
@@ -464,11 +578,17 @@ function registerIpc(getWebContents: () => WebContents | null) {
       if (!story) return { kind: 'error', message: `Story ${req.storyIndex} not found in plan` };
       await acquireRunner();
       const taskId = story.taskId;
+      let effectiveBase: string | undefined = req.baseBranch;
+      if (!effectiveBase && story.blockerTaskId) {
+        const project = await loadProject(req.folderPath).catch(() => null);
+        const blockerBase = project ? resolveBlockerBaseBranch({ story, tasks: project.tasks }) : null;
+        if (blockerBase) effectiveBase = blockerBase;
+      }
       const handle = runSingleStory({
         story,
         storyIndex: req.storyIndex,
         repoPath: req.folderPath,
-        baseBranch: req.baseBranch,
+        baseBranch: effectiveBase,
         onEvent: (e) => {
           const wc = getWebContents();
           if (e.kind === 'status') {
@@ -807,6 +927,19 @@ function registerIpc(getWebContents: () => WebContents | null) {
         if (!folderPath) return { kind: 'error', message: 'No folder is currently opened' };
         const files = await removeTaskFile(folderPath, req.taskId, req.name);
         return { kind: 'ok', files };
+      } catch (err) {
+        return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.ListRepoTree,
+    async (_event, req: ListRepoTreeRequest): Promise<ListRepoTreeResult> => {
+      try {
+        if (!req.folderPath) return { kind: 'error', message: 'No folder path provided' };
+        const tree = await buildRepoTree(req.folderPath);
+        return { kind: 'ok', tree };
       } catch (err) {
         return { kind: 'error', message: err instanceof Error ? err.message : String(err) };
       }
