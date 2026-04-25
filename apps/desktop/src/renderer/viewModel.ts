@@ -58,7 +58,17 @@ export function toTasks(
     const waitsOn = plan.dependencies
       .filter((d) => d.to === idx)
       .map((d) => d.from);
-    const status = rt?.status ?? 'pending';
+    const persistedStatus = rt?.status ?? 'pending';
+    const interrupted = interruptedIndices.has(idx) || persistedStatus === 'interrupted';
+    // A persisted 'running'/'pushing' status with no live orchestrator means
+    // the app was closed mid-run. Show it as interrupted instead of falsely
+    // claiming the task is still executing. The underlying runtime status is
+    // left untouched so the main process keeps the 'pushing' distinction it
+    // needs to set `pushOnly` on resume.
+    const status: StoryStatus =
+      interrupted && (persistedStatus === 'running' || persistedStatus === 'pushing')
+        ? 'interrupted'
+        : persistedStatus;
     return {
       id: String(idx),
       taskId: story.taskId,
@@ -78,7 +88,7 @@ export function toTasks(
       logs: rt?.logs ?? [],
       diff: null,
       waitsOn,
-      interrupted: interruptedIndices.has(idx) || status === 'interrupted',
+      interrupted,
       limitResetsAt: rt?.limitResetsAt ?? null,
     };
   });
