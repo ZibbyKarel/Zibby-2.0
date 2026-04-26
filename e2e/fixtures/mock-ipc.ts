@@ -301,6 +301,70 @@ export async function emitLog(
   );
 }
 
+/** Convenience: emit a `branch` RunEvent (sets the branch chip on the card). */
+export async function emitBranch(
+  page: Page,
+  storyIndex: number,
+  branch: string,
+  runId = 'mock-run',
+): Promise<void> {
+  await page.evaluate(
+    ({ storyIndex, branch, runId }) => {
+      window.__NIGHTCODER_TEST__?.emitRunEvent({
+        kind: 'branch',
+        runId,
+        storyIndex,
+        branch,
+      });
+    },
+    { storyIndex, branch, runId },
+  );
+}
+
+/** Convenience: emit a `pr` RunEvent (sets the PR chip + branch on the card). */
+export async function emitPr(
+  page: Page,
+  storyIndex: number,
+  url: string,
+  branch: string,
+  runId = 'mock-run',
+): Promise<void> {
+  await page.evaluate(
+    ({ storyIndex, url, branch, runId }) => {
+      window.__NIGHTCODER_TEST__?.emitRunEvent({
+        kind: 'pr',
+        runId,
+        storyIndex,
+        url,
+        branch,
+      });
+    },
+    { storyIndex, url, branch, runId },
+  );
+}
+
+/** Convenience: emit an `auto-merge` RunEvent (drives the auto-merge watcher state). */
+export async function emitAutoMerge(
+  page: Page,
+  storyIndex: number,
+  state: 'polling' | 'rebasing' | 'merged' | 'failed',
+  message?: string,
+  runId = 'mock-run',
+): Promise<void> {
+  await page.evaluate(
+    ({ storyIndex, state, message, runId }) => {
+      window.__NIGHTCODER_TEST__?.emitRunEvent({
+        kind: 'auto-merge',
+        runId,
+        storyIndex,
+        state,
+        message,
+      });
+    },
+    { storyIndex, state, message, runId },
+  );
+}
+
 /** Read how many times an IPC method was called. */
 export async function getCallCount(page: Page, method: string): Promise<number> {
   return page.evaluate(
