@@ -16,12 +16,37 @@ Package manager is **pnpm** (enforced via `packageManager` in `package.json`); n
 | Full test suite | `pnpm test` (wraps `vitest run`) |
 | Single test file | `pnpm vitest run libs/orchestrator/src/dag.test.ts` |
 | Tests matching a name | `pnpm vitest run -t "cycle detection"` |
+| Playwright e2e (one-time browser install) | `pnpm test:e2e:install` |
+| Playwright e2e | `pnpm test:e2e` (or `pnpm test:e2e:headed` to debug) |
 | Storybook (dev) | `pnpm storybook` (serves on http://localhost:6006) |
 | Storybook (static build) | `pnpm build-storybook` |
 
 `vitest.config.ts` picks up `libs/**/*.{test,spec}.{ts,tsx}` — tests under `apps/desktop` are not wired up. Component tests (`.tsx`) must opt into the DOM via the `// @vitest-environment jsdom` docblock at the top of the file; everything else runs under Node. The shared setup at `vitest.setup.ts` registers `@testing-library/jest-dom` matchers and calls `cleanup()` after every test. `pnpm dev` relies on `wait-on` to hold Electron until Vite's dev server is listening on `http://localhost:5173`; if Vite binds to a different port, `dev:main` will hang.
 
 Nx was removed (commit `e1def662`) — there is no `nx` CLI and no `project.json` files. Do not reintroduce them.
+
+## Post-generation test policy
+
+After **every** code change in this repo (manual or generated), do all of the following before reporting the task as complete:
+
+1. Run the full Vitest suite — `pnpm test`. All tests must pass.
+2. Run `pnpm typecheck` — both `tsconfig.main.json` and `tsconfig.renderer.json` must compile clean.
+3. If the renderer or any component under `libs/design-system` was touched, also run `pnpm test:e2e` (the Playwright suite under `e2e/`) and make sure it passes.
+4. **If you added new functionality, you must also add or extend tests that cover it** — a Vitest unit/component test for libraries, an `e2e/tests/*.spec.ts` Playwright spec for renderer flows, or both. New behaviour without coverage is treated as an incomplete change.
+5. If a test fails, fix the underlying bug first; do not delete or weaken assertions to make a suite green.
+
+Treat this as a hard gate. Generated diffs that haven't gone through it should not be committed.
+
+## Test ids — `@nightcoder/test-ids`
+
+`libs/test-ids/src/index.ts` is the **single source of truth** for every `data-testid` string in the renderer. The same package is consumed by the React components, by Vitest component tests, and by the Playwright e2e suite (`e2e/`), so renaming an id is a one-line change that the type-checker propagates everywhere.
+
+Conventions:
+
+- All ids are prefixed `nc-` (`TEST_ID_PREFIX`). Anything else is styling, not a test hook.
+- Static ids are exported as string constants; per-row ids (per task index, per column id, per drawer tab) are exported as small builder functions — never hardcode a derived id.
+- When you add a new interactive element, add its id to the right bucket in `libs/test-ids/src/index.ts` first, then reference it from both the component (`data-testid={TestIds.<Bucket>.<id>}`) and the test (`page.getByTestId(TestIds.<Bucket>.<id>)`). Do **not** introduce loose `data-testid="something"` strings inline.
+- `Chip`, `FilterChip`, `Tabs`, and `Badge` accept `data-testid` (or `testId` for `TabItem`) and forward it to the underlying DOM node. Most other design-system primitives extend the matching React `*HTMLAttributes` type and forward the prop automatically.
 
 ## Architecture
 

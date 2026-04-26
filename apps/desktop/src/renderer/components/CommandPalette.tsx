@@ -7,6 +7,7 @@ import {
   Surface,
   Text,
 } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 
 export type Command = {
   id: string;
@@ -76,6 +77,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
         width="min(560px, 94vw)"
         direction="column"
         onClick={(e) => e.stopPropagation()}
+        data-testid={TestIds.CommandPalette.root}
       >
         <Surface bordered={{ bottom: true }} paddingX={14} paddingY={12} direction="row" align="center" gap={10}>
           <Icon value={IconName.Search} size={16} />
@@ -85,12 +87,19 @@ export function CommandPalette({ open, onClose, commands }: Props) {
             onChange={(e) => { setQ(e.target.value); setSelected(0); }}
             placeholder="Type a command or search tasks…"
             className="ds-bare-input"
+            data-testid={TestIds.CommandPalette.input}
           />
           <Kbd>esc</Kbd>
         </Surface>
         <Surface maxHeight={360} overflowY="auto" padding={6} direction="column" gap={2}>
           {matches.length === 0 && (
-            <Surface paddingX={20} paddingY={24} direction="row" justify="center">
+            <Surface
+              paddingX={20}
+              paddingY={24}
+              direction="row"
+              justify="center"
+              data-testid={TestIds.CommandPalette.empty}
+            >
               <Text size="sm" tone="faint">No commands match &quot;{q}&quot;</Text>
             </Surface>
           )}
@@ -111,6 +120,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
               background={idx === selected ? 'bg3' : 'transparent'}
               onMouseEnter={() => setSelected(idx)}
               onClick={() => { c.run(); onClose(); }}
+              data-testid={TestIds.CommandPalette.item(c.id)}
             >
               <Surface width={20} direction="row" align="center" justify="center">
                 <Icon value={c.icon ?? IconName.ArrowRight} size={14} />

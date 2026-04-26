@@ -18,6 +18,8 @@ export type ChipProps = {
   onClick?: (e: MouseEvent<HTMLSpanElement>) => void;
   className?: string;
   title?: string;
+  /** Forwarded to the rendered `<span>` so tests can target it. */
+  'data-testid'?: string;
 };
 
 const sizes: Record<ChipSize, { h: string; px: string; gap: string; text: string; icon: number }> = {
@@ -34,6 +36,7 @@ export function Chip({
   onClick,
   className = '',
   title,
+  'data-testid': dataTestId,
 }: ChipProps) {
   const t = useChipTokens(tone);
   const s = sizes[size];
@@ -55,6 +58,7 @@ export function Chip({
           : undefined
       }
       title={title}
+      data-testid={dataTestId}
       className={`inline-flex items-center rounded-md border font-mono font-medium ${s.h} ${s.px} ${s.gap} ${s.text} ${interactive ? 'cursor-pointer hover:opacity-80' : ''} ${className}`.trim()}
       style={{ color: t.color, background: t.bg, borderColor: t.border }}
     >

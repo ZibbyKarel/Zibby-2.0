@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
+import { TestIds } from '@nightcoder/test-ids';
 
 import {
   Alert,
@@ -516,9 +517,16 @@ export default function App() {
   return (
     <DesignSystemProvider theme={theme} layout="column">
       {/* Top bar */}
-      <Surface as="header" background="bg1" bordered={{ bottom: true }} paddingX={20} paddingY={14}>
+      <Surface
+        as="header"
+        background="bg1"
+        bordered={{ bottom: true }}
+        paddingX={20}
+        paddingY={14}
+        data-testid={TestIds.TopBar.root}
+      >
         <Stack direction="row" align="center" gap={16}>
-          <Stack direction="row" align="center" gap={10}>
+          <Stack direction="row" align="center" gap={10} data-testid={TestIds.TopBar.brand}>
             <BrandMark theme={theme} size={30} />
             <Stack direction="column">
               <Text size="md" weight="semibold" tracking="tight">
@@ -533,7 +541,9 @@ export default function App() {
               <Stack direction="row" align="center" gap={6}>
                 <Icon value={IconName.Folder} size={13} />
                 <Surface maxWidth={260}>
-                  <Text size="sm" mono tone="muted" truncate>{folder.path}</Text>
+                  <Text size="sm" mono tone="muted" truncate data-testid={TestIds.TopBar.folderPath}>
+                    {folder.path}
+                  </Text>
                 </Surface>
                 <Divider orientation="vertical" />
                 <DsChip tone="accent" size="sm" icon={<Icon value={IconName.Git} size={11} />}>main</DsChip>
@@ -543,6 +553,7 @@ export default function App() {
                   variant="ghost"
                   onClick={() => void pickFolder()}
                   icon={<Icon value={IconName.ChevronDown} size={12} />}
+                  data-testid={TestIds.TopBar.changeFolderBtn}
                 />
               </Stack>
             </Surface>
@@ -553,6 +564,7 @@ export default function App() {
               onClick={() => void pickFolder()}
               startIcon={<Icon value={IconName.Folder} size={13} />}
               label="Pick folder"
+              data-testid={TestIds.TopBar.pickFolderBtn}
             />
           )}
 
@@ -564,6 +576,7 @@ export default function App() {
             placeholder="Search tasks"
             startAdornment={<Icon value={IconName.Search} size={13} />}
             endAdornment={<Kbd>⌘K</Kbd>}
+            data-testid={TestIds.TopBar.searchInput}
           />
 
           <UsagePanel tick={tick} />
@@ -574,28 +587,36 @@ export default function App() {
             variant="secondary"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
             icon={<Icon value={theme === 'dark' ? IconName.Sun : IconName.Moon} size={14} />}
+            data-testid={TestIds.TopBar.themeToggle}
           />
         </Stack>
       </Surface>
 
       {/* Sub-bar */}
-      <Surface background="bg0" bordered={{ bottom: true }} paddingX={20} paddingY={12}>
+      <Surface
+        background="bg0"
+        bordered={{ bottom: true }}
+        paddingX={20}
+        paddingY={12}
+        data-testid={TestIds.SubBar.root}
+      >
         <Stack direction="row" align="center" gap={10}>
-          <Text size="xs" tone="faint" mono>
+          <Text size="xs" tone="faint" mono data-testid={TestIds.SubBar.taskCount}>
             {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
           </Text>
           <Divider orientation="vertical" />
           {([
-            { key: 'interrupted'     as const, label: 'Interrupted',         tone: 'warn'   as const },
-            { key: 'cancelled_error' as const, label: 'Cancelled / Error',   tone: 'rose'   as const },
-            { key: 'pending'         as const, label: 'Pending',             tone: 'sky'    as const },
-          ]).map(({ key, label, tone }) => (
+            { key: 'interrupted'     as const, label: 'Interrupted',         tone: 'warn'   as const, testId: TestIds.SubBar.filterInterrupted },
+            { key: 'cancelled_error' as const, label: 'Cancelled / Error',   tone: 'rose'   as const, testId: TestIds.SubBar.filterCancelledErr },
+            { key: 'pending'         as const, label: 'Pending',             tone: 'sky'    as const, testId: TestIds.SubBar.filterPending },
+          ]).map(({ key, label, tone, testId }) => (
             <FilterChip
               key={key}
               tone={tone}
               size="md"
               active={activeFilters.has(key)}
               onToggle={() => toggleFilter(key)}
+              data-testid={testId}
             >
               {label}
             </FilterChip>
@@ -609,6 +630,7 @@ export default function App() {
             title="Synchronize task states with their pull requests"
             startIcon={<Icon value={IconName.Refresh} size={13} />}
             label={syncing ? 'Synchronizing…' : 'Synchronize'}
+            data-testid={TestIds.SubBar.syncBtn}
           />
           <Button
             size="sm"
@@ -616,6 +638,7 @@ export default function App() {
             onClick={() => setAddOpen(true)}
             startIcon={<Icon value={IconName.Plus} size={13} />}
             label="Add task"
+            data-testid={TestIds.SubBar.addTaskBtn}
           />
           <Button
             size="sm"
@@ -624,6 +647,7 @@ export default function App() {
             onClick={() => void runAll()}
             startIcon={<Icon value={IconName.Play} size={13} />}
             label="Run all"
+            data-testid={TestIds.SubBar.runAllBtn}
           />
         </Stack>
       </Surface>
@@ -644,6 +668,7 @@ export default function App() {
         paddingTop={16}
         paddingBottom={24}
         overflowY="auto"
+        data-testid={TestIds.Board.root}
       >
         <Stack direction="row" gap={14} grow>
           {COLS.map((col) => (

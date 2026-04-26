@@ -28,7 +28,8 @@
       "@nightcoder/usage": ["libs/usage/src/index.ts"],
       "@nightcoder/ui": ["libs/ui/src/index.ts"],
       "@nightcoder/design-system": ["libs/design-system/src/index.ts"],
-      "@nightcoder/form": ["libs/form/src/index.ts"]
+      "@nightcoder/form": ["libs/form/src/index.ts"],
+      "@nightcoder/test-ids": ["libs/test-ids/src/index.ts"]
     }
   }
 }

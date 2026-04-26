@@ -17,6 +17,8 @@ export type FilterChipProps = {
   disabled?: boolean;
   className?: string;
   title?: string;
+  /** Forwarded straight to the rendered `<button>`. Used by tests. */
+  'data-testid'?: string;
 };
 
 const sizeClasses: Record<FilterChipSize, string> = {
@@ -42,6 +44,7 @@ export function FilterChip({
   disabled = false,
   className = '',
   title,
+  'data-testid': dataTestId,
 }: FilterChipProps) {
   const t = useChipTokens(tone);
 
@@ -63,6 +66,7 @@ export function FilterChip({
       aria-pressed={active}
       disabled={disabled}
       title={title}
+      data-testid={dataTestId}
       onClick={fire}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

@@ -12,6 +12,7 @@ import {
   Textarea,
   TextField,
 } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 
 export type NewTaskData = {
   title: string;
@@ -274,6 +275,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
         radius="md"
         shadow="2"
         direction="column"
+        data-testid={TestIds.AddTaskDialog.root}
       >
         <Surface
           as="header"
@@ -307,6 +309,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             variant="ghost"
             icon={<Icon value={IconName.X} size={16} />}
             onClick={onClose}
+            data-testid={TestIds.AddTaskDialog.closeBtn}
           />
         </Surface>
 
@@ -414,6 +417,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What should the agent do?"
+              data-testid={TestIds.AddTaskDialog.titleInput}
             />
             <Textarea
               ref={descriptionRef}
@@ -435,6 +439,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               onDrop={onDescriptionDrop}
               placeholder="Describe the work. Drag files from the tree to reference them with @path."
               rows={5}
+              data-testid={TestIds.AddTaskDialog.descriptionInput}
             />
 
             <Textarea
@@ -444,6 +449,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               onChange={(e) => setAcceptance(e.target.value)}
               placeholder={'Column drag works\nCounts are correct'}
               rows={3}
+              data-testid={TestIds.AddTaskDialog.acceptanceInput}
             />
 
             {/* ── Phases section ─────────────────────────────── */}
@@ -469,6 +475,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                           value={cur.model ?? ''}
                           onChange={(e) => setPhase(key, { model: e.target.value || undefined })}
                           options={MODEL_OPTIONS}
+                          data-testid={TestIds.AddTaskDialog.phaseModelSelect(key)}
                         />
                       </Surface>
                       <Surface grow>
@@ -477,6 +484,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                           value={cur.thinking ?? 'off'}
                           onChange={(e) => setPhase(key, { thinking: e.target.value as ThinkingLevel })}
                           options={THINKING_OPTIONS}
+                          data-testid={TestIds.AddTaskDialog.phaseThinkingSelect(key)}
                         />
                       </Surface>
                     </Stack>
@@ -498,6 +506,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                   label: opt.hint ? `${opt.hint} — ${opt.title}` : opt.title,
                 })),
               ]}
+              data-testid={TestIds.AddTaskDialog.blockerSelect}
             />
 
             {/* ── Attachments (existing flow) ───────────────── */}
@@ -546,6 +555,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     label="Attach files"
                     startIcon={<Icon value={IconName.Paperclip} size={13} />}
                     onClick={() => void pickFiles()}
+                    data-testid={TestIds.AddTaskDialog.attachFilesBtn}
                   />
                 </Stack>
                 {pickError && <Text size="xs" tone="rose">{pickError}</Text>}
@@ -565,7 +575,12 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
           justify="end"
           gap={8}
         >
-          <Button variant="ghost" label="Cancel" onClick={onClose} />
+          <Button
+            variant="ghost"
+            label="Cancel"
+            onClick={onClose}
+            data-testid={TestIds.AddTaskDialog.cancelBtn}
+          />
           <Button
             variant="primary"
             label="Add task"
@@ -580,6 +595,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               phaseModels: Object.keys(phaseModels).length > 0 ? phaseModels : undefined,
               blockerTaskId: blockerTaskId || undefined,
             })}
+            data-testid={TestIds.AddTaskDialog.submitBtn}
           />
         </Surface>
       </Surface>

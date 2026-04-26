@@ -17,6 +17,7 @@
     "@nightcoder/orchestrator": "workspace:*",
     "@nightcoder/project-state": "workspace:*",
     "@nightcoder/shared-types": "workspace:*",
+    "@nightcoder/test-ids": "workspace:*",
     "@nightcoder/usage": "workspace:*"
   }
 }
