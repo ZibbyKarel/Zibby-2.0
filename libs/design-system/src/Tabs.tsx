@@ -7,6 +7,8 @@ export type TabItem<T extends string = string> = {
   badge?: ReactNode;
   disabled?: boolean;
   icon?: ReactNode;
+  /** Forwarded to the underlying tab button so tests can target it. */
+  testId?: string;
 };
 
 export type TabsProps<T extends string = string> = {
@@ -68,6 +70,7 @@ export function Tabs<T extends string>({
             aria-selected={active}
             aria-controls={panelId}
             disabled={t.disabled}
+            data-testid={t.testId}
             onClick={() => !t.disabled && onChange(t.key)}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${sizes[size]} ${variantClasses} ${fullWidth ? 'flex-1 justify-center' : ''}`.trim()}
           >

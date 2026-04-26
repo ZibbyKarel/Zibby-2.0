@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Stack, Surface, Text } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 import type { TaskColumn } from '../viewModel';
 
 export type ColumnAccent = 'emerald' | 'rose' | 'amber' | 'sky' | 'violet';
@@ -21,6 +22,7 @@ export function Column({ id, title, accent, count, children, isEmpty, onDropTask
     <Surface
       as="section"
       data-col={id}
+      data-testid={TestIds.Board.column(id)}
       background={hover ? 'bg2' : 'bg1'}
       bordered
       borderTone={hover ? accent : 'default'}
@@ -45,7 +47,7 @@ export function Column({ id, title, accent, count, children, isEmpty, onDropTask
           {title}
         </Text>
         <Surface background="bg3" radius="pill" paddingX={7} paddingY={1}>
-          <Text size="xs" mono tone="faint">{count}</Text>
+          <Text size="xs" mono tone="faint" data-testid={TestIds.Board.columnCount(id)}>{count}</Text>
         </Surface>
       </Surface>
       <Stack direction="column" gap={8} grow>
@@ -62,6 +64,7 @@ export function Column({ id, title, accent, count, children, isEmpty, onDropTask
             direction="row"
             align="center"
             justify="center"
+            data-testid={TestIds.Board.columnEmpty(id)}
           >
             <Text size="xs" tone="faint" italic>drop tasks here</Text>
           </Surface>

@@ -23,6 +23,7 @@ import {
   Textarea,
   type TextTone,
 } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 import { fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
 
@@ -79,7 +80,7 @@ export function TaskDrawer({
 
   return (
     <Drawer open={open} onClose={onClose} anchor="right" width="min(720px, 92vw)">
-      <Surface direction="column" grow minHeight={0} height="100%">
+      <Surface direction="column" grow minHeight={0} height="100%" data-testid={TestIds.Drawer.root}>
         <Surface
           as="header"
           bordered={{ bottom: true }}
@@ -108,6 +109,7 @@ export function TaskDrawer({
               disabled={!runnable}
               title={runnable ? undefined : 'Task is not in a runnable state'}
               onClick={onRun}
+              data-testid={TestIds.Drawer.runBtn}
             />
             <IconButton
               aria-label="Close drawer"
@@ -115,9 +117,10 @@ export function TaskDrawer({
               variant="ghost"
               icon={<Icon value={IconName.X} size={14} />}
               onClick={onClose}
+              data-testid={TestIds.Drawer.closeBtn}
             />
           </Stack>
-          <Text as="h2" size="xl" weight="semibold" tracking="tight">
+          <Text as="h2" size="xl" weight="semibold" tracking="tight" data-testid={TestIds.Drawer.title}>
             {task.title}
           </Text>
           <Stack direction="row" wrap gap={6}>
@@ -146,16 +149,19 @@ export function TaskDrawer({
                 label: 'Logs',
                 icon: <Icon value={IconName.Terminal} size={13} />,
                 badge: task.logs.length || undefined,
+                testId: TestIds.Drawer.tab('logs'),
               },
               {
                 key: 'diff',
                 label: 'Diff',
                 icon: <Icon value={IconName.Diff} size={13} />,
+                testId: TestIds.Drawer.tab('diff'),
               },
               {
                 key: 'details',
                 label: 'Details',
                 icon: <Icon value={IconName.Edit} size={13} />,
+                testId: TestIds.Drawer.tab('details'),
               },
             ]}
             activeKey={tab}
@@ -166,9 +172,21 @@ export function TaskDrawer({
         </Surface>
 
         <Surface grow overflowY="auto" minHeight={0}>
-          {tab === 'logs' && <LogsView task={task} />}
-          {tab === 'diff' && <DiffPanel task={task} />}
-          {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
+          {tab === 'logs' && (
+            <Surface data-testid={TestIds.Drawer.panel('logs')} direction="column" grow>
+              <LogsView task={task} />
+            </Surface>
+          )}
+          {tab === 'diff' && (
+            <Surface data-testid={TestIds.Drawer.panel('diff')} direction="column" grow>
+              <DiffPanel task={task} />
+            </Surface>
+          )}
+          {tab === 'details' && (
+            <Surface data-testid={TestIds.Drawer.panel('details')} direction="column" grow>
+              <DetailsView task={task} onSave={onSave} />
+            </Surface>
+          )}
         </Surface>
       </Surface>
     </Drawer>
@@ -198,7 +216,14 @@ function LogsView({ task }: { task: TaskVM }) {
 
   if (task.logs.length === 0) {
     return (
-      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={8}>
+      <Surface
+        paddingX={20}
+        paddingY={40}
+        direction="column"
+        align="center"
+        gap={8}
+        data-testid={TestIds.Drawer.logsEmpty}
+      >
         <Icon value={IconName.Terminal} size={28} />
         <Text size="sm" tone="faint">No logs yet. Run this task to stream output.</Text>
       </Surface>
@@ -218,7 +243,7 @@ function LogsView({ task }: { task: TaskVM }) {
           const tone: TextTone = l.s === 'err' ? 'rose' : l.s === 'info' ? 'sky' : 'muted';
           const prefix = l.s === 'err' ? '✗ ' : '';
           return (
-            <Stack key={i} direction="row" gap={8}>
+            <Stack key={i} direction="row" gap={8} data-testid={TestIds.Drawer.logLine(i + 1)}>
               <Surface minWidth={28} userSelect="none">
                 <Text size="sm" mono tone="faint" align="end">
                   {String(i + 1).padStart(3, ' ')}
@@ -570,6 +595,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
               ? 'Squash all commits on this branch into one and merge the PR'
               : 'Task has no PR yet'
           }
+          data-testid={TestIds.Drawer.diffMergeBtn}
         />
         <Button
           size="sm"
@@ -578,6 +604,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           startIcon={<Icon value={IconName.Refresh} size={13} />}
           onClick={() => void refresh()}
           disabled={loading || merging}
+          data-testid={TestIds.Drawer.diffRefreshBtn}
         />
       </Stack>
       {mergeError && (
@@ -653,12 +680,14 @@ function DetailsView({
           autoFocus
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          data-testid={TestIds.Drawer.detailsTitle}
         />
         <Textarea
           label="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={5}
+          data-testid={TestIds.Drawer.detailsDescription}
         />
         <Textarea
           label="Acceptance criteria"
@@ -666,21 +695,29 @@ function DetailsView({
           value={acceptance}
           onChange={(e) => setAcceptance(e.target.value)}
           rows={4}
+          data-testid={TestIds.Drawer.detailsAcceptance}
         />
         <Select
           label="Model"
           value={model}
           onChange={(e) => setModel(e.target.value)}
           options={MODEL_OPTIONS}
+          data-testid={TestIds.Drawer.detailsModel}
         />
         <Stack direction="row" justify="end" gap={8}>
-          <Button variant="ghost" label="Cancel" onClick={handleCancel} />
+          <Button
+            variant="ghost"
+            label="Cancel"
+            onClick={handleCancel}
+            data-testid={TestIds.Drawer.detailsCancelBtn}
+          />
           <Button
             variant="primary"
             label="Save"
             startIcon={<Icon value={IconName.Check} size={13} />}
             disabled={!title.trim() || !description.trim()}
             onClick={handleSave}
+            data-testid={TestIds.Drawer.detailsSaveBtn}
           />
         </Stack>
       </Surface>
@@ -696,6 +733,7 @@ function DetailsView({
           label="Edit"
           startIcon={<Icon value={IconName.Edit} size={13} />}
           onClick={() => setEditing(true)}
+          data-testid={TestIds.Drawer.detailsEditBtn}
         />
       </Stack>
 

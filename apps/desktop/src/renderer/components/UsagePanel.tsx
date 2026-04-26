@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Usage } from '@nightcoder/shared-types/ipc';
 import { CircularProgress, Divider, Stack, Surface, Text } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 import { fmtCountdown } from './primitives';
 
 type ViewUsage = {
@@ -48,21 +49,42 @@ export function UsagePanel({ tick: _tick }: Props) {
       direction="row"
       align="center"
       gap={14}
+      data-testid={TestIds.UsagePanel.root}
     >
       {fiveHour && (
-        <UsageMini label="5H" pct={fiveHour.usedPct} resetsInMs={Math.max(0, fiveHour.resetsAt - now)} />
+        <UsageMini
+          label="5H"
+          pct={fiveHour.usedPct}
+          resetsInMs={Math.max(0, fiveHour.resetsAt - now)}
+          testId={TestIds.UsagePanel.fiveHour}
+        />
       )}
       {fiveHour && weekly && <Divider orientation="vertical" />}
       {weekly && (
-        <UsageMini label="WEEK" pct={weekly.usedPct} resetsInMs={Math.max(0, weekly.resetsAt - now)} />
+        <UsageMini
+          label="WEEK"
+          pct={weekly.usedPct}
+          resetsInMs={Math.max(0, weekly.resetsAt - now)}
+          testId={TestIds.UsagePanel.weekly}
+        />
       )}
     </Surface>
   );
 }
 
-function UsageMini({ label, pct, resetsInMs }: { label: string; pct: number; resetsInMs: number }) {
+function UsageMini({
+  label,
+  pct,
+  resetsInMs,
+  testId,
+}: {
+  label: string;
+  pct: number;
+  resetsInMs: number;
+  testId: string;
+}) {
   return (
-    <Stack direction="row" align="center" gap={8}>
+    <Stack direction="row" align="center" gap={8} data-testid={testId}>
       <CircularProgress value={pct} size={34} thickness={3} />
       <Stack direction="column" gap={1}>
         <Text size="xxs" weight="semibold" tone="faint" tracking="wider">{label}</Text>

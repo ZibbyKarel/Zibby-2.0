@@ -10,6 +10,7 @@ import {
   Surface,
   Text,
 } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 import { fmtDuration } from './primitives';
 import type { TaskVM } from '../viewModel';
 
@@ -49,6 +50,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       opacity={isDragging ? 0.4 : 1}
       position="relative"
       onClick={onOpen}
+      data-testid={TestIds.TaskCard.root(task.index)}
       {...dragHandlers}
     >
       {task.status === 'running' && (
@@ -66,7 +68,15 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       <Stack as="header" direction="row" align="start" gap={8}>
         <Text size="xs" mono tone="faint">#{task.numericId ?? task.index + 1}</Text>
         <Surface grow>
-          <Text as="h3" size="md" weight="semibold" tracking="tight">{task.title}</Text>
+          <Text
+            as="h3"
+            size="md"
+            weight="semibold"
+            tracking="tight"
+            data-testid={TestIds.TaskCard.title(task.index)}
+          >
+            {task.title}
+          </Text>
         </Surface>
         <IconButton
           aria-label="Edit task"
@@ -75,12 +85,20 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           variant="ghost"
           icon={<Icon value={IconName.More} size={14} />}
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          data-testid={TestIds.TaskCard.editBtn(task.index)}
         />
       </Stack>
 
       {task.description && (
         <Surface paddingTop={2} paddingBottom={10}>
-          <Text size="sm" tone="muted" lineClamp={2}>{task.description}</Text>
+          <Text
+            size="sm"
+            tone="muted"
+            lineClamp={2}
+            data-testid={TestIds.TaskCard.description(task.index)}
+          >
+            {task.description}
+          </Text>
         </Surface>
       )}
 
@@ -96,6 +114,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             icon={<Icon value={IconName.Github} size={11} />}
             title={task.prUrl}
             onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
+            data-testid={TestIds.TaskCard.prChip(task.index)}
           >
             PR #{task.prUrl.split('/').pop()}
           </Chip>
@@ -153,6 +172,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
               startIcon={<Icon value={IconName.Play} size={11} />}
               title="Resume this interrupted task"
               onClick={(e) => { e.stopPropagation(); onRun(); }}
+              data-testid={TestIds.TaskCard.resumeBtn(task.index)}
             />
           )}
           <Button
@@ -163,6 +183,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             startIcon={<Icon value={IconName.Play} size={11} />}
             title={canRun ? 'Run this task' : 'Task is not in a runnable state'}
             onClick={(e) => { e.stopPropagation(); onRun(); }}
+            data-testid={TestIds.TaskCard.runBtn(task.index)}
           />
           <IconButton
             aria-label="Remove task"
@@ -171,9 +192,10 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             variant="ghost"
             icon={<Icon value={IconName.Trash} size={12} />}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            data-testid={TestIds.TaskCard.deleteBtn(task.index)}
           />
           {(task.status !== 'pending' || task.startedAt !== null) && (
-            <Badge status={task.status} />
+            <Badge status={task.status} data-testid={TestIds.TaskCard.statusBadge(task.index)} />
           )}
         </Stack>
       </Surface>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Snackbar, Surface, type SnackbarSeverity } from '@nightcoder/design-system';
+import { TestIds } from '@nightcoder/test-ids';
 
 export type Toast = {
   id: string;
@@ -29,16 +30,18 @@ export function Toasts({ toasts, onDismiss }: Props) {
       pointerEvents="none"
       direction="column"
       gap={8}
+      data-testid={TestIds.Toast.region}
     >
       {toasts.map((t) => (
-        <Snackbar
-          key={t.id}
-          open
-          severity={severityFor[t.kind]}
-          title={t.title}
-          message={t.desc}
-          onClose={() => onDismiss(t.id)}
-        />
+        <Surface key={t.id} data-testid={TestIds.Toast.toast(t.id)}>
+          <Snackbar
+            open
+            severity={severityFor[t.kind]}
+            title={t.title}
+            message={t.desc}
+            onClose={() => onDismiss(t.id)}
+          />
+        </Surface>
       ))}
     </Surface>
   );

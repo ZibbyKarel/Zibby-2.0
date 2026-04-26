@@ -19,6 +19,7 @@ export default defineConfig({
       { find: /^@nightcoder\/usage$/, replacement: r('libs/usage/src/index.ts') },
       { find: /^@nightcoder\/design-system$/, replacement: r('libs/design-system/src/index.ts') },
       { find: /^@nightcoder\/form$/, replacement: r('libs/form/src/index.ts') },
+      { find: /^@nightcoder\/test-ids$/, replacement: r('libs/test-ids/src/index.ts') },
     ],
   },
   test: {

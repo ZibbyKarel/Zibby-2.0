@@ -18,6 +18,8 @@ export type BadgeProps = {
   /** Override background when not using a status. */
   background?: string;
   className?: string;
+  /** Forwarded to the rendered `<span>` so tests can target it. */
+  'data-testid'?: string;
 };
 
 const PULSE_KEYFRAMES = '@keyframes nc-badge-pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }';
@@ -30,6 +32,7 @@ export function Badge({
   color,
   background,
   className = '',
+  'data-testid': dataTestId,
 }: BadgeProps) {
   // Hooks must be called unconditionally; default to `pending` when no status
   // is supplied so we still get a valid palette for the fallback path.
@@ -44,6 +47,7 @@ export function Badge({
 
   return (
     <span
+      data-testid={dataTestId}
       className={`inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] font-mono text-[11px] font-medium tracking-wide ${className}`.trim()}
       style={{ background: bg, color: fg }}
     >
