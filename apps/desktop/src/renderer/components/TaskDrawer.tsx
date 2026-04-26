@@ -4,8 +4,25 @@ import type {
   TaskDiffResult,
   TaskFile,
 } from '@nightcoder/shared-types/ipc';
+import {
+  Alert,
+  Badge,
+  Button,
+  Chip,
+  Drawer,
+  IconButton,
+  Select,
+  Spacer,
+  Stack,
+  Surface,
+  Tabs,
+  Text,
+  TextField,
+  Textarea,
+  type TextTone,
+} from '@nightcoder/design-system';
 import { Icon } from './icons';
-import { Btn, StatusPill, Chip, fmtDuration, fmtNum } from './primitives';
+import { fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
 
 export type DrawerTab = 'logs' | 'diff' | 'details';
@@ -41,212 +58,119 @@ export function TaskDrawer({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
       if (e.key === '1') setTab('logs');
       if (e.key === '2') setTab('diff');
       if (e.key === '3') setTab('details');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, setTab]);
+  }, [open, setTab]);
 
   if (!task) return null;
 
-  const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
+  const canRun =
+    task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
   const canResume =
     task.status === 'interrupted' ||
     (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
   const runnable = canRun || canResume;
+  const tokens = task.tokens as { in: number; out: number } | null | undefined;
 
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,.5)',
-          zIndex: 50,
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity .18s',
-        }}
-      />
-      <aside
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 'min(720px, 92vw)',
-          background: 'var(--bg-1)',
-          borderLeft: '1px solid var(--border)',
-          zIndex: 51,
-          display: 'flex',
-          flexDirection: 'column',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform .22s cubic-bezier(.2,.7,.3,1)',
-          boxShadow: 'var(--shadow-2)',
-        }}
-      >
-        <header
-          style={{
-            padding: '14px 18px 12px',
-            borderBottom: '1px solid var(--border)',
-          }}
+    <Drawer open={open} onClose={onClose} anchor="right" width="min(720px, 92vw)">
+      <Surface direction="column" grow minHeight={0} height="100%">
+        <Surface
+          as="header"
+          bordered={{ bottom: true }}
+          paddingX={18}
+          paddingTop={14}
+          paddingBottom={12}
+          direction="column"
+          gap={8}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 8,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 11,
-                fontFamily: 'var(--mono)',
-                color: 'var(--text-3)',
-              }}
-            >
+          <Stack direction="row" align="center" gap={8}>
+            <Text size="xs" mono tone="faint">
               #{task.numericId ?? task.index + 1}
-            </span>
+            </Text>
             {(task.status !== 'pending' || task.startedAt !== null) && (
-              <StatusPill status={task.status} />
+              <Badge status={task.status} />
             )}
             {task.status === 'running' && runtimeMs != null && (
-              <span
-                style={{
-                  fontSize: 11,
-                  fontFamily: 'var(--mono)',
-                  color: 'var(--emerald)',
-                }}
-              >
-                {fmtDuration(runtimeMs)}
-              </span>
+              <Text size="xs" mono tone="emerald">{fmtDuration(runtimeMs)}</Text>
             )}
-            <div style={{ flex: 1 }} />
-            <Btn
-              icon="play"
-              variant="primary"
+            <Spacer />
+            <Button
               size="sm"
-              onClick={onRun}
+              variant="primary"
+              startIcon={<Icon name="play" size={11} />}
+              label={canResume ? 'Resume' : 'Run'}
               disabled={!runnable}
               title={runnable ? undefined : 'Task is not in a runnable state'}
-            >
-              {canResume ? 'Resume' : 'Run'}
-            </Btn>
-            <Btn icon="x" variant="ghost" size="sm" onClick={onClose} />
-          </div>
-          <h2
-            style={{
-              margin: '2px 0 6px',
-              fontSize: 18,
-              fontWeight: 600,
-              letterSpacing: '-.01em',
-            }}
-          >
+              onClick={onRun}
+            />
+            <IconButton
+              aria-label="Close drawer"
+              size="sm"
+              variant="ghost"
+              icon={<Icon name="x" size={14} />}
+              onClick={onClose}
+            />
+          </Stack>
+          <Text as="h2" size="xl" weight="semibold" tracking="tight">
             {task.title}
-          </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {task.branch && <Chip icon="git">{task.branch}</Chip>}
+          </Text>
+          <Stack direction="row" wrap gap={6}>
+            {task.branch && <Chip icon={<Icon name="git" size={11} />}>{task.branch}</Chip>}
             {task.prUrl && (
-              <Chip icon="github" tone="accent">
+              <Chip tone="accent" icon={<Icon name="github" size={11} />}>
                 PR #{task.prUrl.split('/').pop()}
               </Chip>
             )}
             {task.model && (
-              <Chip icon="sparkle" tone="violet">
-                {task.model}
+              <Chip tone="violet" icon={<Icon name="sparkle" size={11} />}>{task.model}</Chip>
+            )}
+            {tokens != null && (
+              <Chip icon={<Icon name="bolt" size={11} />}>
+                ↑{fmtNum(tokens.in)} ↓{fmtNum(tokens.out)}
               </Chip>
             )}
-            {task.tokens != null && (
-              <Chip icon="bolt">
-                ↑{fmtNum((task.tokens as { in: number; out: number }).in)} ↓
-                {fmtNum((task.tokens as { in: number; out: number }).out)}
-              </Chip>
-            )}
-          </div>
-        </header>
+          </Stack>
+        </Surface>
 
-        <nav
-          style={{
-            display: 'flex',
-            gap: 2,
-            padding: '0 12px',
-            borderBottom: '1px solid var(--border)',
-            background: 'var(--bg-1)',
-          }}
-        >
-          {[
-            {
-              k: 'logs' as DrawerTab,
-              label: 'Logs',
-              icon: 'terminal' as const,
-              badge: task.logs.length || null,
-            },
-            {
-              k: 'diff' as DrawerTab,
-              label: 'Diff',
-              icon: 'diff' as const,
-              badge: null,
-            },
-            {
-              k: 'details' as DrawerTab,
-              label: 'Details',
-              icon: 'edit' as const,
-              badge: null,
-            },
-          ].map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '10px 12px',
-                fontSize: 12,
-                fontWeight: 500,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: tab === t.k ? 'var(--text-0)' : 'var(--text-2)',
-                borderBottom:
-                  tab === t.k
-                    ? '2px solid var(--emerald)'
-                    : '2px solid transparent',
-                marginBottom: -1,
-              }}
-            >
-              <Icon name={t.icon} size={13} />
-              {t.label}
-              {t.badge != null && (
-                <span
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 10,
-                    color: 'var(--text-3)',
-                    background: 'var(--bg-3)',
-                    padding: '1px 6px',
-                    borderRadius: 999,
-                  }}
-                >
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
+        <Surface paddingX={12} bordered={{ bottom: true }}>
+          <Tabs<DrawerTab>
+            tabs={[
+              {
+                key: 'logs',
+                label: 'Logs',
+                icon: <Icon name="terminal" size={13} />,
+                badge: task.logs.length || undefined,
+              },
+              {
+                key: 'diff',
+                label: 'Diff',
+                icon: <Icon name="diff" size={13} />,
+              },
+              {
+                key: 'details',
+                label: 'Details',
+                icon: <Icon name="edit" size={13} />,
+              },
+            ]}
+            activeKey={tab}
+            onChange={setTab}
+            variant="underline"
+            size="sm"
+          />
+        </Surface>
 
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <Surface grow overflowY="auto" minHeight={0}>
           {tab === 'logs' && <LogsView task={task} />}
           {tab === 'diff' && <DiffPanel task={task} />}
           {tab === 'details' && <DetailsView task={task} onSave={onSave} />}
-        </div>
-      </aside>
-    </>
+        </Surface>
+      </Surface>
+    </Drawer>
   );
 }
 
@@ -273,105 +197,63 @@ function LogsView({ task }: { task: TaskVM }) {
 
   if (task.logs.length === 0) {
     return (
-      <div
-        style={{
-          padding: 40,
-          textAlign: 'center',
-          color: 'var(--text-3)',
-          fontSize: 12,
-        }}
-      >
+      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={8}>
         <Icon name="terminal" size={28} />
-        <p style={{ marginTop: 8 }}>
-          No logs yet. Run this task to stream output.
-        </p>
-      </div>
+        <Text size="sm" tone="faint">No logs yet. Run this task to stream output.</Text>
+      </Surface>
     );
   }
   return (
-    <div
-      ref={containerRef}
+    <Surface
+      ref={containerRef as React.Ref<HTMLElement>}
       onScroll={handleScroll}
-      style={{ height: '100%', overflowY: 'auto', position: 'relative' }}
+      height="100%"
+      overflowY="auto"
+      position="relative"
+      background="bg0"
     >
-      <pre
-        style={{
-          margin: 0,
-          padding: '14px 18px',
-          fontSize: 12,
-          lineHeight: 1.55,
-          fontFamily: 'var(--mono)',
-          color: 'var(--text-1)',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          background: 'var(--bg-0)',
-        }}
-      >
+      <Surface as="pre" paddingX={18} paddingY={14} direction="column" gap={0}>
         {task.logs.map((l, i) => {
-          const color =
-            l.s === 'err'
-              ? 'var(--rose)'
-              : l.s === 'info'
-                ? 'var(--sky)'
-                : 'var(--text-1)';
+          const tone: TextTone = l.s === 'err' ? 'rose' : l.s === 'info' ? 'sky' : 'muted';
           const prefix = l.s === 'err' ? '✗ ' : '';
           return (
-            <div key={i} style={{ color, display: 'flex', gap: 8 }}>
-              <span
-                style={{
-                  color: 'var(--text-3)',
-                  userSelect: 'none',
-                  minWidth: 28,
-                  textAlign: 'right',
-                }}
-              >
-                {String(i + 1).padStart(3, ' ')}
-              </span>
-              <span style={{ flex: 1 }}>
-                {prefix}
-                {l.l}
-              </span>
-            </div>
+            <Stack key={i} direction="row" gap={8}>
+              <Surface minWidth={28} userSelect="none">
+                <Text size="sm" mono tone="faint" align="end">
+                  {String(i + 1).padStart(3, ' ')}
+                </Text>
+              </Surface>
+              <Surface grow>
+                <Text size="sm" mono tone={tone} whitespace="pre-wrap">
+                  {prefix}{l.l}
+                </Text>
+              </Surface>
+            </Stack>
           );
         })}
-        {task.status === 'running' && (
-          <div className="caret" style={{ color: 'var(--emerald)' }} />
-        )}
-      </pre>
+        {task.status === 'running' && <span className="ds-caret" />}
+      </Surface>
       {!autoScroll && (
-        <div
-          style={{
-            position: 'sticky',
-            bottom: 16,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            paddingRight: 16,
-            pointerEvents: 'none',
-          }}
+        <Surface
+          position="sticky"
+          bottom={16}
+          direction="row"
+          justify="end"
+          paddingRight={16}
+          pointerEvents="none"
         >
-          <button
-            onClick={scrollToBottom}
-            title="Scroll to bottom"
-            style={{
-              pointerEvents: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'var(--bg-3)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-1)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,.25)',
-            }}
-          >
-            <Icon name="chevronDown" size={16} />
-          </button>
-        </div>
+          <Surface pointerEvents="auto" radius="pill" shadow="2">
+            <IconButton
+              aria-label="Scroll to bottom"
+              title="Scroll to bottom"
+              variant="secondary"
+              icon={<Icon name="chevronDown" size={16} />}
+              onClick={scrollToBottom}
+            />
+          </Surface>
+        </Surface>
       )}
-    </div>
+    </Surface>
   );
 }
 
@@ -399,18 +281,18 @@ function filePathLabel(f: TaskDiffFile): string {
   return f.newPath ?? f.oldPath ?? '(unknown)';
 }
 
-function changeKindTone(kind: TaskDiffFile['changeKind']): string {
+function changeKindTone(kind: TaskDiffFile['changeKind']): TextTone {
   switch (kind) {
     case 'added':
-      return 'var(--emerald)';
+      return 'emerald';
     case 'deleted':
-      return 'var(--rose)';
+      return 'rose';
     case 'renamed':
-      return 'var(--sky)';
+      return 'sky';
     case 'binary':
-      return 'var(--text-3)';
+      return 'faint';
     default:
-      return 'var(--amber)';
+      return 'amber';
   }
 }
 
@@ -456,91 +338,62 @@ function DiffHunks({ hunks }: { hunks: string[] }) {
   const rows: HunkLine[] = [];
   for (const h of hunks) rows.push(...parseHunkLines(h));
 
-  const gutterStyle: React.CSSProperties = {
-    display: 'inline-block',
-    width: 40,
-    textAlign: 'right',
-    paddingRight: 8,
-    color: 'var(--text-3)',
-    userSelect: 'none',
-    flexShrink: 0,
-  };
-
   return (
-    <div
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 12,
-        lineHeight: 1.55,
-        overflowX: 'auto',
-        background: 'var(--bg-0)',
-      }}
-    >
-      {rows.map((r, i) => {
-        const styles = rowStyle(r.kind);
-        const sign =
-          r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : r.kind === 'header' ? '' : ' ';
-        const oldN =
-          r.kind === 'del' ? r.oldLine : r.kind === 'context' ? r.oldLine : '';
-        const newN =
-          r.kind === 'add' ? r.newLine : r.kind === 'context' ? r.newLine : '';
-        return (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              whiteSpace: 'pre',
-              padding: '0 10px',
-              ...styles,
-            }}
-          >
-            {r.kind === 'header' ? (
-              <span style={{ flex: 1, color: 'var(--text-3)' }}>{r.text}</span>
-            ) : (
-              <>
-                <span style={gutterStyle}>{oldN}</span>
-                <span style={gutterStyle}>{newN}</span>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 14,
-                    color:
-                      r.kind === 'add'
-                        ? 'var(--emerald)'
-                        : r.kind === 'del'
-                          ? 'var(--rose)'
-                          : 'var(--text-3)',
-                    flexShrink: 0,
-                  }}
-                >
-                  {sign}
-                </span>
-                <span style={{ color: 'var(--text-0)' }}>{r.text}</span>
-              </>
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <Surface overflowX="auto" background="bg0">
+      {rows.map((r, i) => <HunkRow key={i} row={r} />)}
+    </Surface>
   );
 }
 
-function rowStyle(kind: HunkLine['kind']): React.CSSProperties {
+type HunkRowBackground = 'emeraldTint' | 'roseTint' | 'bg2' | 'transparent';
+function rowBackground(kind: HunkLine['kind']): HunkRowBackground {
   switch (kind) {
-    case 'add':
-      return { background: 'rgba(16,185,129,.12)' };
-    case 'del':
-      return { background: 'rgba(244,63,94,.12)' };
-    case 'header':
-      return {
-        background: 'var(--bg-2)',
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-        padding: '2px 10px',
-      };
-    default:
-      return {};
+    case 'add':    return 'emeraldTint';
+    case 'del':    return 'roseTint';
+    case 'header': return 'bg2';
+    default:       return 'transparent';
   }
+}
+
+function HunkRow({ row }: { row: HunkLine }) {
+  const sign =
+    row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : row.kind === 'header' ? '' : ' ';
+  const oldN =
+    row.kind === 'del' ? row.oldLine : row.kind === 'context' ? row.oldLine : '';
+  const newN =
+    row.kind === 'add' ? row.newLine : row.kind === 'context' ? row.newLine : '';
+  const signTone: TextTone =
+    row.kind === 'add' ? 'emerald' : row.kind === 'del' ? 'rose' : 'faint';
+  const isHeader = row.kind === 'header';
+
+  return (
+    <Surface
+      direction="row"
+      paddingX={10}
+      paddingY={isHeader ? 2 : undefined}
+      background={rowBackground(row.kind)}
+      bordered={isHeader ? { top: true, bottom: true } : undefined}
+    >
+      {isHeader ? (
+        <Surface grow>
+          <Text size="sm" mono tone="faint" whitespace="pre">{row.text}</Text>
+        </Surface>
+      ) : (
+        <>
+          <Surface width={40} paddingRight={8} userSelect="none">
+            <Text size="sm" mono tone="faint" align="end">{oldN}</Text>
+          </Surface>
+          <Surface width={40} paddingRight={8} userSelect="none">
+            <Text size="sm" mono tone="faint" align="end">{newN}</Text>
+          </Surface>
+          <Surface width={14} shrink={false}>
+            <Text size="sm" mono tone={signTone}>{sign}</Text>
+          </Surface>
+          <Text size="sm" mono whitespace="pre">{row.text}</Text>
+        </>
+      )}
+    </Surface>
+  );
 }
 
 function DiffFileBlock({ file }: { file: TaskDiffFile }) {
@@ -549,97 +402,47 @@ function DiffFileBlock({ file }: { file: TaskDiffFile }) {
   const label = filePathLabel(file);
 
   return (
-    <div
-      style={{
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        background: 'var(--bg-1)',
-        overflow: 'hidden',
-        marginBottom: 10,
-      }}
-    >
-      <button
+    <Surface bordered radius="sm" background="bg1" overflowX="hidden" overflowY="hidden">
+      <Surface
+        as="button"
+        type="button"
+        width="100%"
+        direction="row"
+        align="center"
+        gap={8}
+        paddingX={10}
+        paddingY={8}
+        background="bg2"
+        bordered={!collapsed ? { bottom: true } : undefined}
+        cursor="pointer"
+        textAlign="left"
         onClick={() => setCollapsed((c) => !c)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 10px',
-          background: 'var(--bg-2)',
-          borderBottom: collapsed ? 'none' : '1px solid var(--border)',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'var(--text-0)',
-          textAlign: 'left',
-        }}
       >
         <Icon name={collapsed ? 'chevron' : 'chevronDown'} size={12} />
-        <span
-          style={{
-            fontSize: 10,
-            padding: '1px 6px',
-            borderRadius: 999,
-            background: 'var(--bg-3)',
-            color: changeKindTone(file.changeKind),
-            fontFamily: 'var(--mono)',
-            textTransform: 'uppercase',
-            letterSpacing: '.05em',
-          }}
-        >
-          {file.changeKind}
-        </span>
-        <code
-          style={{
-            flex: 1,
-            minWidth: 0,
-            fontFamily: 'var(--mono)',
-            fontSize: 12,
-            color: 'var(--text-1)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={label}
-        >
-          {label}
-        </code>
-        <span
-          style={{
-            fontSize: 11,
-            fontFamily: 'var(--mono)',
-            color: 'var(--emerald)',
-          }}
-        >
-          +{adds}
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontFamily: 'var(--mono)',
-            color: 'var(--rose)',
-          }}
-        >
-          −{dels}
-        </span>
-      </button>
+        <Surface background="bg3" radius="pill" paddingX={6} paddingY={1}>
+          <Text size="xxs" mono tone={changeKindTone(file.changeKind)} tracking="wide" transform="uppercase">
+            {file.changeKind}
+          </Text>
+        </Surface>
+        <Surface grow minWidth={0} title={label}>
+          <Text as="code" size="sm" mono tone="muted" truncate>{label}</Text>
+        </Surface>
+        <Text size="xs" mono tone="emerald">+{adds}</Text>
+        <Text size="xs" mono tone="rose">−{dels}</Text>
+      </Surface>
       {!collapsed &&
         (file.changeKind === 'binary' || file.hunks.length === 0 ? (
-          <div
-            style={{
-              padding: '14px 12px',
-              fontSize: 12,
-              color: 'var(--text-3)',
-            }}
-          >
-            {file.changeKind === 'binary'
-              ? 'Binary file — diff not shown.'
-              : 'No textual changes in this file.'}
-          </div>
+          <Surface paddingX={12} paddingY={14}>
+            <Text size="sm" tone="faint">
+              {file.changeKind === 'binary'
+                ? 'Binary file — diff not shown.'
+                : 'No textual changes in this file.'}
+            </Text>
+          </Surface>
         ) : (
           <DiffHunks hunks={file.hunks} />
         ))}
-    </div>
+    </Surface>
   );
 }
 
@@ -684,46 +487,29 @@ function DiffPanel({ task }: { task: TaskVM }) {
 
   if (loading && !result) {
     return (
-      <div
-        style={{
-          padding: 40,
-          textAlign: 'center',
-          color: 'var(--text-3)',
-          fontSize: 12,
-        }}
-      >
-        <div className="spinner" style={{ margin: '0 auto 10px' }} />
-        Loading diff…
-      </div>
+      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
+        <span className="ds-spinner" />
+        <Text size="sm" tone="faint">Loading diff…</Text>
+      </Surface>
     );
   }
 
   if (result?.kind === 'error') {
     return (
-      <div style={{ padding: 18 }}>
-        <div
-          style={{
-            padding: 12,
-            background: 'rgba(244,63,94,.08)',
-            border: '1px solid rgba(244,63,94,.2)',
-            borderRadius: 8,
-            color: 'var(--rose)',
-            fontSize: 12,
-          }}
-        >
-          Failed to load diff: {result.message}
-        </div>
-        <div style={{ marginTop: 10 }}>
-          <Btn
-            icon="refresh"
-            variant="secondary"
+      <Surface padding={18} direction="column" gap={10}>
+        <Alert severity="error" title="Failed to load diff">
+          {result.message}
+        </Alert>
+        <Stack direction="row">
+          <Button
             size="sm"
+            variant="secondary"
+            label="Retry"
+            startIcon={<Icon name="refresh" size={13} />}
             onClick={() => void refresh()}
-          >
-            Retry
-          </Btn>
-        </div>
-      </div>
+          />
+        </Stack>
+      </Surface>
     );
   }
 
@@ -733,27 +519,17 @@ function DiffPanel({ task }: { task: TaskVM }) {
         ? "No diff available. The task hasn't produced a branch yet."
         : "No changes on the task's branch compared to the base branch.";
     return (
-      <div
-        style={{
-          padding: 40,
-          textAlign: 'center',
-          color: 'var(--text-3)',
-          fontSize: 12,
-        }}
-      >
+      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
         <Icon name="diff" size={28} />
-        <p style={{ marginTop: 8 }}>{msg}</p>
-        <div style={{ marginTop: 10 }}>
-          <Btn
-            icon="refresh"
-            variant="ghost"
-            size="sm"
-            onClick={() => void refresh()}
-          >
-            Refresh
-          </Btn>
-        </div>
-      </div>
+        <Text size="sm" tone="faint">{msg}</Text>
+        <Button
+          size="sm"
+          variant="ghost"
+          label="Refresh"
+          startIcon={<Icon name="refresh" size={13} />}
+          onClick={() => void refresh()}
+        />
+      </Surface>
     );
   }
 
@@ -768,38 +544,24 @@ function DiffPanel({ task }: { task: TaskVM }) {
   );
 
   return (
-    <div
-      style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 4 }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 8,
-          fontSize: 11,
-          color: 'var(--text-2)',
-        }}
-      >
-        <span style={{ fontFamily: 'var(--mono)' }}>
+    <Surface padding={14} direction="column" gap={10}>
+      <Stack direction="row" align="center" gap={10}>
+        <Text size="xs" mono tone="muted">
           {result.files.length} file{result.files.length === 1 ? '' : 's'}
-        </span>
-        <span style={{ color: 'var(--emerald)', fontFamily: 'var(--mono)' }}>
-          +{totals.adds}
-        </span>
-        <span style={{ color: 'var(--rose)', fontFamily: 'var(--mono)' }}>
-          −{totals.dels}
-        </span>
-        <span style={{ color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
+        </Text>
+        <Text size="xs" mono tone="emerald">+{totals.adds}</Text>
+        <Text size="xs" mono tone="rose">−{totals.dels}</Text>
+        <Text size="xs" mono tone="faint">
           {result.branch
             ? `${result.baseBranch}…${result.branch}`
             : result.baseBranch}
-        </span>
-        <div style={{ flex: 1 }} />
-        <Btn
-          icon="git"
-          variant="primary"
+        </Text>
+        <Spacer />
+        <Button
           size="sm"
+          variant="primary"
+          label={merging ? 'Merging…' : 'Squash and Merge'}
+          startIcon={<Icon name="git" size={13} />}
           onClick={() => void squashAndMerge()}
           disabled={merging || loading || !task.prUrl}
           title={
@@ -807,57 +569,38 @@ function DiffPanel({ task }: { task: TaskVM }) {
               ? 'Squash all commits on this branch into one and merge the PR'
               : 'Task has no PR yet'
           }
-        >
-          {merging ? 'Merging…' : 'Squash and Merge'}
-        </Btn>
-        <Btn
-          icon="refresh"
-          variant="ghost"
+        />
+        <Button
           size="sm"
+          variant="ghost"
+          label={loading ? 'Refreshing…' : 'Refresh'}
+          startIcon={<Icon name="refresh" size={13} />}
           onClick={() => void refresh()}
           disabled={loading || merging}
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </Btn>
-      </div>
-      {mergeError && (
-        <div
-          style={{
-            padding: 10,
-            marginBottom: 10,
-            background: 'rgba(244,63,94,.08)',
-            border: '1px solid rgba(244,63,94,.2)',
-            borderRadius: 8,
-            color: 'var(--rose)',
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Squash-merge failed: {mergeError}
-        </div>
-      )}
-      {result.files.map((f, i) => (
-        <DiffFileBlock
-          key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
-          file={f}
         />
-      ))}
-    </div>
+      </Stack>
+      {mergeError && (
+        <Alert severity="error" title="Squash-merge failed">
+          <Text size="sm" tone="rose" whitespace="pre-wrap">{mergeError}</Text>
+        </Alert>
+      )}
+      <Surface direction="column" gap={10}>
+        {result.files.map((f, i) => (
+          <DiffFileBlock
+            key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
+            file={f}
+          />
+        ))}
+      </Surface>
+    </Surface>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  background: 'var(--bg-2)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  color: 'var(--text-0)',
-  fontSize: 13,
-  outline: 'none',
-  transition: 'border-color .12s',
-  boxSizing: 'border-box',
-};
+const MODEL_OPTIONS = [
+  { value: '', label: 'Sonnet (default)' },
+  { value: 'opus', label: 'Opus' },
+  { value: 'haiku', label: 'Haiku' },
+];
 
 function DetailsView({
   task,
@@ -903,175 +646,97 @@ function DetailsView({
 
   if (editing) {
     return (
-      <div
-        style={{
-          padding: 18,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-        }}
-      >
-        <EditField label="Title">
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={inputStyle}
-          />
-        </EditField>
-        <EditField label="Description">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
-        </EditField>
-        <EditField label="Acceptance criteria" hint="one per line">
-          <textarea
-            value={acceptance}
-            onChange={(e) => setAcceptance(e.target.value)}
-            rows={4}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
-        </EditField>
-        <EditField label="Model">
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            style={{ ...inputStyle, height: 34 }}
-          >
-            <option value="">Sonnet (default)</option>
-            <option value="opus">Opus</option>
-            <option value="haiku">Haiku</option>
-          </select>
-        </EditField>
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            justifyContent: 'flex-end',
-            paddingTop: 4,
-          }}
-        >
-          <Btn variant="ghost" onClick={handleCancel}>
-            Cancel
-          </Btn>
-          <Btn
+      <Surface padding={18} direction="column" gap={14}>
+        <TextField
+          label="Title"
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <Textarea
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={5}
+        />
+        <Textarea
+          label="Acceptance criteria"
+          helperText="one per line"
+          value={acceptance}
+          onChange={(e) => setAcceptance(e.target.value)}
+          rows={4}
+        />
+        <Select
+          label="Model"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          options={MODEL_OPTIONS}
+        />
+        <Stack direction="row" justify="end" gap={8}>
+          <Button variant="ghost" label="Cancel" onClick={handleCancel} />
+          <Button
             variant="primary"
-            icon="check"
+            label="Save"
+            startIcon={<Icon name="check" size={13} />}
             disabled={!title.trim() || !description.trim()}
             onClick={handleSave}
-          >
-            Save
-          </Btn>
-        </div>
-      </div>
+          />
+        </Stack>
+      </Surface>
     );
   }
 
   return (
-    <div
-      style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Btn
-          icon="edit"
-          variant="outline"
+    <Surface padding={18} direction="column" gap={18}>
+      <Stack direction="row" justify="end">
+        <Button
           size="sm"
+          variant="outline"
+          label="Edit"
+          startIcon={<Icon name="edit" size={13} />}
           onClick={() => setEditing(true)}
-        >
-          Edit
-        </Btn>
-      </div>
+        />
+      </Stack>
 
       <Section label="Description">
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            color: 'var(--text-1)',
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          {task.description}
-        </p>
+        <Text size="md" tone="muted" whitespace="pre-wrap">{task.description}</Text>
       </Section>
 
       {task.acceptance.length > 0 && (
         <Section label="Acceptance criteria">
-          <ul
-            style={{
-              margin: 0,
-              padding: 0,
-              listStyle: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
+          <Stack direction="column" gap={8}>
             {task.acceptance.map((a, i) => (
-              <li
-                key={i}
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'flex-start',
-                  fontSize: 13,
-                  color: 'var(--text-1)',
-                  lineHeight: 1.5,
-                }}
-              >
-                <span
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 4,
-                    background: 'var(--bg-3)',
-                    border: '1px solid var(--border-2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 1,
-                    flexShrink: 0,
-                    color:
-                      task.status === 'done'
-                        ? 'var(--emerald)'
-                        : 'var(--text-3)',
-                  }}
+              <Stack key={i} direction="row" align="start" gap={8}>
+                <Surface
+                  width={16}
+                  height={16}
+                  radius="sm"
+                  background="bg3"
+                  bordered
+                  borderTone="strong"
+                  direction="row"
+                  align="center"
+                  justify="center"
+                  shrink={false}
                 >
                   {task.status === 'done' && (
                     <Icon name="check" size={10} stroke={2.5} />
                   )}
-                </span>
-                {a}
-              </li>
+                </Surface>
+                <Text size="md" tone="muted">{a}</Text>
+              </Stack>
             ))}
-          </ul>
+          </Stack>
         </Section>
       )}
 
       {task.affectedFiles.length > 0 && (
         <Section label="Affected files">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <Stack direction="row" wrap gap={6}>
             {task.affectedFiles.map((f, i) => (
-              <code
-                key={i}
-                style={{
-                  fontSize: 12,
-                  padding: '3px 8px',
-                  background: 'var(--bg-3)',
-                  color: 'var(--text-1)',
-                  borderRadius: 5,
-                  fontFamily: 'var(--mono)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {f}
-              </code>
+              <Chip key={i}>{f}</Chip>
             ))}
-          </div>
+          </Stack>
         </Section>
       )}
 
@@ -1079,61 +744,31 @@ function DetailsView({
         <AttachedFilesPanel taskId={task.taskId} />
       </Section>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <KV k="Model" v={task.model ?? 'Sonnet (default)'} />
-        <KV k="Branch" v={task.branch ?? '—'} mono />
-        <KV k="Status" v={task.status} />
-        <KV
-          k="Tokens"
-          v={
-            task.tokens != null
-              ? `↑${fmtNum((task.tokens as { in: number; out: number }).in)}  ↓${fmtNum((task.tokens as { in: number; out: number }).out)}`
-              : '—'
-          }
-          mono
-        />
-      </div>
-    </div>
-  );
-}
-
-function EditField({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 500,
-          color: 'var(--text-2)',
-          letterSpacing: '.04em',
-          display: 'flex',
-          gap: 6,
-          alignItems: 'center',
-        }}
-      >
-        {label}
-        {hint && (
-          <span
-            style={{
-              color: 'var(--text-3)',
-              fontWeight: 400,
-              fontStyle: 'italic',
-            }}
-          >
-            · {hint}
-          </span>
-        )}
-      </span>
-      {children}
-    </label>
+      <Surface direction="row" gap={12}>
+        <Surface grow>
+          <KV k="Model" v={task.model ?? 'Sonnet (default)'} />
+        </Surface>
+        <Surface grow>
+          <KV k="Branch" v={task.branch ?? '—'} mono />
+        </Surface>
+      </Surface>
+      <Surface direction="row" gap={12}>
+        <Surface grow>
+          <KV k="Status" v={task.status} />
+        </Surface>
+        <Surface grow>
+          <KV
+            k="Tokens"
+            v={
+              task.tokens != null
+                ? `↑${fmtNum((task.tokens as { in: number; out: number }).in)}  ↓${fmtNum((task.tokens as { in: number; out: number }).out)}`
+                : '—'
+            }
+            mono
+          />
+        </Surface>
+      </Surface>
+    </Surface>
   );
 }
 
@@ -1145,55 +780,21 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <h3
-        style={{
-          margin: '0 0 8px',
-          fontSize: 10,
-          fontWeight: 600,
-          color: 'var(--text-3)',
-          letterSpacing: '.12em',
-          textTransform: 'uppercase',
-        }}
-      >
+    <Surface direction="column" gap={8}>
+      <Text as="h3" size="xxs" weight="semibold" tone="faint" tracking="wider" transform="uppercase">
         {label}
-      </h3>
+      </Text>
       {children}
-    </div>
+    </Surface>
   );
 }
 
 function KV({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
-    <div
-      style={{
-        padding: '8px 10px',
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        background: 'var(--bg-2)',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 10,
-          color: 'var(--text-3)',
-          letterSpacing: '.1em',
-          textTransform: 'uppercase',
-          marginBottom: 2,
-        }}
-      >
-        {k}
-      </div>
-      <div
-        style={{
-          fontSize: 12,
-          color: 'var(--text-0)',
-          fontFamily: mono ? 'var(--mono)' : 'var(--sans)',
-        }}
-      >
-        {v}
-      </div>
-    </div>
+    <Surface bordered radius="sm" background="bg2" paddingX={10} paddingY={8} direction="column" gap={2}>
+      <Text size="xxs" tone="faint" tracking="wider" transform="uppercase">{k}</Text>
+      <Text size="sm" mono={mono}>{v}</Text>
+    </Surface>
   );
 }
 
@@ -1263,96 +864,54 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <Surface direction="column" gap={8}>
       {loading ? (
-        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Loading…</div>
+        <Text size="sm" tone="faint">Loading…</Text>
       ) : files.length === 0 ? (
-        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-          No files attached yet.
-        </div>
+        <Text size="sm" tone="faint">No files attached yet.</Text>
       ) : (
-        <ul
-          style={{
-            margin: 0,
-            padding: 0,
-            listStyle: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
+        <Stack direction="column" gap={4}>
           {files.map((f) => (
-            <li
+            <Surface
               key={f.name}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 8px',
-                background: 'var(--bg-2)',
-                border: '1px solid var(--border)',
-                borderRadius: 6,
-              }}
+              bordered
+              radius="sm"
+              background="bg2"
+              paddingX={8}
+              paddingY={6}
+              direction="row"
+              align="center"
+              gap={8}
             >
               <Icon name="file" size={13} />
-              <span
-                title={f.name}
-                style={{
-                  flex: 1,
-                  fontSize: 12,
-                  fontFamily: 'var(--mono)',
-                  color: 'var(--text-1)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  minWidth: 0,
-                }}
-              >
-                {f.name}
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-3)',
-                  fontFamily: 'var(--mono)',
-                }}
-              >
-                {formatBytes(f.size)}
-              </span>
-              <button
-                onClick={() => void onRemove(f.name)}
-                disabled={busy}
+              <Surface grow minWidth={0} title={f.name}>
+                <Text size="sm" mono tone="muted" truncate>{f.name}</Text>
+              </Surface>
+              <Text size="xs" mono tone="faint">{formatBytes(f.size)}</Text>
+              <IconButton
+                aria-label={`Remove ${f.name}`}
                 title="Remove"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-3)',
-                  cursor: busy ? 'default' : 'pointer',
-                  padding: 2,
-                  display: 'flex',
-                  opacity: busy ? 0.5 : 1,
-                }}
-              >
-                <Icon name="trash" size={13} />
-              </button>
-            </li>
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                icon={<Icon name="trash" size={13} />}
+                onClick={() => void onRemove(f.name)}
+              />
+            </Surface>
           ))}
-        </ul>
+        </Stack>
       )}
-      <div>
-        <Btn
-          icon="paperclip"
-          variant="secondary"
+      <Stack direction="row">
+        <Button
           size="sm"
+          variant="secondary"
+          label="Attach files"
+          startIcon={<Icon name="paperclip" size={13} />}
           onClick={() => void onAdd()}
           disabled={busy}
-        >
-          Attach files
-        </Btn>
-      </div>
-      {error && (
-        <div style={{ fontSize: 11, color: 'var(--rose)' }}>{error}</div>
-      )}
-    </div>
+        />
+      </Stack>
+      {error && <Text size="xs" tone="rose">{error}</Text>}
+    </Surface>
   );
 }
