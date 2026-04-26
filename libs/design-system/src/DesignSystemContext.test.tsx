@@ -5,19 +5,20 @@ import {
   DesignSystemProvider,
   useAccentColors,
   useChipTokens,
+  useFontTokens,
   useSizeTokens,
   useStatusTokens,
   useTextColors,
   useTokens,
 } from './DesignSystemContext';
-import { defaultTokens } from './tokens';
+import { defaultDarkTokens, defaultLightTokens, defaultTokens, tokensToCssVars } from './tokens';
 
 function Probe({ get }: { get: () => unknown }) {
   return <span data-testid="p">{JSON.stringify(get())}</span>;
 }
 
 describe('DesignSystemContext', () => {
-  it('useTokens returns the default tree without a provider', () => {
+  it('useTokens returns the default (dark) tree without a provider', () => {
     render(<Probe get={useTokens} />);
     expect(JSON.parse(screen.getByTestId('p').textContent!)).toEqual(defaultTokens);
   });
@@ -37,13 +38,18 @@ describe('DesignSystemContext', () => {
     expect(JSON.parse(screen.getByTestId('p').textContent!)).toEqual(defaultTokens.size);
   });
 
+  it('useFontTokens returns the font tokens', () => {
+    render(<Probe get={useFontTokens} />);
+    expect(JSON.parse(screen.getByTestId('p').textContent!)).toEqual(defaultTokens.font);
+  });
+
   it('useStatusTokens returns the palette for a given status', () => {
     function P() {
       const tokens = useStatusTokens('running');
       return <span data-testid="p">{tokens.color}</span>;
     }
     render(<P />);
-    expect(screen.getByTestId('p')).toHaveTextContent('var(--emerald)');
+    expect(screen.getByTestId('p')).toHaveTextContent(defaultTokens.color.accent.emerald);
   });
 
   it('useChipTokens returns the palette for a given tone', () => {
@@ -52,7 +58,7 @@ describe('DesignSystemContext', () => {
       return <span data-testid="p">{tokens.color}</span>;
     }
     render(<P />);
-    expect(screen.getByTestId('p')).toHaveTextContent('var(--violet)');
+    expect(screen.getByTestId('p')).toHaveTextContent(defaultTokens.color.accent.violet);
   });
 
   it('DesignSystemProvider deep-merges overrides on top of defaults', () => {
@@ -116,5 +122,38 @@ describe('DesignSystemContext', () => {
       </DesignSystemProvider>,
     );
     expect(screen.getByTestId('p').textContent).toBe(defaultTokens.color.bg[1]);
+  });
+
+  it('switches token palette via the theme prop', () => {
+    function P() {
+      const t = useTokens();
+      return <span data-testid="p">{`${t.color.bg[0]}|${t.color.accent.emerald}`}</span>;
+    }
+    const { rerender } = render(
+      <DesignSystemProvider theme="dark"><P /></DesignSystemProvider>,
+    );
+    expect(screen.getByTestId('p').textContent).toBe(
+      `${defaultDarkTokens.color.bg[0]}|${defaultDarkTokens.color.accent.emerald}`,
+    );
+
+    rerender(<DesignSystemProvider theme="light"><P /></DesignSystemProvider>);
+    expect(screen.getByTestId('p').textContent).toBe(
+      `${defaultLightTokens.color.bg[0]}|${defaultLightTokens.color.accent.emerald}`,
+    );
+  });
+
+  it('emits CSS custom properties on the wrapping element', () => {
+    const { container } = render(
+      <DesignSystemProvider theme="dark">
+        <span>x</span>
+      </DesignSystemProvider>,
+    );
+    const root = container.querySelector('.ds-root') as HTMLElement;
+    expect(root).not.toBeNull();
+    expect(root.dataset.theme).toBe('dark');
+    const expected = tokensToCssVars(defaultDarkTokens);
+    for (const [name, value] of Object.entries(expected)) {
+      expect(root.style.getPropertyValue(name)).toBe(value);
+    }
   });
 });

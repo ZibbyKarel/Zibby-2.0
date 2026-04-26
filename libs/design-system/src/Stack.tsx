@@ -12,6 +12,8 @@ export type StackProps = HTMLAttributes<HTMLDivElement> & {
   gap?: number | string;
   wrap?: boolean;
   inline?: boolean;
+  /** Whether the stack should be flex-grow:1 inside a flex parent. */
+  grow?: boolean;
   as?: ElementType;
   children?: ReactNode;
 };
@@ -41,6 +43,7 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
     gap,
     wrap,
     inline,
+    grow,
     as,
     style,
     className = '',
@@ -57,6 +60,7 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
     justifyContent: justify ? justifyMap[justify] : undefined,
     gap: typeof gap === 'number' ? `${gap}px` : gap,
     flexWrap: wrap ? 'wrap' : undefined,
+    flexGrow: grow ? 1 : undefined,
     ...style,
   };
 

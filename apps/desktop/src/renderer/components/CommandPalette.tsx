@@ -1,4 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Kbd,
+  Stack,
+  Surface,
+  Text,
+} from '@nightcoder/design-system';
 import { Icon } from './icons';
 
 export type Command = {
@@ -14,12 +20,6 @@ type Props = {
   open: boolean;
   onClose: () => void;
   commands: Command[];
-};
-
-const kbdStyle: React.CSSProperties = {
-  fontFamily: 'var(--mono)', fontSize: 10, padding: '2px 6px',
-  background: 'var(--bg-3)', border: '1px solid var(--border)',
-  borderRadius: 4, color: 'var(--text-2)',
 };
 
 export function CommandPalette({ open, onClose, commands }: Props) {
@@ -51,57 +51,78 @@ export function CommandPalette({ open, onClose, commands }: Props) {
   if (!open) return null;
 
   return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 70,
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      paddingTop: '12vh', animation: 'fade-in .12s ease',
-    }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        width: 'min(560px, 94vw)', background: 'var(--bg-1)',
-        border: '1px solid var(--border-2)', borderRadius: 12,
-        boxShadow: 'var(--shadow-2)', overflow: 'hidden',
-        animation: 'slide-up .15s ease',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
+    <Surface
+      position="fixed"
+      top={0}
+      right={0}
+      bottom={0}
+      left={0}
+      zIndex={70}
+      background="backdrop"
+      direction="row"
+      align="start"
+      justify="center"
+      paddingTop="12vh"
+      onClick={onClose}
+    >
+      <Surface
+        background="bg1"
+        bordered
+        borderTone="strong"
+        radius="md"
+        shadow="2"
+        overflowY="hidden"
+        width="min(560px, 94vw)"
+        direction="column"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Surface bordered={{ bottom: true }} paddingX={14} paddingY={12} direction="row" align="center" gap={10}>
           <Icon name="search" size={16} />
           <input
             ref={inputRef}
             value={q}
             onChange={(e) => { setQ(e.target.value); setSelected(0); }}
             placeholder="Type a command or search tasks…"
-            style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-0)', fontSize: 14, outline: 'none' }}
+            className="ds-bare-input"
           />
-          <kbd style={kbdStyle}>esc</kbd>
-        </div>
-        <div style={{ maxHeight: 360, overflowY: 'auto', padding: 6 }}>
+          <Kbd>esc</Kbd>
+        </Surface>
+        <Surface maxHeight={360} overflowY="auto" padding={6} direction="column" gap={2}>
           {matches.length === 0 && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
-              No commands match "{q}"
-            </div>
+            <Surface paddingX={20} paddingY={24} direction="row" justify="center">
+              <Text size="sm" tone="faint">No commands match &quot;{q}&quot;</Text>
+            </Surface>
           )}
           {matches.map((c, idx) => (
-            <button
+            <Surface
               key={c.id}
+              as="button"
+              type="button"
+              width="100%"
+              direction="row"
+              align="center"
+              gap={10}
+              paddingX={10}
+              paddingY={8}
+              radius="sm"
+              cursor="pointer"
+              textAlign="left"
+              background={idx === selected ? 'bg3' : 'transparent'}
               onMouseEnter={() => setSelected(idx)}
               onClick={() => { c.run(); onClose(); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '8px 10px',
-                background: idx === selected ? 'var(--bg-3)' : 'transparent',
-                border: 'none', borderRadius: 6, cursor: 'pointer', textAlign: 'left',
-                color: 'var(--text-0)', fontSize: 13,
-              }}
             >
-              <span style={{ width: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)' }}>
+              <Surface width={20} direction="row" align="center" justify="center">
                 <Icon name={c.icon ?? 'arrowRight'} size={14} />
-              </span>
-              <span style={{ flex: 1 }}>{c.label}</span>
-              {c.hint && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{c.hint}</span>}
-              {c.kbd && <kbd style={kbdStyle}>{c.kbd}</kbd>}
-            </button>
+              </Surface>
+              <Stack direction="row" align="center" grow>
+                <Text size="md">{c.label}</Text>
+              </Stack>
+              {c.hint && <Text size="xs" tone="faint">{c.hint}</Text>}
+              {c.kbd && <Kbd>{c.kbd}</Kbd>}
+            </Surface>
           ))}
-        </div>
-      </div>
-    </div>
+        </Surface>
+      </Surface>
+    </Surface>
   );
 }

@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "anthropic-frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "b81e2ff87ed8fa4d6c377ccb127a7254c9e6a77e3ae94f21e6b514f7bb2945a0"
+    },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
