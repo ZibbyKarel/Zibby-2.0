@@ -11,6 +11,10 @@ apps/desktop/dist-renderer/
 apps/desktop/release/
 storybook-static/
 
+# Playwright artifacts
+test-results/
+playwright-report/
+
 # Prisma generated client
 libs/db/src/generated/
 .DS_Store

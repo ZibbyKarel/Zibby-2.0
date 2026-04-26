@@ -64,6 +64,7 @@ export const TaskCardTestIds = {
   editBtn:      (index: number): string => `nc-task-card-${index}-edit`,
   statusBadge:  (index: number): string => `nc-task-card-${index}-status`,
   prChip:       (index: number): string => `nc-task-card-${index}-pr`,
+  conflictedFiles: (index: number): string => `nc-task-card-${index}-conflicted-files`,
 } as const;
 
 /* ─── Task drawer (detail pane) ──────────────────────────────────── */
@@ -104,6 +105,7 @@ export const AddTaskDialogTestIds = {
   acceptanceInput:'nc-add-task-acceptance',
   blockerSelect:  'nc-add-task-blocker',
   attachFilesBtn: 'nc-add-task-attach-files',
+  requiresReviewCheckbox: 'nc-add-task-requires-review',
   submitBtn:      'nc-add-task-submit',
   cancelBtn:      'nc-add-task-cancel',
   /** Phase-model rows. */

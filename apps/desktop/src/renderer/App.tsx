@@ -88,6 +88,8 @@ export default function App() {
               ...v,
               limitResetsAt: v.limitResetsAt ?? null,
               logs: prev[idx]?.logs ?? [],
+              conflictedFiles: prev[idx]?.conflictedFiles ?? [],
+              autoMergeState: prev[idx]?.autoMergeState ?? null,
             };
           }
           return next;
@@ -208,6 +210,13 @@ export default function App() {
           }
           case 'limit-hit': {
             return { ...prev, [idx]: { ...cur, limitResetsAt: ev.resetsAt } };
+          }
+          case 'conflict': {
+            const conflictedFiles = ev.resolved ? [] : ev.conflictedFiles;
+            return { ...prev, [idx]: { ...cur, conflictedFiles } };
+          }
+          case 'auto-merge': {
+            return { ...prev, [idx]: { ...cur, autoMergeState: ev.state } };
           }
         }
       });
@@ -396,6 +405,7 @@ export default function App() {
         model: data.model,
         phaseModels: data.phaseModels,
         blockerTaskId: data.blockerTaskId,
+        requiresHumanReview: data.requiresHumanReview,
       }];
       // If the user picked a blocker, mirror it into the DAG as a
       // dependency edge so the board, run ordering, and block cascade

@@ -291,6 +291,8 @@ async function resumeInterruptedTasks(getWebContents: () => WebContents | null):
           void persistStoryLimitHit(folderPath, taskId, e.resetsAt);
           scheduleResumeAt(e.resetsAt, getWebContents);
           if (liveWc) emitToRenderer(liveWc, { runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
+        } else {
+          forwardConflictAutoMergeEvent({ wc: liveWc, runId, event: e as never });
         }
       },
     });
@@ -389,7 +391,43 @@ function emitToRenderer(wc: WebContents, event: RunEvent) {
   if (!wc.isDestroyed()) wc.send(IpcEvents.RunEvent, event);
 }
 
-const TERMINAL_STATUSES: ReadonlySet<StoryStatus> = new Set(['review', 'done', 'failed', 'cancelled']);
+/**
+ * Forward the new conflict / auto-merge story-execution events through to the
+ * renderer. Returns true when the event was a known conflict/auto-merge kind
+ * (so callers can early-return from the existing if-else ladder); false when
+ * the caller should keep running its own handlers.
+ */
+function forwardConflictAutoMergeEvent(args: {
+  wc: WebContents | null;
+  runId: string;
+  event: { storyIndex: number; kind: string } & Record<string, unknown>;
+}): boolean {
+  const { wc, runId, event } = args;
+  if (event.kind === 'conflict') {
+    if (wc) emitToRenderer(wc, {
+      runId,
+      storyIndex: event.storyIndex,
+      kind: 'conflict',
+      conflictedFiles: event.conflictedFiles as string[],
+      attempt: event.attempt as number,
+      resolved: event.resolved as boolean,
+    });
+    return true;
+  }
+  if (event.kind === 'auto-merge') {
+    if (wc) emitToRenderer(wc, {
+      runId,
+      storyIndex: event.storyIndex,
+      kind: 'auto-merge',
+      state: event.state as 'polling' | 'rebasing' | 'merged' | 'failed',
+      message: event.message as string | undefined,
+    });
+    return true;
+  }
+  return false;
+}
+
+const TERMINAL_STATUSES: ReadonlySet<StoryStatus> = new Set(['review', 'done', 'failed', 'cancelled', 'merged', 'conflict']);
 
 async function persistStoryStatus(
   repoPath: string,
@@ -556,6 +594,8 @@ function registerIpc(getWebContents: () => WebContents | null) {
                   kind: 'limit-hit',
                   resetsAt: e.resetsAt,
                 });
+              } else {
+                forwardConflictAutoMergeEvent({ wc, runId: handle.runId, event: e as never });
               }
             } else if (e.kind === 'run-done') {
               if (wc) emitToRenderer(wc, { runId: handle.runId, kind: 'run-done', success: e.success });
@@ -606,6 +646,8 @@ function registerIpc(getWebContents: () => WebContents | null) {
             if (taskId) void persistStoryLimitHit(req.folderPath, taskId, e.resetsAt);
             scheduleResumeAt(e.resetsAt, getWebContents);
             if (wc) emitToRenderer(wc, { runId: req.runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
+          } else {
+            forwardConflictAutoMergeEvent({ wc, runId: req.runId, event: e as never });
           }
         },
       });
@@ -683,6 +725,8 @@ function registerIpc(getWebContents: () => WebContents | null) {
             void persistStoryLimitHit(folderPath, req.taskId, e.resetsAt);
             scheduleResumeAt(e.resetsAt, getWebContents);
             if (wc) emitToRenderer(wc, { runId, storyIndex: e.storyIndex, kind: 'limit-hit', resetsAt: e.resetsAt });
+          } else {
+            forwardConflictAutoMergeEvent({ wc, runId, event: e as never });
           }
         },
       });

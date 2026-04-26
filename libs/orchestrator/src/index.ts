@@ -14,3 +14,7 @@ export { getTaskDiff, parseUnifiedDiff } from './task-diff';
 export type { GetTaskDiffArgs, GetTaskDiffOutcome } from './task-diff';
 export { formatSquashCommitTitle } from './squash-merge';
 export { resolveBlockerBaseBranch } from './blocker-base';
+export { resolveConflicts, buildResolutionPrompt } from './conflict-resolver';
+export type { ConflictResolverEvent, ConflictResolverResult, ResolveConflictsArgs } from './conflict-resolver';
+export { startAutoMerge } from './auto-merge';
+export type { AutoMergeEvent, AutoMergeHandle, StartAutoMergeArgs } from './auto-merge';

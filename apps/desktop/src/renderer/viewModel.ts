@@ -11,6 +11,10 @@ export type StoryRuntime = {
   endedAt: number | null;
   /** Epoch ms when the usage limit that paused this task resets. */
   limitResetsAt: number | null;
+  /** Files reported as conflicted by the AI conflict resolver, if any. */
+  conflictedFiles: string[];
+  /** Last mergeability state observed by the auto-merger, when active. */
+  autoMergeState: 'polling' | 'rebasing' | 'merged' | 'failed' | null;
 };
 
 export type TaskVM = {
@@ -37,14 +41,18 @@ export type TaskVM = {
   interrupted: boolean;
   /** Epoch ms when a usage-limit-induced pause resets. */
   limitResetsAt: number | null;
+  /** Files currently in conflict, surfaced by the auto-resolver. */
+  conflictedFiles: string[];
+  /** Last mergeability snapshot from the auto-merge poll, if active. */
+  autoMergeState: 'polling' | 'rebasing' | 'merged' | 'failed' | null;
 };
 
 export type TaskColumn = 'queue' | 'running' | 'review' | 'done';
 
 export function statusToCol(status: StoryStatus): TaskColumn {
-  if (status === 'running' || status === 'pushing') return 'running';
-  if (status === 'review') return 'review';
-  if (status === 'done' || status === 'failed' || status === 'cancelled') return 'done';
+  if (status === 'running' || status === 'pushing' || status === 'merging') return 'running';
+  if (status === 'review' || status === 'conflict') return 'review';
+  if (status === 'done' || status === 'merged' || status === 'failed' || status === 'cancelled') return 'done';
   return 'queue'; // pending | blocked | interrupted
 }
 
@@ -90,6 +98,8 @@ export function toTasks(
       waitsOn,
       interrupted,
       limitResetsAt: rt?.limitResetsAt ?? null,
+      conflictedFiles: rt?.conflictedFiles ?? [],
+      autoMergeState: rt?.autoMergeState ?? null,
     };
   });
 }
@@ -103,10 +113,12 @@ export function emptyRuntime(): StoryRuntime {
     startedAt: null,
     endedAt: null,
     limitResetsAt: null,
+    conflictedFiles: [],
+    autoMergeState: null,
   };
 }
 
-const TERMINAL_STATUSES: StoryStatus[] = ['done', 'failed', 'cancelled'];
+const TERMINAL_STATUSES: StoryStatus[] = ['done', 'failed', 'cancelled', 'merged'];
 export function isTerminal(s: StoryStatus): boolean {
   return TERMINAL_STATUSES.includes(s);
 }

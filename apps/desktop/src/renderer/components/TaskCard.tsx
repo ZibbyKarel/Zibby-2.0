@@ -31,7 +31,11 @@ function formatResumeAt(ts: number): string {
 
 export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, onEdit, onRun, onDelete }: Props) {
   const waits = task.waitsOn.length > 0;
-  const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'blocked';
+  const canRun =
+    task.status === 'pending' ||
+    task.status === 'failed' ||
+    task.status === 'blocked' ||
+    task.status === 'conflict';
   const canResume =
     task.status === 'interrupted' ||
     (task.interrupted && (task.status === 'running' || task.status === 'pushing'));
@@ -135,7 +139,28 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
         {canResume && !pausedByLimit && (
           <Chip tone="warn" icon={<Icon value={IconName.Warn} size={11} />}>interrupted</Chip>
         )}
+        {task.status === 'merging' && (
+          <Chip tone="sky" icon={<Icon value={IconName.Clock} size={11} />}>auto-merging</Chip>
+        )}
       </Stack>
+
+      {task.status === 'conflict' && task.conflictedFiles.length > 0 && (
+        <Surface
+          paddingTop={6}
+          data-testid={TestIds.TaskCard.conflictedFiles(task.index)}
+        >
+          <Text size="xs" tone="rose" weight="medium">
+            Auto-resolve failed — conflicted files:
+          </Text>
+          <ul className="mt-1 ml-4 list-disc">
+            {task.conflictedFiles.map((f) => (
+              <li key={f}>
+                <Text as="span" size="xs" mono tone="muted">{f}</Text>
+              </li>
+            ))}
+          </ul>
+        </Surface>
+      )}
 
       <Surface paddingTop={10} direction="row" align="center" justify="between" gap={8}>
         <Stack direction="row" align="center" gap={10}>
