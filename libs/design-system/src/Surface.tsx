@@ -78,6 +78,10 @@ export type SurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   opacity?: number;
   /** Text alignment, useful when rendering as a `<button>`. */
   textAlign?: 'left' | 'center' | 'right';
+  /** User-select behaviour. */
+  userSelect?: 'auto' | 'none' | 'text' | 'all';
+  /** Resize behaviour for `<textarea>` etc. */
+  resize?: 'none' | 'vertical' | 'horizontal' | 'both';
   /** Fixed width — px when a number. */
   width?: number | string;
   /** Fixed height — px when a number. */
@@ -158,6 +162,8 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
     interactive,
     opacity,
     textAlign,
+    userSelect,
+    resize,
     width,
     height,
     maxWidth,
@@ -278,6 +284,8 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
     cursor,
     opacity,
     textAlign,
+    userSelect,
+    resize,
     display:        direction ? 'flex' : undefined,
     flexDirection:  direction,
     gap:            gap === undefined ? undefined : (typeof gap === 'number' ? `${gap}px` : gap),
