@@ -1,24 +1,54 @@
-export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
-export { IconButton, type IconButtonProps, type IconButtonVariant, type IconButtonSize } from './IconButton';
-export { Input, type InputProps } from './Input';
-export { SearchField, type SearchFieldProps } from './SearchField';
-export { TextField, type TextFieldProps } from './TextField';
-export { Textarea, type TextareaProps } from './Textarea';
-export { Kbd, type KbdProps, type KbdSize } from './Kbd';
+export {
+  Button,
+  type ButtonProps,
+  type ButtonVariant,
+  type ButtonSize,
+} from './components/Button';
+export {
+  IconButton,
+  type IconButtonProps,
+  type IconButtonVariant,
+  type IconButtonSize,
+} from './components/IconButton';
+export { Input, type InputProps } from './components/Input';
+export { SearchField, type SearchFieldProps } from './components/SearchField';
+export { TextField, type TextFieldProps } from './components/TextField';
+export { Textarea, type TextareaProps } from './components/Textarea';
+export { Kbd, type KbdProps, type KbdSize } from './components/Kbd';
 export {
   FilterChip,
   type FilterChipProps,
   type FilterChipTone,
   type FilterChipSize,
-} from './FilterChip';
-export { Select, type SelectProps, type SelectOption } from './Select';
-export { Checkbox, type CheckboxProps } from './Checkbox';
-export { Snackbar, type SnackbarProps, type SnackbarSeverity } from './Snackbar';
-export { Alert, type AlertProps, type AlertSeverity } from './Alert';
-export { CircularProgress, type CircularProgressProps } from './CircularProgress';
-export { Badge, type BadgeProps, type BadgeStatus } from './Badge';
-export { Chip, type ChipProps, type ChipTone, type ChipSize } from './Chip';
-export { Divider, type DividerProps, type DividerOrientation } from './Divider';
+} from './components/FilterChip';
+export {
+  Select,
+  type SelectProps,
+  type SelectOption,
+} from './components/Select';
+export { Checkbox, type CheckboxProps } from './components/Checkbox';
+export {
+  Snackbar,
+  type SnackbarProps,
+  type SnackbarSeverity,
+} from './components/Snackbar';
+export { Alert, type AlertProps, type AlertSeverity } from './components/Alert';
+export {
+  CircularProgress,
+  type CircularProgressProps,
+} from './components/CircularProgress';
+export { Badge, type BadgeProps, type BadgeStatus } from './components/Badge';
+export {
+  Chip,
+  type ChipProps,
+  type ChipTone,
+  type ChipSize,
+} from './components/Chip';
+export {
+  Divider,
+  type DividerProps,
+  type DividerOrientation,
+} from './components/Divider';
 export {
   Card,
   CardHeader,
@@ -28,17 +58,27 @@ export {
   type CardHeaderProps,
   type CardVariant,
   type CardPadding,
-} from './Card';
-export { Dialog, DialogBody, type DialogProps } from './Dialog';
-export { Drawer, type DrawerProps, type DrawerAnchor } from './Drawer';
-export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';
+} from './components/Card';
+export { Dialog, DialogBody, type DialogProps } from './components/Dialog';
+export {
+  Drawer,
+  type DrawerProps,
+  type DrawerAnchor,
+} from './components/Drawer';
+export {
+  Tabs,
+  TabPanel,
+  type TabsProps,
+  type TabPanelProps,
+  type TabItem,
+} from './components/Tabs';
 export {
   Stack,
   type StackProps,
   type StackDirection,
   type StackAlign,
   type StackJustify,
-} from './Stack';
+} from './components/Stack';
 export {
   Surface,
   type SurfaceProps,
@@ -47,8 +87,8 @@ export {
   type SurfaceBorderTone,
   type SurfaceRadius,
   type SurfaceShadow,
-} from './Surface';
-export { Spacer, type SpacerProps, type SpacerAxis } from './Spacer';
+} from './components/Surface';
+export { Spacer, type SpacerProps, type SpacerAxis } from './components/Spacer';
 export {
   Text,
   type TextProps,
@@ -59,8 +99,8 @@ export {
   type TextTracking,
   type TextAlign,
   type TextWhitespace,
-} from './Text';
-export { Icon, IconName, type IconProps } from './Icon';
+} from './components/Text';
+export { Icon, IconName, type IconProps } from './components/Icon';
 export {
   DesignSystemProvider,
   useTokens,
