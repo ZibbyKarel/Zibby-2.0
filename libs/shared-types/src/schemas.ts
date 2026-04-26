@@ -27,6 +27,7 @@ export const StoryCoreSchema = z.object({
   model: z.string().optional(),
   phaseModels: PhaseModelsSchema.optional(),
   blockerTaskId: z.string().min(1).max(80).optional(),
+  requiresHumanReview: z.boolean().optional(),
 });
 
 export const StorySchema = StoryCoreSchema.extend({
@@ -63,6 +64,7 @@ const PersistedStorySchema = z.object({
   model: z.string().optional(),
   phaseModels: PhaseModelsSchema.optional(),
   blockerTaskId: z.string().optional(),
+  requiresHumanReview: z.boolean().optional(),
 });
 
 const PersistedDependencySchema = z.object({
@@ -77,7 +79,7 @@ export const PersistedPlanSchema = z.object({
 });
 
 export const PersistedStoryRuntimeSchema = z.object({
-  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted']),
+  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted', 'conflict', 'merging', 'merged']),
   branch: z.string().nullable(),
   prUrl: z.string().nullable(),
   startedAt: z.number().nullable(),
@@ -92,7 +94,7 @@ export const PersistedRuntimeSchema = z.record(
 
 export const PersistedTaskSchema = z.object({
   taskId: z.string().min(1),
-  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted']),
+  status: z.enum(['pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted', 'conflict', 'merging', 'merged']),
   branch: z.string().nullable(),
   prUrl: z.string().nullable(),
   startedAt: z.number().nullable(),
@@ -116,6 +118,7 @@ const ProjectPlanStorySchema = z.object({
   model: z.string().optional(),
   phaseModels: PhaseModelsSchema.optional(),
   blockerTaskId: z.string().optional(),
+  requiresHumanReview: z.boolean().optional(),
 });
 
 const ProjectPlanSchema = z.object({

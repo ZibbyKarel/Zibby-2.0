@@ -42,7 +42,10 @@ export type StatusKey =
   | 'done'
   | 'failed'
   | 'cancelled'
-  | 'interrupted';
+  | 'interrupted'
+  | 'conflict'
+  | 'merging'
+  | 'merged';
 
 export type StatusPalette = {
   /** Foreground (label) color. */
@@ -123,6 +126,9 @@ function statusFor(c: ColorTokens): StatusTokens {
     failed:      { label: 'failed',      color: c.accent.rose,    bg: 'rgba(244,63,94,.10)',   dot: c.accent.rose },
     cancelled:   { label: 'cancelled',   color: c.accent.amber,   bg: 'rgba(245,158,11,.10)',  dot: c.accent.amber },
     interrupted: { label: 'interrupted', color: c.accent.amber,   bg: 'rgba(245,158,11,.12)',  dot: c.accent.amber,   pulse: true },
+    conflict:    { label: 'conflict',    color: c.accent.rose,    bg: 'rgba(244,63,94,.12)',   dot: c.accent.rose,    pulse: true },
+    merging:     { label: 'merging',     color: c.accent.sky,     bg: 'rgba(56,189,248,.12)',  dot: c.accent.sky,     pulse: true },
+    merged:      { label: 'merged',      color: c.accent.emerald, bg: 'rgba(16,185,129,.10)',  dot: c.accent.emerald },
   };
 }
 

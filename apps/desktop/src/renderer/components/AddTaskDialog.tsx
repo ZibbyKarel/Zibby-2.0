@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { PhaseModels, PhaseModel, RepoTreeEntry, ThinkingLevel } from '@nightcoder/shared-types/ipc';
 import {
   Button,
+  Checkbox,
   Icon,
   IconButton,
   IconName,
@@ -22,6 +23,12 @@ export type NewTaskData = {
   attachedFilePaths: string[];
   phaseModels?: PhaseModels;
   blockerTaskId?: string;
+  /**
+   * When false, the orchestrator runs the task end-to-end: it auto-resolves any
+   * rebase conflicts via the AI executor and auto-merges the PR once it is
+   * mergeable. Defaults to true (the existing human-review flow).
+   */
+  requiresHumanReview: boolean;
 };
 
 export type BlockerOption = {
@@ -103,6 +110,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
   const [acceptance, setAcceptance] = useState('');
   const [phaseModels, setPhaseModels] = useState<PhaseModels>({});
   const [blockerTaskId, setBlockerTaskId] = useState<string>('');
+  const [requiresHumanReview, setRequiresHumanReview] = useState<boolean>(true);
   const [attachedFilePaths, setAttachedFilePaths] = useState<string[]>([]);
   const [pickError, setPickError] = useState<string | null>(null);
 
@@ -120,6 +128,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
     if (!open) return;
     setTitle(''); setDescription(''); setAcceptance('');
     setPhaseModels({}); setBlockerTaskId('');
+    setRequiresHumanReview(true);
     setAttachedFilePaths([]); setPickError(null);
     setTreeFilter(''); setExpanded(new Set()); setDropActive(false);
   }, [open]);
@@ -509,6 +518,15 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               data-testid={TestIds.AddTaskDialog.blockerSelect}
             />
 
+            {/* ── Review / auto-merge gate ──────────────────── */}
+            <Checkbox
+              label="Requires human review"
+              helperText="Uncheck to let NightCoder auto-resolve any rebase conflicts and squash-merge the PR once it's mergeable."
+              checked={requiresHumanReview}
+              onChange={(e) => setRequiresHumanReview(e.target.checked)}
+              data-testid={TestIds.AddTaskDialog.requiresReviewCheckbox}
+            />
+
             {/* ── Attachments (existing flow) ───────────────── */}
             <Surface direction="column" gap={6}>
               <Surface direction="row" align="center" gap={6}>
@@ -594,6 +612,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               attachedFilePaths,
               phaseModels: Object.keys(phaseModels).length > 0 ? phaseModels : undefined,
               blockerTaskId: blockerTaskId || undefined,
+              requiresHumanReview,
             })}
             data-testid={TestIds.AddTaskDialog.submitBtn}
           />

@@ -75,6 +75,13 @@ export type Story = {
    * PR targets that branch instead of the repo's default base.
    */
   blockerTaskId?: string;
+  /**
+   * When true (default), the task stops at `review` and waits for a human to
+   * merge the PR. When false, the orchestrator will rebase the branch onto
+   * base before pushing (resolving any conflicts via the AI executor) and
+   * auto-merge the PR once it becomes mergeable.
+   */
+  requiresHumanReview?: boolean;
 };
 
 export type Dependency = {
@@ -122,7 +129,10 @@ export type StoryStatus =
   | 'done'
   | 'failed'
   | 'cancelled'
-  | 'interrupted';
+  | 'interrupted'
+  | 'conflict'
+  | 'merging'
+  | 'merged';
 
 export type RunStartRequest = {
   folderPath: string;
@@ -161,6 +171,8 @@ export type RunEvent =
   | { runId: string; storyIndex: number; kind: 'branch'; branch: string }
   | { runId: string; storyIndex: number; kind: 'pr'; url: string; branch: string }
   | { runId: string; storyIndex: number; kind: 'limit-hit'; resetsAt: number | null }
+  | { runId: string; storyIndex: number; kind: 'conflict'; conflictedFiles: string[]; attempt: number; resolved: boolean }
+  | { runId: string; storyIndex: number; kind: 'auto-merge'; state: 'polling' | 'rebasing' | 'merged' | 'failed'; message?: string }
   | { runId: string; kind: 'run-done'; success: boolean };
 
 export type RemoveStoryPayload = {

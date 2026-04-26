@@ -49,6 +49,107 @@ export async function gitPush(cwd: string, branch: string, opts: CancelOpts = {}
   });
 }
 
+/**
+ * Force-push using `--force-with-lease` so we never overwrite a commit on the
+ * remote that we haven't seen locally. Used after auto-resolving a rebase
+ * conflict on a story branch that was already pushed.
+ */
+export async function gitForcePushWithLease(
+  cwd: string,
+  branch: string,
+  opts: CancelOpts = {},
+): Promise<void> {
+  await execFileP('git', ['push', '--force-with-lease', 'origin', branch], {
+    cwd,
+    ...OPTS,
+    signal: opts.signal,
+  });
+}
+
+export async function gitFetch(
+  cwd: string,
+  branch: string,
+  opts: CancelOpts = {},
+): Promise<void> {
+  await execFileP('git', ['fetch', 'origin', branch], {
+    cwd,
+    ...OPTS,
+    signal: opts.signal,
+  });
+}
+
+/**
+ * Mergeability state reported by GitHub's `mergeStateStatus` field. We collapse
+ * GitHub's full enum into the values the auto-merger reacts to.
+ *
+ * - 'CLEAN': PR can be merged immediately.
+ * - 'DIRTY': branch has merge conflicts with base.
+ * - 'BLOCKED' / 'BEHIND': waiting on required reviews/branch protection.
+ * - 'UNSTABLE': mergeable but a check is failing or pending.
+ * - 'HAS_HOOKS': mergeable, post-receive hook is enabled.
+ * - 'UNKNOWN': GitHub hasn't computed it yet — poll again.
+ */
+export type PrMergeStateStatus =
+  | 'CLEAN'
+  | 'DIRTY'
+  | 'BLOCKED'
+  | 'BEHIND'
+  | 'UNSTABLE'
+  | 'HAS_HOOKS'
+  | 'UNKNOWN';
+
+export type PrMergeState = {
+  mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+  mergeStateStatus: PrMergeStateStatus;
+};
+
+export async function ghViewPrMergeState(args: {
+  cwd: string;
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<PrMergeState | null> {
+  try {
+    const { stdout } = await execFileP(
+      'gh',
+      ['pr', 'view', args.branch, '--json', 'mergeable,mergeStateStatus'],
+      { cwd: args.cwd, ...OPTS, signal: args.signal },
+    );
+    const parsed = JSON.parse(stdout) as {
+      mergeable?: string;
+      mergeStateStatus?: string;
+    };
+    const mergeable =
+      parsed.mergeable === 'MERGEABLE' || parsed.mergeable === 'CONFLICTING'
+        ? parsed.mergeable
+        : 'UNKNOWN';
+    const stateRaw = (parsed.mergeStateStatus ?? 'UNKNOWN').toUpperCase();
+    const mergeStateStatus: PrMergeStateStatus =
+      stateRaw === 'CLEAN' ||
+      stateRaw === 'DIRTY' ||
+      stateRaw === 'BLOCKED' ||
+      stateRaw === 'BEHIND' ||
+      stateRaw === 'UNSTABLE' ||
+      stateRaw === 'HAS_HOOKS'
+        ? (stateRaw as PrMergeStateStatus)
+        : 'UNKNOWN';
+    return { mergeable, mergeStateStatus };
+  } catch {
+    return null;
+  }
+}
+
+export async function ghMergePrAuto(args: {
+  cwd: string;
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<void> {
+  await execFileP(
+    'gh',
+    ['pr', 'merge', args.branch, '--squash', '--auto', '--delete-branch'],
+    { cwd: args.cwd, ...OPTS, signal: args.signal },
+  );
+}
+
 export type CreatePrArgs = {
   cwd: string;
   title: string;

@@ -16,6 +16,8 @@ import { attachWorktree, createWorktree, type WorktreeHandle } from './worktree'
 import { slugify, uniqueSlug } from './slug';
 import { tryClaimStory } from './active-stories';
 import { installPostCommitHook } from './post-commit-hook';
+import { resolveConflicts, type ConflictResolverEvent } from './conflict-resolver';
+import { startAutoMerge, type AutoMergeEvent, type AutoMergeHandle } from './auto-merge';
 
 const execFileP = promisify(execFile);
 const POLL_INTERVAL_MS = 2000;
@@ -26,7 +28,9 @@ export type StoryExecutionEvent =
   | { kind: 'log'; stream: 'stdout' | 'stderr' | 'info'; line: string }
   | { kind: 'branch'; branch: string }
   | { kind: 'pr'; url: string; branch: string }
-  | { kind: 'limit-hit'; resetsAt: number | null };
+  | { kind: 'limit-hit'; resetsAt: number | null }
+  | { kind: 'conflict'; conflictedFiles: string[]; attempt: number; resolved: boolean }
+  | { kind: 'auto-merge'; state: 'polling' | 'rebasing' | 'merged' | 'failed'; message?: string };
 
 export type StoryExecutionResult = {
   success: boolean;
@@ -383,6 +387,7 @@ export async function executeStory(args: {
       onEvent({ kind: 'log', stream: 'info', line: 'push-only resume — skipping claude, jumping straight to push + PR' });
     }
 
+    let autoMergeHandle: AutoMergeHandle | null = null;
     try {
       onEvent({ kind: 'status', status: 'pushing' });
       const madeCommit = await commitAllIfDirty(
@@ -391,6 +396,38 @@ export async function executeStory(args: {
         { signal: abort.signal }
       );
       if (madeCommit) onEvent({ kind: 'log', stream: 'info', line: 'flushed uncommitted changes into final commit' });
+
+      const autoResolveEnabled = story.requiresHumanReview === false;
+      if (autoResolveEnabled) {
+        onEvent({ kind: 'log', stream: 'info', line: `auto-resolve enabled — rebasing on origin/${baseBranch} before push` });
+        const cr = await resolveConflicts({
+          worktreePath: worktree.path,
+          baseBranch,
+          story,
+          model: implementationModelFor(story),
+          signal,
+          onEvent: (e: ConflictResolverEvent) => {
+            if (e.kind === 'log') {
+              onEvent({ kind: 'log', stream: e.stream, line: e.line });
+            } else if (e.kind === 'conflict-detected') {
+              onEvent({ kind: 'conflict', conflictedFiles: e.conflictedFiles, attempt: e.attempt, resolved: false });
+            } else if (e.kind === 'conflict-resolved') {
+              onEvent({ kind: 'conflict', conflictedFiles: [], attempt: e.attempt, resolved: true });
+            }
+          },
+        });
+        if (cr.kind === 'failed') {
+          if (cr.reason === 'cancelled') {
+            clearInterval(cancelWatcher);
+            onEvent({ kind: 'status', status: 'cancelled' });
+            return { success: false, error: 'cancelled' };
+          }
+          onEvent({ kind: 'log', stream: 'stderr', line: `auto-resolve failed: ${cr.message}` });
+          onEvent({ kind: 'status', status: 'conflict' });
+          return { success: false, error: `unresolved conflicts: ${cr.conflictedFiles.join(', ') || cr.message}` };
+        }
+      }
+
       await gitPush(worktree.path, worktree.branch, { signal: abort.signal });
       onEvent({ kind: 'log', stream: 'info', line: `pushed ${worktree.branch}` });
       // A prior push-only resume or interrupted PR step may have already created
@@ -408,11 +445,42 @@ export async function executeStory(args: {
         onEvent({ kind: 'log', stream: 'info', line: `reusing existing PR ${existingPr}` });
       }
       onEvent({ kind: 'pr', url: prUrl, branch: worktree.branch });
-      onEvent({ kind: 'status', status: 'review' });
+
+      if (autoResolveEnabled) {
+        onEvent({ kind: 'status', status: 'merging' });
+        autoMergeHandle = startAutoMerge({
+          worktreePath: worktree.path,
+          branch: worktree.branch,
+          baseBranch,
+          story,
+          model: implementationModelFor(story),
+          signal,
+          onEvent: (e: AutoMergeEvent) => {
+            if (e.kind === 'log') {
+              onEvent({ kind: 'log', stream: e.stream, line: e.line });
+            } else if (e.kind === 'mergeability') {
+              onEvent({ kind: 'auto-merge', state: 'polling', message: e.state });
+            } else if (e.kind === 'merged') {
+              onEvent({ kind: 'auto-merge', state: 'merged' });
+            } else if (e.kind === 'failed') {
+              onEvent({ kind: 'auto-merge', state: 'failed', message: e.message });
+            }
+          },
+        });
+        await autoMergeHandle.done;
+        if (signal.cancelled) {
+          onEvent({ kind: 'status', status: 'cancelled' });
+          return { success: false, error: 'cancelled' };
+        }
+        onEvent({ kind: 'status', status: 'merged' });
+      } else {
+        onEvent({ kind: 'status', status: 'review' });
+      }
       reachedReview = true;
       return { success: true, prUrl, branch: worktree.branch };
     } finally {
       clearInterval(cancelWatcher);
+      autoMergeHandle?.stop();
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
