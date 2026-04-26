@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { PhaseModels, PhaseModel, RepoTreeEntry, ThinkingLevel } from '@nightcoder/shared-types/ipc';
+import {
+  Button,
+  IconButton,
+  Select,
+  Stack,
+  Surface,
+  Text,
+  Textarea,
+  TextField,
+} from '@nightcoder/design-system';
 import { Icon } from './icons';
-import { Btn } from './primitives';
 
 export type NewTaskData = {
   title: string;
@@ -50,14 +59,6 @@ const THINKING_OPTIONS: readonly { value: ThinkingLevel; label: string }[] = [
   { value: 'medium', label: 'Think carefully' },
   { value: 'high',   label: 'Think deeply' },
 ];
-
-const INPUT_BORDER_COLOR = 'var(--border)';
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px',
-  background: 'var(--bg-2)', border: `1px solid ${INPUT_BORDER_COLOR}`,
-  borderRadius: 8, color: 'var(--text-0)', fontSize: 13,
-  outline: 'none', transition: 'border-color .12s',
-};
 
 const DRAG_MIME = 'application/x-nightcoder-path';
 
@@ -249,92 +250,140 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
   };
 
   return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 60,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      animation: 'fade-in .14s ease',
-    }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        width: 'min(960px, 96vw)', maxHeight: '92vh',
-        background: 'var(--bg-1)', border: '1px solid var(--border-2)',
-        borderRadius: 14, boxShadow: 'var(--shadow-2)',
-        animation: 'slide-up .2s ease',
-        display: 'flex', flexDirection: 'column',
-      }}>
-        <header style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '16px 20px 14px', borderBottom: '1px solid var(--border)',
-        }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--emerald)' }}>
+    <Surface
+      onClick={onClose}
+      position="fixed"
+      top={0}
+      right={0}
+      bottom={0}
+      left={0}
+      zIndex={60}
+      background="backdrop"
+      direction="row"
+      align="center"
+      justify="center"
+    >
+      <Surface
+        onClick={(e) => e.stopPropagation()}
+        width="min(960px, 96vw)"
+        maxHeight="92vh"
+        background="bg1"
+        bordered
+        borderTone="strong"
+        radius="md"
+        shadow="2"
+        direction="column"
+      >
+        <Surface
+          as="header"
+          bordered={{ bottom: true }}
+          paddingX={20}
+          paddingTop={16}
+          paddingBottom={14}
+          direction="row"
+          align="center"
+          gap={10}
+        >
+          <Surface
+            background="accentSoft"
+            radius="sm"
+            width={32}
+            height={32}
+            direction="row"
+            align="center"
+            justify="center"
+          >
             <Icon name="plus" size={16} />
-          </div>
-          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>New task</h2>
-          <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
+          </Surface>
+          <Text as="h2" size="lg" weight="semibold">New task</Text>
+          <Text size="xs" mono tone="faint">
             drag a file from the tree into the description to reference it with @path
-          </span>
-          <div style={{ flex: 1 }} />
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 4, borderRadius: 4, display: 'flex' }} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </header>
+          </Text>
+          <Surface grow />
+          <IconButton
+            aria-label="Close"
+            size="sm"
+            variant="ghost"
+            icon={<Icon name="x" size={16} />}
+            onClick={onClose}
+          />
+        </Surface>
 
-        <div style={{ display: 'flex', gap: 0, flex: 1, minHeight: 0 }}>
+        <Surface direction="row" grow minHeight={0}>
           {/* ── File tree panel ─────────────────────────────────── */}
-          <aside style={{
-            width: 300, flexShrink: 0,
-            borderRight: '1px solid var(--border)',
-            background: 'var(--bg-0)',
-            display: 'flex', flexDirection: 'column', minHeight: 0,
-          }}>
-            <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 8px', background: 'var(--bg-2)',
-                border: '1px solid var(--border)', borderRadius: 6,
-              }}>
+          <Surface
+            as="aside"
+            width={300}
+            shrink={false}
+            bordered={{ right: true }}
+            background="bg0"
+            direction="column"
+            minHeight={0}
+          >
+            <Surface
+              bordered={{ bottom: true }}
+              paddingX={12}
+              paddingTop={12}
+              paddingBottom={8}
+            >
+              <Surface
+                background="bg2"
+                bordered
+                radius="sm"
+                paddingX={8}
+                paddingY={6}
+                direction="row"
+                align="center"
+                gap={6}
+              >
                 <Icon name="search" size={12} />
                 <input
                   value={treeFilter}
                   onChange={(e) => setTreeFilter(e.target.value)}
                   placeholder="Filter files…"
                   aria-label="Filter files"
-                  style={{
-                    flex: 1, background: 'transparent', border: 'none',
-                    color: 'var(--text-0)', fontSize: 12, outline: 'none',
-                    fontFamily: 'var(--mono)',
-                  }}
+                  className="ds-bare-input ds-mono"
                 />
                 {treeFilter && (
-                  <button
-                    onClick={() => setTreeFilter('')}
+                  <IconButton
                     aria-label="Clear filter"
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 0, display: 'flex' }}
-                  >
-                    <Icon name="x" size={11} />
-                  </button>
+                    size="sm"
+                    variant="ghost"
+                    icon={<Icon name="x" size={11} />}
+                    onClick={() => setTreeFilter('')}
+                  />
                 )}
-              </div>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '8px 4px 12px', minHeight: 0 }}>
+              </Surface>
+            </Surface>
+            <Surface
+              grow
+              overflowY="auto"
+              paddingX={4}
+              paddingTop={8}
+              paddingBottom={12}
+              minHeight={0}
+            >
               {!folderPath && (
-                <div style={{ padding: '10px 12px', fontSize: 11, color: 'var(--text-3)' }}>
-                  Pick a folder to see its file tree.
-                </div>
+                <Surface paddingX={12} paddingY={10}>
+                  <Text size="xs" tone="faint">Pick a folder to see its file tree.</Text>
+                </Surface>
               )}
               {folderPath && treeLoading && (
-                <div style={{ padding: '10px 12px', fontSize: 11, color: 'var(--text-3)' }}>
-                  Loading tree…
-                </div>
+                <Surface paddingX={12} paddingY={10}>
+                  <Text size="xs" tone="faint">Loading tree…</Text>
+                </Surface>
               )}
               {folderPath && treeError && (
-                <div style={{ padding: '10px 12px', fontSize: 11, color: 'var(--rose)' }}>
-                  Couldn't load tree: {treeError}
-                </div>
+                <Surface paddingX={12} paddingY={10}>
+                  <Text size="xs" tone="rose">Couldn&apos;t load tree: {treeError}</Text>
+                </Surface>
               )}
               {folderPath && !treeLoading && !treeError && filteredTree.length === 0 && (
-                <div style={{ padding: '10px 12px', fontSize: 11, color: 'var(--text-3)' }}>
-                  {treeFilter ? 'No files match this filter.' : 'No files found.'}
-                </div>
+                <Surface paddingX={12} paddingY={10}>
+                  <Text size="xs" tone="faint">
+                    {treeFilter ? 'No files match this filter.' : 'No files found.'}
+                  </Text>
+                </Surface>
               )}
               {folderPath && filteredTree.length > 0 && (
                 <TreeList
@@ -344,177 +393,182 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                   onToggle={toggleDir}
                 />
               )}
-            </div>
-          </aside>
+            </Surface>
+          </Surface>
 
           {/* ── Form ────────────────────────────────────────────── */}
-          <div style={{
-            flex: 1, minWidth: 0, overflow: 'auto',
-            padding: '18px 20px 20px',
-            display: 'flex', flexDirection: 'column', gap: 14,
-          }}>
-            <Field label="Title" hint="optional">
-              <input
-                value={title} onChange={(e) => setTitle(e.target.value)}
-                placeholder="What should the agent do?" style={inputStyle}
-              />
-            </Field>
-            <Field label="Description / brief" required hint="drop a file from the tree to paste @path">
-              <textarea
-                ref={descriptionRef}
-                autoFocus
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onDragOver={(e) => {
-                  if (e.dataTransfer.types.includes(DRAG_MIME) || e.dataTransfer.types.includes('text/plain')) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'copy';
-                    setDropActive(true);
-                  }
-                }}
-                onDragLeave={() => setDropActive(false)}
-                onDrop={onDescriptionDrop}
-                placeholder="Describe the work. Drag files from the tree to reference them with @path."
-                rows={5}
-                style={{
-                  ...inputStyle,
-                  resize: 'vertical',
-                  borderColor: dropActive ? 'var(--emerald)' : INPUT_BORDER_COLOR,
-                  boxShadow: dropActive ? '0 0 0 2px rgba(16,185,129,.2)' : undefined,
-                }}
-              />
-            </Field>
+          <Surface
+            grow
+            minWidth={0}
+            overflowY="auto"
+            paddingX={20}
+            paddingTop={18}
+            paddingBottom={20}
+            direction="column"
+            gap={14}
+          >
+            <TextField
+              label="Title"
+              helperText="optional"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="What should the agent do?"
+            />
+            <Textarea
+              ref={descriptionRef}
+              label="Description / brief"
+              helperText="drop a file from the tree to paste @path"
+              required
+              autoFocus
+              invalid={dropActive}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes(DRAG_MIME) || e.dataTransfer.types.includes('text/plain')) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'copy';
+                  setDropActive(true);
+                }
+              }}
+              onDragLeave={() => setDropActive(false)}
+              onDrop={onDescriptionDrop}
+              placeholder="Describe the work. Drag files from the tree to reference them with @path."
+              rows={5}
+            />
 
-            <Field label="Acceptance criteria" hint="one per line, optional">
-              <textarea value={acceptance} onChange={(e) => setAcceptance(e.target.value)}
-                placeholder={"Column drag works\nCounts are correct"}
-                rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
-            </Field>
+            <Textarea
+              label="Acceptance criteria"
+              helperText="one per line, optional"
+              value={acceptance}
+              onChange={(e) => setAcceptance(e.target.value)}
+              placeholder={'Column drag works\nCounts are correct'}
+              rows={3}
+            />
 
             {/* ── Phases section ─────────────────────────────── */}
-            <section>
-              <SectionHeader
-                title="Phase models"
-                hint="Implementation drives today's single run. Planning / QA are saved for the upcoming multi-phase executor."
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Surface as="section" direction="column" gap={8}>
+              <Surface direction="column" gap={2}>
+                <Text size="xs" weight="medium" tone="muted" tracking="wide">Phase models</Text>
+                <Text size="xs" tone="faint" italic>
+                  Implementation drives today&apos;s single run. Planning / QA are saved for the upcoming multi-phase executor.
+                </Text>
+              </Surface>
+              <Stack direction="column" gap={8}>
                 {PHASES.map(({ key, label, hint }) => {
                   const cur = phaseModels[key] ?? {};
                   return (
-                    <div
-                      key={key}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '110px 1fr 1fr',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-1)', fontWeight: 500 }}>{label}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{hint}</span>
-                      </div>
-                      <select
-                        aria-label={`${label} model`}
-                        value={cur.model ?? ''}
-                        onChange={(e) => setPhase(key, { model: e.target.value || undefined })}
-                        style={{ ...inputStyle, height: 32 }}
-                      >
-                        {MODEL_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      <select
-                        aria-label={`${label} thinking`}
-                        value={cur.thinking ?? 'off'}
-                        onChange={(e) => setPhase(key, { thinking: e.target.value as ThinkingLevel })}
-                        style={{ ...inputStyle, height: 32 }}
-                      >
-                        {THINKING_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <Stack key={key} direction="row" align="center" gap={8}>
+                      <Surface width={110} direction="column">
+                        <Text size="sm" weight="medium" tone="muted">{label}</Text>
+                        <Text size="xxs" tone="faint">{hint}</Text>
+                      </Surface>
+                      <Surface grow>
+                        <Select
+                          aria-label={`${label} model`}
+                          value={cur.model ?? ''}
+                          onChange={(e) => setPhase(key, { model: e.target.value || undefined })}
+                          options={MODEL_OPTIONS}
+                        />
+                      </Surface>
+                      <Surface grow>
+                        <Select
+                          aria-label={`${label} thinking`}
+                          value={cur.thinking ?? 'off'}
+                          onChange={(e) => setPhase(key, { thinking: e.target.value as ThinkingLevel })}
+                          options={THINKING_OPTIONS}
+                        />
+                      </Surface>
+                    </Stack>
                   );
                 })}
-              </div>
-            </section>
+              </Stack>
+            </Surface>
 
             {/* ── Blocker selector ──────────────────────────── */}
-            <Field label="Blocked by" hint="optional — branch off this task and target its PR branch">
-              <select
-                value={blockerTaskId}
-                onChange={(e) => setBlockerTaskId(e.target.value)}
-                style={{ ...inputStyle, height: 32 }}
-              >
-                <option value="">No blocker (branch off main)</option>
-                {(blockerOptions ?? []).map((opt) => (
-                  <option key={opt.taskId} value={opt.taskId}>
-                    {opt.hint ? `${opt.hint} — ${opt.title}` : opt.title}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            <Select
+              label="Blocked by"
+              helperText="optional — branch off this task and target its PR branch"
+              value={blockerTaskId}
+              onChange={(e) => setBlockerTaskId(e.target.value)}
+              options={[
+                { value: '', label: 'No blocker (branch off main)' },
+                ...(blockerOptions ?? []).map((opt) => ({
+                  value: opt.taskId,
+                  label: opt.hint ? `${opt.hint} — ${opt.title}` : opt.title,
+                })),
+              ]}
+            />
 
             {/* ── Attachments (existing flow) ───────────────── */}
-            <Field label="Attached files" hint="copied into .nightcoder/tasks/<id>/files — shared with the agent">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Surface direction="column" gap={6}>
+              <Surface direction="row" align="center" gap={6}>
+                <Text size="xs" weight="medium" tone="muted" tracking="wide">Attached files</Text>
+                <Text size="xs" tone="faint" italic>
+                  · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with the agent
+                </Text>
+              </Surface>
+              <Surface direction="column" gap={8}>
                 {attachedFilePaths.length > 0 && (
-                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <Stack direction="column" gap={4}>
                     {attachedFilePaths.map((p) => (
-                      <li key={p} style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '6px 8px', background: 'var(--bg-2)',
-                        border: '1px solid var(--border)', borderRadius: 6,
-                      }}>
+                      <Surface
+                        key={p}
+                        bordered
+                        radius="sm"
+                        background="bg2"
+                        paddingX={8}
+                        paddingY={6}
+                        direction="row"
+                        align="center"
+                        gap={8}
+                      >
                         <Icon name="file" size={13} />
-                        <span
-                          title={p}
-                          style={{
-                            flex: 1, fontSize: 12, fontFamily: 'var(--mono)',
-                            color: 'var(--text-1)', overflow: 'hidden',
-                            textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
-                          }}
-                        >
-                          {basename(p)}
-                        </span>
-                        <button
-                          onClick={() => removeFile(p)}
-                          title="Remove"
+                        <Surface grow minWidth={0} title={p}>
+                          <Text size="sm" mono tone="muted" truncate>{basename(p)}</Text>
+                        </Surface>
+                        <IconButton
                           aria-label={`Remove ${basename(p)}`}
-                          style={{
-                            background: 'transparent', border: 'none',
-                            color: 'var(--text-3)', cursor: 'pointer',
-                            padding: 2, display: 'flex',
-                          }}
-                        >
-                          <Icon name="x" size={12} />
-                        </button>
-                      </li>
+                          title="Remove"
+                          size="sm"
+                          variant="ghost"
+                          icon={<Icon name="x" size={12} />}
+                          onClick={() => removeFile(p)}
+                        />
+                      </Surface>
                     ))}
-                  </ul>
+                  </Stack>
                 )}
-                <div>
-                  <Btn icon="paperclip" variant="secondary" size="sm" onClick={() => void pickFiles()}>
-                    Attach files
-                  </Btn>
-                </div>
-                {pickError && (
-                  <div style={{ fontSize: 11, color: 'var(--rose)' }}>{pickError}</div>
-                )}
-              </div>
-            </Field>
-          </div>
-        </div>
+                <Stack direction="row">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    label="Attach files"
+                    startIcon={<Icon name="paperclip" size={13} />}
+                    onClick={() => void pickFiles()}
+                  />
+                </Stack>
+                {pickError && <Text size="xs" tone="rose">{pickError}</Text>}
+              </Surface>
+            </Surface>
+          </Surface>
+        </Surface>
 
-        <footer style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-          padding: '14px 20px 16px', borderTop: '1px solid var(--border)',
-        }}>
-          <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
-          <Btn
+        <Surface
+          as="footer"
+          bordered={{ top: true }}
+          paddingX={20}
+          paddingTop={14}
+          paddingBottom={16}
+          direction="row"
+          align="center"
+          justify="end"
+          gap={8}
+        >
+          <Button variant="ghost" label="Cancel" onClick={onClose} />
+          <Button
             variant="primary"
-            icon="check"
+            label="Add task"
+            startIcon={<Icon name="check" size={13} />}
             disabled={!canAdd}
             onClick={() => canAdd && onAdd({
               title: title.trim() || description.trim().split(' ').slice(0, 6).join(' '),
@@ -525,33 +579,10 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
               phaseModels: Object.keys(phaseModels).length > 0 ? phaseModels : undefined,
               blockerTaskId: blockerTaskId || undefined,
             })}
-          >
-            Add task
-          </Btn>
-        </footer>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.04em', display: 'flex', gap: 6, alignItems: 'center' }}>
-        {label}{required && <span style={{ color: 'var(--emerald)' }}>*</span>}
-        {hint && <span style={{ color: 'var(--text-3)', fontWeight: 400, fontStyle: 'italic' }}>· {hint}</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function SectionHeader({ title, hint }: { title: string; hint?: string }) {
-  return (
-    <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.04em' }}>{title}</div>
-      {hint && <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginTop: 2 }}>{hint}</div>}
-    </div>
+          />
+        </Surface>
+      </Surface>
+    </Surface>
   );
 }
 
@@ -567,7 +598,7 @@ function TreeList({
   onToggle: (path: string) => void;
 }) {
   return (
-    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <Surface as="ul">
       {nodes.map((node) => (
         <TreeNode
           key={node.path}
@@ -577,7 +608,7 @@ function TreeList({
           onToggle={onToggle}
         />
       ))}
-    </ul>
+    </Surface>
   );
 }
 
@@ -600,38 +631,35 @@ function TreeNode({
     e.dataTransfer.effectAllowed = 'copy';
   };
   return (
-    <li>
-      <div
+    <Surface as="li">
+      <Surface
         draggable
         onDragStart={onDragStart}
         onClick={() => isDir && onToggle(node.path)}
         title={node.path}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          paddingLeft: 8 + depth * 12, paddingRight: 8,
-          paddingTop: 3, paddingBottom: 3,
-          cursor: isDir ? 'pointer' : 'grab',
-          fontSize: 12, color: 'var(--text-1)',
-          fontFamily: 'var(--mono)',
-          userSelect: 'none',
-          borderRadius: 4,
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        direction="row"
+        align="center"
+        gap={4}
+        paddingLeft={8 + depth * 12}
+        paddingRight={8}
+        paddingTop={3}
+        paddingBottom={3}
+        cursor={isDir ? 'pointer' : 'grab'}
+        userSelect="none"
+        radius="sm"
+        interactive
       >
-        <span style={{ width: 12, display: 'flex', alignItems: 'center', color: 'var(--text-3)' }}>
+        <Surface width={12} direction="row" align="center">
           {isDir ? <Icon name={isOpen ? 'chevronDown' : 'chevron'} size={10} /> : null}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', color: isDir ? 'var(--text-2)' : 'var(--text-1)' }}>
+        </Surface>
+        <Surface direction="row" align="center">
           <Icon name={isDir ? 'folder' : 'file'} size={11} />
-        </span>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {node.name}
-        </span>
-      </div>
+        </Surface>
+        <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>{node.name}</Text>
+      </Surface>
       {isDir && isOpen && node.children && node.children.length > 0 && (
         <TreeList nodes={node.children} depth={depth + 1} expanded={expanded} onToggle={onToggle} />
       )}
-    </li>
+    </Surface>
   );
 }
