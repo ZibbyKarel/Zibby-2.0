@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { PhaseModels, PhaseModel, RepoTreeEntry, ThinkingLevel } from '@nightcoder/shared-types/ipc';
 import {
   Button,
+  Icon,
   IconButton,
+  IconName,
   Select,
   Stack,
   Surface,
@@ -10,7 +12,6 @@ import {
   Textarea,
   TextField,
 } from '@nightcoder/design-system';
-import { Icon } from './icons';
 
 export type NewTaskData = {
   title: string;
@@ -293,7 +294,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             align="center"
             justify="center"
           >
-            <Icon name="plus" size={16} />
+            <Icon value={IconName.Plus} size={16} />
           </Surface>
           <Text as="h2" size="lg" weight="semibold">New task</Text>
           <Text size="xs" mono tone="faint">
@@ -304,7 +305,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             aria-label="Close"
             size="sm"
             variant="ghost"
-            icon={<Icon name="x" size={16} />}
+            icon={<Icon value={IconName.X} size={16} />}
             onClick={onClose}
           />
         </Surface>
@@ -336,7 +337,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                 align="center"
                 gap={6}
               >
-                <Icon name="search" size={12} />
+                <Icon value={IconName.Search} size={12} />
                 <input
                   value={treeFilter}
                   onChange={(e) => setTreeFilter(e.target.value)}
@@ -349,7 +350,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     aria-label="Clear filter"
                     size="sm"
                     variant="ghost"
-                    icon={<Icon name="x" size={11} />}
+                    icon={<Icon value={IconName.X} size={11} />}
                     onClick={() => setTreeFilter('')}
                   />
                 )}
@@ -522,7 +523,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                         align="center"
                         gap={8}
                       >
-                        <Icon name="file" size={13} />
+                        <Icon value={IconName.File} size={13} />
                         <Surface grow minWidth={0} title={p}>
                           <Text size="sm" mono tone="muted" truncate>{basename(p)}</Text>
                         </Surface>
@@ -531,7 +532,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                           title="Remove"
                           size="sm"
                           variant="ghost"
-                          icon={<Icon name="x" size={12} />}
+                          icon={<Icon value={IconName.X} size={12} />}
                           onClick={() => removeFile(p)}
                         />
                       </Surface>
@@ -543,7 +544,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     size="sm"
                     variant="secondary"
                     label="Attach files"
-                    startIcon={<Icon name="paperclip" size={13} />}
+                    startIcon={<Icon value={IconName.Paperclip} size={13} />}
                     onClick={() => void pickFiles()}
                   />
                 </Stack>
@@ -568,7 +569,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
           <Button
             variant="primary"
             label="Add task"
-            startIcon={<Icon name="check" size={13} />}
+            startIcon={<Icon value={IconName.Check} size={13} />}
             disabled={!canAdd}
             onClick={() => canAdd && onAdd({
               title: title.trim() || description.trim().split(' ').slice(0, 6).join(' '),
@@ -650,10 +651,10 @@ function TreeNode({
         interactive
       >
         <Surface width={12} direction="row" align="center">
-          {isDir ? <Icon name={isOpen ? 'chevronDown' : 'chevron'} size={10} /> : null}
+          {isDir ? <Icon value={isOpen ? IconName.ChevronDown : IconName.ChevronRight} size={10} /> : null}
         </Surface>
         <Surface direction="row" align="center">
-          <Icon name={isDir ? 'folder' : 'file'} size={11} />
+          <Icon value={isDir ? IconName.Folder : IconName.File} size={11} />
         </Surface>
         <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>{node.name}</Text>
       </Surface>

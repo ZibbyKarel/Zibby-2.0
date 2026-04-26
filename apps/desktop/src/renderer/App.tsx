@@ -9,7 +9,9 @@ import {
   DesignSystemProvider,
   Divider,
   FilterChip,
+  Icon,
   IconButton,
+  IconName,
   Kbd,
   SearchField,
   Spacer,
@@ -17,7 +19,7 @@ import {
   Surface,
   Text,
 } from '@nightcoder/design-system';
-import { Icon, BrandMark } from './components/icons';
+import { BrandMark } from './components/icons';
 import { TaskCard } from './components/TaskCard';
 import { Column } from './components/Column';
 import { TaskDrawer } from './components/TaskDrawer';
@@ -476,24 +478,24 @@ export default function App() {
   // ── Commands ───────────────────────────────────────────────
   const commands = useMemo<Command[]>(() => [
     {
-      id: 'run-all', icon: 'play', label: 'Run all pending tasks', kbd: '⌘⏎',
+      id: 'run-all', icon: IconName.Play, label: 'Run all pending tasks', kbd: '⌘⏎',
       run: () => { void runAll(); },
     },
     {
-      id: 'sync', icon: 'refresh', label: 'Synchronize task states',
+      id: 'sync', icon: IconName.Refresh, label: 'Synchronize task states',
       hint: 'Detect PRs merged externally',
       run: () => { void syncTaskStates(); },
     },
-    { id: 'add', icon: 'plus', label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
+    { id: 'add', icon: IconName.Plus, label: 'Add task', kbd: 'n', run: () => setAddOpen(true) },
     {
-      id: 'theme', icon: theme === 'dark' ? 'sun' : 'moon',
+      id: 'theme', icon: theme === 'dark' ? IconName.Sun : IconName.Moon,
       label: `Toggle theme (→ ${theme === 'dark' ? 'light' : 'dark'})`,
       run: () => setTheme((t) => t === 'dark' ? 'light' : 'dark'),
     },
-    { id: 'folder', icon: 'folder', label: 'Pick folder…', hint: folder?.path, run: () => void pickFolder() },
+    { id: 'folder', icon: IconName.Folder, label: 'Pick folder…', hint: folder?.path, run: () => void pickFolder() },
     ...tasks.map((t) => ({
       id: 'task-' + t.id,
-      icon: 'arrowRight' as const,
+      icon: IconName.ArrowRight,
       label: `Go to: ${t.title}`,
       hint: `#${t.index} · ${t.status}`,
       run: () => { setSelectedIndex(t.index); setDrawerTab('logs'); },
@@ -529,18 +531,18 @@ export default function App() {
           {folder ? (
             <Surface background="bg2" bordered radius="sm" paddingX={10} paddingY={6}>
               <Stack direction="row" align="center" gap={6}>
-                <Icon name="folder" size={13} />
+                <Icon value={IconName.Folder} size={13} />
                 <Surface maxWidth={260}>
                   <Text size="sm" mono tone="muted" truncate>{folder.path}</Text>
                 </Surface>
                 <Divider orientation="vertical" />
-                <DsChip tone="accent" size="sm" icon={<Icon name="git" size={11} />}>main</DsChip>
+                <DsChip tone="accent" size="sm" icon={<Icon value={IconName.Git} size={11} />}>main</DsChip>
                 <IconButton
                   aria-label="Change folder"
                   size="sm"
                   variant="ghost"
                   onClick={() => void pickFolder()}
-                  icon={<Icon name="chevronDown" size={12} />}
+                  icon={<Icon value={IconName.ChevronDown} size={12} />}
                 />
               </Stack>
             </Surface>
@@ -549,7 +551,7 @@ export default function App() {
               size="sm"
               variant="secondary"
               onClick={() => void pickFolder()}
-              startIcon={<Icon name="folder" size={13} />}
+              startIcon={<Icon value={IconName.Folder} size={13} />}
               label="Pick folder"
             />
           )}
@@ -560,7 +562,7 @@ export default function App() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tasks"
-            startAdornment={<Icon name="search" size={13} />}
+            startAdornment={<Icon value={IconName.Search} size={13} />}
             endAdornment={<Kbd>⌘K</Kbd>}
           />
 
@@ -571,7 +573,7 @@ export default function App() {
             title="Toggle theme"
             variant="secondary"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            icon={<Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />}
+            icon={<Icon value={theme === 'dark' ? IconName.Sun : IconName.Moon} size={14} />}
           />
         </Stack>
       </Surface>
@@ -605,14 +607,14 @@ export default function App() {
             disabled={!folder || syncing}
             onClick={() => void syncTaskStates()}
             title="Synchronize task states with their pull requests"
-            startIcon={<Icon name="refresh" size={13} />}
+            startIcon={<Icon value={IconName.Refresh} size={13} />}
             label={syncing ? 'Synchronizing…' : 'Synchronize'}
           />
           <Button
             size="sm"
             variant="secondary"
             onClick={() => setAddOpen(true)}
-            startIcon={<Icon name="plus" size={13} />}
+            startIcon={<Icon value={IconName.Plus} size={13} />}
             label="Add task"
           />
           <Button
@@ -620,7 +622,7 @@ export default function App() {
             variant="primary"
             disabled={!hasRunnableTasks}
             onClick={() => void runAll()}
-            startIcon={<Icon name="play" size={13} />}
+            startIcon={<Icon value={IconName.Play} size={13} />}
             label="Run all"
           />
         </Stack>

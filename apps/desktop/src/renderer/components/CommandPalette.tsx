@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Icon,
+  IconName,
   Kbd,
   Stack,
   Surface,
   Text,
 } from '@nightcoder/design-system';
-import { Icon } from './icons';
 
 export type Command = {
   id: string;
-  icon?: Parameters<typeof Icon>[0]['name'];
+  icon?: IconName;
   label: string;
   hint?: string;
   kbd?: string;
@@ -77,7 +78,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <Surface bordered={{ bottom: true }} paddingX={14} paddingY={12} direction="row" align="center" gap={10}>
-          <Icon name="search" size={16} />
+          <Icon value={IconName.Search} size={16} />
           <input
             ref={inputRef}
             value={q}
@@ -112,7 +113,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
               onClick={() => { c.run(); onClose(); }}
             >
               <Surface width={20} direction="row" align="center" justify="center">
-                <Icon name={c.icon ?? 'arrowRight'} size={14} />
+                <Icon value={c.icon ?? IconName.ArrowRight} size={14} />
               </Surface>
               <Stack direction="row" align="center" grow>
                 <Text size="md">{c.label}</Text>

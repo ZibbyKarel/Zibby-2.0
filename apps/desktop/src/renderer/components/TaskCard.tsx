@@ -3,12 +3,13 @@ import {
   Badge,
   Button,
   Chip,
+  Icon,
   IconButton,
+  IconName,
   Stack,
   Surface,
   Text,
 } from '@nightcoder/design-system';
-import { Icon } from './icons';
 import { fmtDuration } from './primitives';
 import type { TaskVM } from '../viewModel';
 
@@ -72,7 +73,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           title="Details"
           size="sm"
           variant="ghost"
-          icon={<Icon name="more" size={14} />}
+          icon={<Icon value={IconName.More} size={14} />}
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
         />
       </Stack>
@@ -85,14 +86,14 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
 
       <Stack direction="row" wrap gap={5}>
         {task.branch && (
-          <Chip icon={<Icon name="git" size={11} />}>
+          <Chip icon={<Icon value={IconName.Git} size={11} />}>
             {task.branch.replace('nightcoder/', '')}
           </Chip>
         )}
         {task.prUrl && (
           <Chip
             tone="accent"
-            icon={<Icon name="github" size={11} />}
+            icon={<Icon value={IconName.Github} size={11} />}
             title={task.prUrl}
             onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
           >
@@ -100,20 +101,20 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           </Chip>
         )}
         {task.model && (
-          <Chip tone="violet" icon={<Icon name="sparkle" size={11} />}>{task.model}</Chip>
+          <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size={11} />}>{task.model}</Chip>
         )}
         {waits && (
-          <Chip tone="warn" icon={<Icon name="clock" size={11} />}>
+          <Chip tone="warn" icon={<Icon value={IconName.Clock} size={11} />}>
             waits #{task.waitsOn.join(', #')}
           </Chip>
         )}
         {pausedByLimit && (
-          <Chip tone="warn" icon={<Icon name="clock" size={11} />}>
+          <Chip tone="warn" icon={<Icon value={IconName.Clock} size={11} />}>
             paused · resumes {formatResumeAt(task.limitResetsAt!)}
           </Chip>
         )}
         {canResume && !pausedByLimit && (
-          <Chip tone="warn" icon={<Icon name="warn" size={11} />}>interrupted</Chip>
+          <Chip tone="warn" icon={<Icon value={IconName.Warn} size={11} />}>interrupted</Chip>
         )}
       </Stack>
 
@@ -127,13 +128,13 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           )}
           {task.status === 'done' && task.endedAt && task.startedAt && (
             <Stack direction="row" align="center" gap={4}>
-              <Icon name="check" size={11} />
+              <Icon value={IconName.Check} size={11} />
               <Text size="xs" mono tone="faint">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
           )}
           {task.status === 'failed' && task.endedAt && task.startedAt && (
             <Stack direction="row" align="center" gap={4}>
-              <Icon name="warn" size={11} />
+              <Icon value={IconName.Warn} size={11} />
               <Text size="xs" mono tone="rose">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
           )}
@@ -149,7 +150,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
               size="sm"
               variant="secondary"
               label="resume"
-              startIcon={<Icon name="play" size={11} />}
+              startIcon={<Icon value={IconName.Play} size={11} />}
               title="Resume this interrupted task"
               onClick={(e) => { e.stopPropagation(); onRun(); }}
             />
@@ -159,7 +160,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             variant="primary"
             label="run"
             disabled={!canRun}
-            startIcon={<Icon name="play" size={11} />}
+            startIcon={<Icon value={IconName.Play} size={11} />}
             title={canRun ? 'Run this task' : 'Task is not in a runnable state'}
             onClick={(e) => { e.stopPropagation(); onRun(); }}
           />
@@ -168,7 +169,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             title="Remove"
             size="sm"
             variant="ghost"
-            icon={<Icon name="trash" size={12} />}
+            icon={<Icon value={IconName.Trash} size={12} />}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
           />
           {(task.status !== 'pending' || task.startedAt !== null) && (

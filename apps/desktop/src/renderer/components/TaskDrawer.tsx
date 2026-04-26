@@ -10,7 +10,9 @@ import {
   Button,
   Chip,
   Drawer,
+  Icon,
   IconButton,
+  IconName,
   Select,
   Spacer,
   Stack,
@@ -21,7 +23,6 @@ import {
   Textarea,
   type TextTone,
 } from '@nightcoder/design-system';
-import { Icon } from './icons';
 import { fmtDuration, fmtNum } from './primitives';
 import type { TaskVM } from '../viewModel';
 
@@ -102,7 +103,7 @@ export function TaskDrawer({
             <Button
               size="sm"
               variant="primary"
-              startIcon={<Icon name="play" size={11} />}
+              startIcon={<Icon value={IconName.Play} size={11} />}
               label={canResume ? 'Resume' : 'Run'}
               disabled={!runnable}
               title={runnable ? undefined : 'Task is not in a runnable state'}
@@ -112,7 +113,7 @@ export function TaskDrawer({
               aria-label="Close drawer"
               size="sm"
               variant="ghost"
-              icon={<Icon name="x" size={14} />}
+              icon={<Icon value={IconName.X} size={14} />}
               onClick={onClose}
             />
           </Stack>
@@ -120,17 +121,17 @@ export function TaskDrawer({
             {task.title}
           </Text>
           <Stack direction="row" wrap gap={6}>
-            {task.branch && <Chip icon={<Icon name="git" size={11} />}>{task.branch}</Chip>}
+            {task.branch && <Chip icon={<Icon value={IconName.Git} size={11} />}>{task.branch}</Chip>}
             {task.prUrl && (
-              <Chip tone="accent" icon={<Icon name="github" size={11} />}>
+              <Chip tone="accent" icon={<Icon value={IconName.Github} size={11} />}>
                 PR #{task.prUrl.split('/').pop()}
               </Chip>
             )}
             {task.model && (
-              <Chip tone="violet" icon={<Icon name="sparkle" size={11} />}>{task.model}</Chip>
+              <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size={11} />}>{task.model}</Chip>
             )}
             {tokens != null && (
-              <Chip icon={<Icon name="bolt" size={11} />}>
+              <Chip icon={<Icon value={IconName.Zap} size={11} />}>
                 ↑{fmtNum(tokens.in)} ↓{fmtNum(tokens.out)}
               </Chip>
             )}
@@ -143,18 +144,18 @@ export function TaskDrawer({
               {
                 key: 'logs',
                 label: 'Logs',
-                icon: <Icon name="terminal" size={13} />,
+                icon: <Icon value={IconName.Terminal} size={13} />,
                 badge: task.logs.length || undefined,
               },
               {
                 key: 'diff',
                 label: 'Diff',
-                icon: <Icon name="diff" size={13} />,
+                icon: <Icon value={IconName.Diff} size={13} />,
               },
               {
                 key: 'details',
                 label: 'Details',
-                icon: <Icon name="edit" size={13} />,
+                icon: <Icon value={IconName.Edit} size={13} />,
               },
             ]}
             activeKey={tab}
@@ -198,7 +199,7 @@ function LogsView({ task }: { task: TaskVM }) {
   if (task.logs.length === 0) {
     return (
       <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={8}>
-        <Icon name="terminal" size={28} />
+        <Icon value={IconName.Terminal} size={28} />
         <Text size="sm" tone="faint">No logs yet. Run this task to stream output.</Text>
       </Surface>
     );
@@ -247,7 +248,7 @@ function LogsView({ task }: { task: TaskVM }) {
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
               variant="secondary"
-              icon={<Icon name="chevronDown" size={16} />}
+              icon={<Icon value={IconName.ChevronDown} size={16} />}
               onClick={scrollToBottom}
             />
           </Surface>
@@ -418,7 +419,7 @@ function DiffFileBlock({ file }: { file: TaskDiffFile }) {
         textAlign="left"
         onClick={() => setCollapsed((c) => !c)}
       >
-        <Icon name={collapsed ? 'chevron' : 'chevronDown'} size={12} />
+        <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size={12} />
         <Surface background="bg3" radius="pill" paddingX={6} paddingY={1}>
           <Text size="xxs" mono tone={changeKindTone(file.changeKind)} tracking="wide" transform="uppercase">
             {file.changeKind}
@@ -505,7 +506,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
             size="sm"
             variant="secondary"
             label="Retry"
-            startIcon={<Icon name="refresh" size={13} />}
+            startIcon={<Icon value={IconName.Refresh} size={13} />}
             onClick={() => void refresh()}
           />
         </Stack>
@@ -520,13 +521,13 @@ function DiffPanel({ task }: { task: TaskVM }) {
         : "No changes on the task's branch compared to the base branch.";
     return (
       <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
-        <Icon name="diff" size={28} />
+        <Icon value={IconName.Diff} size={28} />
         <Text size="sm" tone="faint">{msg}</Text>
         <Button
           size="sm"
           variant="ghost"
           label="Refresh"
-          startIcon={<Icon name="refresh" size={13} />}
+          startIcon={<Icon value={IconName.Refresh} size={13} />}
           onClick={() => void refresh()}
         />
       </Surface>
@@ -561,7 +562,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           size="sm"
           variant="primary"
           label={merging ? 'Merging…' : 'Squash and Merge'}
-          startIcon={<Icon name="git" size={13} />}
+          startIcon={<Icon value={IconName.Git} size={13} />}
           onClick={() => void squashAndMerge()}
           disabled={merging || loading || !task.prUrl}
           title={
@@ -574,7 +575,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           size="sm"
           variant="ghost"
           label={loading ? 'Refreshing…' : 'Refresh'}
-          startIcon={<Icon name="refresh" size={13} />}
+          startIcon={<Icon value={IconName.Refresh} size={13} />}
           onClick={() => void refresh()}
           disabled={loading || merging}
         />
@@ -677,7 +678,7 @@ function DetailsView({
           <Button
             variant="primary"
             label="Save"
-            startIcon={<Icon name="check" size={13} />}
+            startIcon={<Icon value={IconName.Check} size={13} />}
             disabled={!title.trim() || !description.trim()}
             onClick={handleSave}
           />
@@ -693,7 +694,7 @@ function DetailsView({
           size="sm"
           variant="outline"
           label="Edit"
-          startIcon={<Icon name="edit" size={13} />}
+          startIcon={<Icon value={IconName.Edit} size={13} />}
           onClick={() => setEditing(true)}
         />
       </Stack>
@@ -720,7 +721,7 @@ function DetailsView({
                   shrink={false}
                 >
                   {task.status === 'done' && (
-                    <Icon name="check" size={10} stroke={2.5} />
+                    <Icon value={IconName.Check} size={10} strokeWidth={2.5} />
                   )}
                 </Surface>
                 <Text size="md" tone="muted">{a}</Text>
@@ -883,7 +884,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
               align="center"
               gap={8}
             >
-              <Icon name="file" size={13} />
+              <Icon value={IconName.File} size={13} />
               <Surface grow minWidth={0} title={f.name}>
                 <Text size="sm" mono tone="muted" truncate>{f.name}</Text>
               </Surface>
@@ -894,7 +895,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                icon={<Icon name="trash" size={13} />}
+                icon={<Icon value={IconName.Trash} size={13} />}
                 onClick={() => void onRemove(f.name)}
               />
             </Surface>
@@ -906,7 +907,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
           size="sm"
           variant="secondary"
           label="Attach files"
-          startIcon={<Icon name="paperclip" size={13} />}
+          startIcon={<Icon value={IconName.Paperclip} size={13} />}
           onClick={() => void onAdd()}
           disabled={busy}
         />
