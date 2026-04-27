@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { TextField, type TextFieldProps } from '@nightcoder/design-system';
+import type { ChangeEvent, ReactNode } from 'react';
+import { Checkbox, type CheckboxProps } from '@nightcoder/design-system';
 import {
   useController,
   type FieldValues,
@@ -7,21 +7,21 @@ import {
   type PathValue,
 } from 'react-hook-form';
 
-export type FormInputProps<TFieldValues extends FieldValues = FieldValues> = Omit<
-  TextFieldProps,
-  'name' | 'value' | 'onChange' | 'onBlur' | 'defaultValue'
+export type FormCheckboxProps<TFieldValues extends FieldValues = FieldValues> = Omit<
+  CheckboxProps,
+  'name' | 'checked' | 'value' | 'onChange' | 'onBlur' | 'defaultValue' | 'defaultChecked'
 > & {
   name: Path<TFieldValues>;
   defaultValue?: PathValue<TFieldValues, Path<TFieldValues>>;
 };
 
-export function FormInput<TFieldValues extends FieldValues = FieldValues>({
+export function FormCheckbox<TFieldValues extends FieldValues = FieldValues>({
   name,
   defaultValue,
   invalid,
   helperText,
-  ...textFieldProps
-}: FormInputProps<TFieldValues>) {
+  ...checkboxProps
+}: FormCheckboxProps<TFieldValues>) {
   const { field, fieldState } = useController<TFieldValues>({
     name,
     defaultValue,
@@ -32,11 +32,11 @@ export function FormInput<TFieldValues extends FieldValues = FieldValues>({
     fieldState.error?.message ?? helperText ?? null;
 
   return (
-    <TextField
-      {...textFieldProps}
+    <Checkbox
+      {...checkboxProps}
       name={field.name}
-      value={(field.value as string | undefined) ?? ''}
-      onChange={field.onChange}
+      checked={!!field.value}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
       onBlur={field.onBlur}
       ref={field.ref}
       invalid={isInvalid}

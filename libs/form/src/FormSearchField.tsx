@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-import { TextField, type TextFieldProps } from '@nightcoder/design-system';
+import { SearchField, type SearchFieldProps } from '@nightcoder/design-system';
 import {
   useController,
   type FieldValues,
@@ -7,40 +6,38 @@ import {
   type PathValue,
 } from 'react-hook-form';
 
-export type FormInputProps<TFieldValues extends FieldValues = FieldValues> = Omit<
-  TextFieldProps,
+export type FormSearchFieldProps<TFieldValues extends FieldValues = FieldValues> = Omit<
+  SearchFieldProps,
   'name' | 'value' | 'onChange' | 'onBlur' | 'defaultValue'
 > & {
   name: Path<TFieldValues>;
   defaultValue?: PathValue<TFieldValues, Path<TFieldValues>>;
+  /** Optional override; defaults to `!!fieldState.error`. */
+  invalid?: boolean;
 };
 
-export function FormInput<TFieldValues extends FieldValues = FieldValues>({
+export function FormSearchField<TFieldValues extends FieldValues = FieldValues>({
   name,
   defaultValue,
   invalid,
-  helperText,
-  ...textFieldProps
-}: FormInputProps<TFieldValues>) {
+  ...searchFieldProps
+}: FormSearchFieldProps<TFieldValues>) {
   const { field, fieldState } = useController<TFieldValues>({
     name,
     defaultValue,
   });
 
   const isInvalid = invalid ?? !!fieldState.error;
-  const resolvedHelperText: ReactNode =
-    fieldState.error?.message ?? helperText ?? null;
 
   return (
-    <TextField
-      {...textFieldProps}
+    <SearchField
+      {...searchFieldProps}
       name={field.name}
       value={(field.value as string | undefined) ?? ''}
       onChange={field.onChange}
       onBlur={field.onBlur}
       ref={field.ref}
-      invalid={isInvalid}
-      helperText={resolvedHelperText}
+      aria-invalid={isInvalid || undefined}
     />
   );
 }

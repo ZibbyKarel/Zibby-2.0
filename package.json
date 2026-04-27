@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.90.0",
+    "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "6.19.3",
     "execa": "^9.6.1",
     "prisma": "6.19.3",
