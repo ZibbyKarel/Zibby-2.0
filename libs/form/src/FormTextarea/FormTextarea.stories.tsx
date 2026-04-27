@@ -1,17 +1,14 @@
 import type { CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Form } from './Form';
-import { FormInput } from './FormInput';
-
-type Demo = { empty: string; filled: string; helper: string; invalid: string; disabled: string };
-type One = { value: string };
+import { Form } from '../Form';
+import { FormTextarea } from './FormTextarea';
 
 const meta = {
-  title: 'Form/FormInput',
-  component: FormInput,
+  title: 'Form/FormTextarea',
+  component: FormTextarea,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },
-} satisfies Meta<typeof FormInput>;
+} satisfies Meta<typeof FormTextarea>;
 
 export default meta;
 
@@ -24,9 +21,8 @@ const stack: CSSProperties = {
   width: 'min(420px, 80vw)',
 };
 
-/**
- * Visual states side-by-side, all wrapped in a single `<Form>`.
- */
+type Demo = { empty: string; filled: string; helper: string; invalid: string; disabled: string };
+
 export const Overview: Story = {
   args: { name: 'overview' },
   render: () => (
@@ -36,53 +32,53 @@ export const Overview: Story = {
         empty: '',
         filled: 'Hello',
         helper: '',
-        invalid: 'bad@',
+        invalid: 'too short',
         disabled: 'Locked',
       }}
       style={stack}
     >
-      <FormInput<Demo> name="empty" label="Empty" placeholder="Type something…" />
-      <FormInput<Demo> name="filled" label="Filled" />
-      <FormInput<Demo> name="helper" label="With helper" helperText="A short hint" />
-      <FormInput<Demo> name="invalid" label="Invalid" invalid helperText="Invalid email" />
-      <FormInput<Demo> name="disabled" label="Disabled" disabled />
+      <FormTextarea<Demo> name="empty" label="Empty" placeholder="Notes…" />
+      <FormTextarea<Demo> name="filled" label="Filled" />
+      <FormTextarea<Demo> name="helper" label="With helper" helperText="Tip: be concise" />
+      <FormTextarea<Demo> name="invalid" label="Invalid" invalid helperText="Min 50 chars" />
+      <FormTextarea<Demo> name="disabled" label="Disabled" disabled />
     </Form>
   ),
 };
 
-/**
- * Drives `label`, `placeholder`, `helperText`, `defaultValue`, `size`,
- * `invalid`, and `required` from the controls panel. Wrapped in a `<Form>`.
- */
+type One = { notes: string };
+
 export const Playground: Story = {
   args: {
-    name: 'value',
-    label: 'Field label',
-    placeholder: 'Type something…',
+    name: 'notes',
+    label: 'Notes',
+    placeholder: '',
     helperText: '',
     defaultValue: '',
-    size: 'md',
+    rows: 4,
     invalid: false,
     disabled: false,
     readOnly: false,
     required: false,
     fullWidth: true,
+    resize: 'vertical',
   },
   argTypes: {
     label: { control: 'text' },
     placeholder: { control: 'text' },
     helperText: { control: 'text' },
     defaultValue: { control: 'text' },
-    size: { control: 'select', options: ['sm', 'md', 'lg'] },
+    rows: { control: 'number' },
     invalid: { control: 'boolean' },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
     fullWidth: { control: 'boolean' },
+    resize: { control: 'select', options: ['none', 'vertical', 'horizontal', 'both'] },
   },
   render: (args) => (
-    <Form<One> onSubmit={() => {}} defaultValues={{ value: '' }} style={stack}>
-      <FormInput {...args} name="value" />
+    <Form<One> onSubmit={() => {}} defaultValues={{ notes: '' }} style={stack}>
+      <FormTextarea {...args} name="notes" />
     </Form>
   ),
 };

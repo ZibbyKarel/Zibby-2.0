@@ -1,4 +1,4 @@
-import { FormInput, type FormInputProps } from './FormInput';
+import { FormInput, type FormInputProps } from '../FormInput';
 import type { FieldValues } from 'react-hook-form';
 
 export type FormPasswordInputProps<TFieldValues extends FieldValues = FieldValues> = Omit<

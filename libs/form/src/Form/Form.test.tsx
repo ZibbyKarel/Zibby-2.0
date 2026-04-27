@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import type { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { Form } from './Form';
-import { FormInput } from './FormInput';
+import { FormInput } from '../FormInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const loginSchema = z.object({

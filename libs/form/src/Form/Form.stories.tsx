@@ -4,8 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { SubmitHandler, UseFormProps } from 'react-hook-form';
 import { z } from 'zod';
 import { Form } from './Form';
-import { FormInput } from './FormInput';
-import { FormPasswordInput } from './FormPasswordInput';
+import { FormInput } from '../FormInput';
+import { FormPasswordInput } from '../FormPasswordInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const loginSchema = z.object({
