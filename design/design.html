@@ -1,0 +1,3441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>NightCoder — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ---- Zibby 2.0 redesign ---- */
+:root {
+  --accent: #10b981;
+  --accent-2: #6366f1;
+  --accent-soft: rgba(16, 185, 129, 0.12);
+  --accent-ring: rgba(16, 185, 129, 0.35);
+
+  /* dark */
+  --bg-0: #0a0b0d;
+  --bg-1: #0f1114;
+  --bg-2: #151820;
+  --bg-3: #1b1f28;
+  --bg-hover: #1e222c;
+  --border: #22262f;
+  --border-2: #2d323d;
+  --text-0: #e6e8ec;
+  --text-1: #b4b8c2;
+  --text-2: #7a8090;
+  --text-3: #555a66;
+
+  --rose: #f43f5e;
+  --amber: #f59e0b;
+  --sky: #38bdf8;
+  --violet: #a78bfa;
+  --emerald: #10b981;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.35);
+  --shadow-2: 0 8px 24px rgba(0,0,0,.45);
+
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.theme-light {
+  --bg-0: #f6f6f4;
+  --bg-1: #ffffff;
+  --bg-2: #fafaf8;
+  --bg-3: #f0f0ec;
+  --bg-hover: #ececea;
+  --border: #e6e6e2;
+  --border-2: #d4d4d0;
+  --text-0: #0e0f12;
+  --text-1: #3a3e48;
+  --text-2: #6b7280;
+  --text-3: #9aa0ac;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.06);
+  --shadow-2: 0 12px 28px rgba(0,0,0,.10);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg-0); color: var(--text-0); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* scrollbar */
+.zb *::-webkit-scrollbar { width: 10px; height: 10px; }
+.zb *::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+.zb *::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; border: 2px solid transparent; }
+
+/* focus */
+.zb button:focus-visible, .zb input:focus-visible, .zb textarea:focus-visible, .zb select:focus-visible, .zb [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* typography helpers */
+.mono { font-family: var(--mono); }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* tiny animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dot-running {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 0 0 var(--accent-ring);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--border-2); border-top-color: var(--emerald);
+  animation: spin .8s linear infinite;
+}
+
+.shimmer-bar {
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,.25), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* flowing caret for terminal-style logs */
+@keyframes caret { 50% { opacity: 0; } }
+.caret::after { content: '▊'; color: var(--emerald); margin-left: 2px; animation: caret 1s steps(1) infinite; }
+
+/* kanban column drop hint */
+.col-drop-hint {
+  border: 1.5px dashed var(--accent-ring);
+  background: var(--accent-soft);
+}
+
+/* density — compact tightens padding & font on key surfaces */
+.zb[data-density="compact"] { font-size: 12px; }
+.zb[data-density="compact"] .task-card { padding: 8px 10px; }
+.zb[data-density="compact"] .kanban-col { padding: 10px; gap: 8px; }
+.zb[data-density="compact"] header { padding: 10px 16px !important; }
+.zb[data-density="compact"] main { padding: 12px 16px 18px !important; gap: 12px !important; }
+
+    html, body, #root { height: 100%; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; margin: 0; }
+    .mono, pre, code, kbd { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-file="logo.jsx">
+/* global React */
+
+// ── NightCoder: crescent moon + code glyph ──────────────────────────────
+function NightCoderMark({ size = 30, accent = '#10b981', style }) {
+  const id = React.useId();
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} aria-label="NightCoder">
+      <defs>
+        <linearGradient id={`nc-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.95"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0.55"/>
+        </linearGradient>
+        <radialGradient id={`nc-glow-${id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.3"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="16" cy="16" r="15" fill={`url(#nc-glow-${id})`}/>
+      <mask id={`nc-crescent-${id}`}>
+        <rect width="32" height="32" fill="black"/>
+        <circle cx="16" cy="16" r="12" fill="white"/>
+        <circle cx="21" cy="12" r="10" fill="black"/>
+      </mask>
+      <rect width="32" height="32" fill={`url(#nc-${id})`} mask={`url(#nc-crescent-${id})`}/>
+      <g stroke="#04140d" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M11 14.5 L8.5 17 L11 19.5"/>
+        <path d="M15.5 13 L13 21"/>
+      </g>
+      <circle cx="23" cy="22" r="1" fill={accent}/>
+      <circle cx="25" cy="9" r="0.7" fill={accent} opacity="0.7"/>
+    </svg>
+  );
+}
+
+// ── DayCoder: sun with radiating rays + code glyph ──────────────────────
+function DayCoderMark({ size = 30, accent = '#f59e0b', style }) {
+  const id = React.useId();
+  // ink color for the code glyph — stays legible on the bright sun disc
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} aria-label="DayCoder">
+      <defs>
+        <linearGradient id={`dc-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity="1"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0.7"/>
+        </linearGradient>
+        <radialGradient id={`dc-glow-${id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.35"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      {/* soft glow */}
+      <circle cx="16" cy="16" r="15" fill={`url(#dc-glow-${id})`}/>
+      {/* sun rays */}
+      <g stroke={accent} strokeWidth="1.6" strokeLinecap="round" opacity="0.9">
+        <line x1="16" y1="2.5" x2="16" y2="5.5"/>
+        <line x1="16" y1="26.5" x2="16" y2="29.5"/>
+        <line x1="2.5" y1="16" x2="5.5" y2="16"/>
+        <line x1="26.5" y1="16" x2="29.5" y2="16"/>
+        <line x1="6.2" y1="6.2" x2="8.4" y2="8.4"/>
+        <line x1="23.6" y1="23.6" x2="25.8" y2="25.8"/>
+        <line x1="6.2" y1="25.8" x2="8.4" y2="23.6"/>
+        <line x1="23.6" y1="8.4" x2="25.8" y2="6.2"/>
+      </g>
+      {/* sun disc */}
+      <circle cx="16" cy="16" r="9" fill={`url(#dc-${id})`}
+        stroke={accent} strokeOpacity="0.4" strokeWidth="0.5"/>
+      {/* code glyph: </> centered */}
+      <g stroke="#3a1f00" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M13 13 L10.5 16 L13 19"/>
+        <path d="M19 13 L21.5 16 L19 19"/>
+        <path d="M17 12 L15 20"/>
+      </g>
+    </svg>
+  );
+}
+
+// Theme-aware brand mark — flips logo with theme.
+function BrandMark({ theme = 'dark', size = 30, accent, style }) {
+  if (theme === 'light') {
+    return <DayCoderMark size={size} accent={accent || '#f59e0b'} style={style}/>;
+  }
+  return <NightCoderMark size={size} accent={accent || '#10b981'} style={style}/>;
+}
+
+function NightCoderWordmark({ accent = '#10b981', size = 14 }) {
+  return (
+    <div style={{display:'flex', alignItems:'baseline', gap:1,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      fontSize: size, fontWeight: 700, letterSpacing:'-.02em',
+      lineHeight: 1}}>
+      <span style={{color:'var(--text-0)'}}>night</span>
+      <span style={{color: accent}}>coder</span>
+    </div>
+  );
+}
+
+window.NightCoderMark = NightCoderMark;
+window.DayCoderMark = DayCoderMark;
+window.BrandMark = BrandMark;
+window.NightCoderWordmark = NightCoderWordmark;
+
+  </script>
+  <script type="text/babel" data-file="tweaks-panel.jsx">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;height:22px;
+    border-radius:6px;cursor:default;padding:0}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((key, val) => {
+    setValues((prev) => ({ ...prev, [key]: val }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel"
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+  </script>
+  <script type="text/babel" data-file="data.jsx">
+/* global React */
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+// ────────────────────────────────────────────────────────────
+// Mock data  — realistic fixtures for the prototype
+// ────────────────────────────────────────────────────────────
+
+const nowMs = Date.now();
+const mins = (n) => n * 60 * 1000;
+
+const FOLDER = {
+  path: '/Users/zibby/Workspace/Zibby-2.0',
+  name: 'Zibby-2.0',
+  isGitRepo: true,
+  hasOrigin: true,
+  branch: 'main',
+  recent: [
+    '/Users/zibby/Workspace/Zibby-2.0',
+    '/Users/zibby/Workspace/graphify',
+    '/Users/zibby/code/scratch-pad',
+  ],
+  tree: [
+    { name: 'apps', type: 'dir', children: [
+      { name: 'desktop', type: 'dir', children: [
+        { name: 'src', type: 'dir', children: [
+          { name: 'main', type: 'dir', children: [
+            { name: 'index.ts', type: 'file' },
+            { name: 'state-store.ts', type: 'file' },
+            { name: 'runner.ts', type: 'file' },
+            { name: 'ipc.ts', type: 'file' },
+          ]},
+          { name: 'renderer', type: 'dir', children: [
+            { name: 'components', type: 'dir', children: [
+              { name: 'LogPanel.tsx', type: 'file' },
+              { name: 'StoryCard.tsx', type: 'file' },
+              { name: 'UsageBar.tsx', type: 'file' },
+              { name: 'CommandPalette.tsx', type: 'file' },
+              { name: 'TaskDrawer.tsx', type: 'file' },
+            ]},
+            { name: 'App.tsx', type: 'file' },
+            { name: 'main.tsx', type: 'file' },
+            { name: 'styles.css', type: 'file' },
+          ]},
+          { name: 'preload', type: 'dir', children: [
+            { name: 'index.ts', type: 'file' },
+          ]},
+        ]},
+        { name: 'package.json', type: 'file' },
+        { name: 'tsconfig.json', type: 'file' },
+        { name: 'vite.config.ts', type: 'file' },
+      ]},
+    ]},
+    { name: 'libs', type: 'dir', children: [
+      { name: 'shared', type: 'dir', children: [
+        { name: 'types.ts', type: 'file' },
+        { name: 'schema.ts', type: 'file' },
+      ]},
+      { name: 'agents', type: 'dir', children: [
+        { name: 'plan.ts', type: 'file' },
+        { name: 'code.ts', type: 'file' },
+        { name: 'qa.ts', type: 'file' },
+      ]},
+    ]},
+    { name: 'docs', type: 'dir', children: [
+      { name: 'architecture.md', type: 'file' },
+      { name: 'agents.md', type: 'file' },
+      { name: 'tasks-spec.md', type: 'file' },
+    ]},
+    { name: '.agents', type: 'dir', children: [
+      { name: 'claude.json', type: 'file' },
+      { name: 'system.md', type: 'file' },
+    ]},
+    { name: 'package.json', type: 'file' },
+    { name: 'pnpm-workspace.yaml', type: 'file' },
+    { name: 'README.md', type: 'file' },
+    { name: '.env', type: 'file' },
+    { name: '.gitignore', type: 'file' },
+  ],
+};
+
+const MODELS = ['sonnet', 'opus', 'haiku'];
+
+const SEED_TASKS = [
+  {
+    id: 't1',
+    index: 0,
+    title: 'Kanban columns for task lifecycle',
+    description:
+      'Replace the single list with Queued / Running / Done columns. Cards drag between columns and persist order.',
+    acceptance: [
+      'Three columns render with correct counts',
+      'Drag updates state + localStorage',
+      'Keyboard reorder works (⌘↑/↓)',
+    ],
+    status: 'running',
+    model: 'sonnet',
+    branch: 'zibby/1-kanban-columns',
+    prUrl: null,
+    startedAt: nowMs - mins(6),
+    endedAt: null,
+    tokens: { in: 14820, out: 3940 },
+    waitsOn: [],
+    affectedFiles: ['App.tsx', 'components/Column.tsx', 'state-store.ts'],
+    logs: runningLogs(),
+    diff: sampleDiff(),
+  },
+  {
+    id: 't2',
+    index: 1,
+    title: 'Task detail drawer with tabs',
+    description: 'Click a task → drawer opens with Logs, Diff, Details tabs. Keyboard: j/k to navigate.',
+    acceptance: ['Drawer overlays main view', 'Tabs remember last selection', 'Esc closes drawer'],
+    status: 'queued',
+    model: 'sonnet',
+    branch: null,
+    prUrl: null,
+    startedAt: null,
+    endedAt: null,
+    tokens: null,
+    waitsOn: [0],
+    affectedFiles: ['components/TaskDrawer.tsx'],
+    logs: [],
+    diff: null,
+  },
+  {
+    id: 't3',
+    index: 2,
+    title: 'Command palette (⌘K)',
+    description:
+      'Fuzzy palette to jump to tasks, run actions, switch folder. Uses fuse-like scoring on title/description.',
+    acceptance: [
+      '⌘K opens, Esc closes',
+      'Keyboard nav with ↑/↓',
+      'Commands: run all, add task, change folder, toggle theme',
+    ],
+    status: 'pending',
+    model: 'opus',
+    branch: null,
+    prUrl: null,
+    startedAt: null,
+    endedAt: null,
+    tokens: null,
+    waitsOn: [],
+    affectedFiles: [],
+    logs: [],
+    diff: null,
+  },
+  {
+    id: 't4',
+    index: 3,
+    title: 'Usage ring with reset countdown',
+    description: 'Show 5h and weekly usage as rings with a live countdown until reset.',
+    acceptance: ['Rings update live via onUsageUpdate', 'Countdown ticks each second'],
+    status: 'review',
+    model: 'sonnet',
+    branch: 'zibby/4-usage-ring',
+    prUrl: 'https://github.com/zibby/zibby-2.0/pull/42',
+    startedAt: nowMs - mins(48),
+    endedAt: nowMs - mins(32),
+    tokens: { in: 9180, out: 2640 },
+    waitsOn: [],
+    affectedFiles: ['components/UsageBar.tsx', 'components/UsageRing.tsx'],
+    logs: doneLogs(),
+    diff: sampleDiffSmall(),
+  },
+  {
+    id: 't5',
+    index: 4,
+    title: 'Diff preview inline in drawer',
+    description: 'Parse git diff and colorize inline. Show per-file collapse.',
+    acceptance: ['Added/removed gutters render', 'Files collapse independently', 'Monospace fits 100ch'],
+    status: 'done',
+    model: 'sonnet',
+    branch: 'zibby/5-diff-preview',
+    prUrl: 'https://github.com/zibby/zibby-2.0/pull/41',
+    startedAt: nowMs - mins(140),
+    endedAt: nowMs - mins(110),
+    tokens: { in: 21440, out: 6120 },
+    waitsOn: [],
+    affectedFiles: ['components/Diff.tsx'],
+    logs: doneLogs(),
+    diff: sampleDiff(),
+  },
+  {
+    id: 't6',
+    index: 5,
+    title: 'Failed push retries with backoff',
+    description: 'If `git push` fails, retry 3× with exponential backoff, then surface the error.',
+    acceptance: ['Retries visible in logs', 'Final error is structured'],
+    status: 'failed',
+    model: 'sonnet',
+    branch: 'zibby/6-push-retry',
+    prUrl: null,
+    startedAt: nowMs - mins(22),
+    endedAt: nowMs - mins(18),
+    tokens: { in: 4200, out: 890 },
+    waitsOn: [],
+    affectedFiles: ['main/runner.ts'],
+    logs: failedLogs(),
+    diff: null,
+  },
+  {
+    id: 't7',
+    index: 6,
+    title: 'Notifications on run complete',
+    description: 'Show a native desktop notification when a task finishes (done or failed).',
+    acceptance: ['Respects OS permission', 'Click focuses the task'],
+    status: 'pending',
+    model: 'haiku',
+    branch: null,
+    prUrl: null,
+    startedAt: null,
+    endedAt: null,
+    tokens: null,
+    waitsOn: [2],
+    affectedFiles: [],
+    logs: [],
+    diff: null,
+  },
+  {
+    id: 'a1',
+    index: 100,
+    title: 'Initial worktree bootstrapping',
+    description: 'Create the .worktrees directory layout and helper script.',
+    acceptance: ['Worktree per task', 'Cleanup on archive'],
+    status: 'done',
+    model: 'sonnet',
+    branch: 'zibby/0-bootstrap',
+    prUrl: 'https://github.com/zibby/zibby-2.0/pull/12',
+    startedAt: nowMs - mins(60 * 24 * 3),
+    endedAt: nowMs - mins(60 * 24 * 3 - 22),
+    tokens: { in: 5400, out: 1100 },
+    waitsOn: [], affectedFiles: ['main/worktree.ts'],
+    archived: true, archivedAt: nowMs - mins(60 * 24 * 2),
+    logs: [], diff: null,
+  },
+  {
+    id: 'a2',
+    index: 101,
+    title: 'Migrate Electron 27 → 30',
+    description: 'Bump Electron, fix sandbox + contextBridge regressions.',
+    acceptance: ['App launches', 'IPC unchanged'],
+    status: 'done',
+    model: 'opus',
+    branch: 'zibby/electron-30',
+    prUrl: 'https://github.com/zibby/zibby-2.0/pull/19',
+    startedAt: nowMs - mins(60 * 24 * 5),
+    endedAt: nowMs - mins(60 * 24 * 5 - 47),
+    tokens: { in: 12300, out: 3200 },
+    waitsOn: [], affectedFiles: ['package.json','main/index.ts'],
+    archived: true, archivedAt: nowMs - mins(60 * 24 * 4),
+    logs: [], diff: null,
+  },
+  {
+    id: 'a3',
+    index: 102,
+    title: 'Token budget warnings',
+    description: 'Soft cap + hard cap on per-task token usage with banner.',
+    acceptance: ['Warn at 80%', 'Halt at 100%'],
+    status: 'failed',
+    model: 'sonnet',
+    branch: 'zibby/token-budget',
+    prUrl: null,
+    startedAt: nowMs - mins(60 * 24 * 8),
+    endedAt: nowMs - mins(60 * 24 * 8 - 12),
+    tokens: { in: 2100, out: 410 },
+    waitsOn: [], affectedFiles: [],
+    archived: true, archivedAt: nowMs - mins(60 * 24 * 7),
+    logs: [], diff: null,
+  },
+  {
+    id: 'a4',
+    index: 103,
+    title: 'Settings schema v2',
+    description: 'Move .claude/settings.local.json under a versioned schema.',
+    acceptance: ['Migration script', 'Backwards compat'],
+    status: 'done',
+    model: 'sonnet',
+    branch: 'zibby/settings-v2',
+    prUrl: 'https://github.com/zibby/zibby-2.0/pull/27',
+    startedAt: nowMs - mins(60 * 24 * 12),
+    endedAt: nowMs - mins(60 * 24 * 12 - 35),
+    tokens: { in: 8200, out: 2100 },
+    waitsOn: [], affectedFiles: ['main/settings.ts'],
+    archived: true, archivedAt: nowMs - mins(60 * 24 * 10),
+    logs: [], diff: null,
+  },
+  {
+    id: 'a5',
+    index: 104,
+    title: 'Crash reporter pipeline',
+    description: 'Pipe renderer crashes into local file + optional sentry.',
+    acceptance: ['Stack traces', 'Opt-in toggle'],
+    status: 'cancelled',
+    model: 'haiku',
+    branch: 'zibby/crash-reporter',
+    prUrl: null,
+    startedAt: nowMs - mins(60 * 24 * 15),
+    endedAt: nowMs - mins(60 * 24 * 15 - 4),
+    tokens: { in: 800, out: 80 },
+    waitsOn: [], affectedFiles: [],
+    archived: true, archivedAt: nowMs - mins(60 * 24 * 14),
+    logs: [], diff: null,
+  },
+];
+
+function runningLogs() {
+  return [
+    { s: 'info', l: '✓ mirrored local AI settings: .claude/settings.local.json' },
+    { s: 'info', l: '✓ worktree /Users/zibby/Workspace/Zibby-2.0/.worktrees/1-kanban-columns (branch zibby/1-kanban-columns)' },
+    { s: 'info', l: '✓ session started (model=claude-sonnet-4-6)' },
+    { s: 'out', l: '→ reading apps/desktop/src/renderer/App.tsx' },
+    { s: 'out', l: '→ reading apps/desktop/src/renderer/components/StoryCard.tsx' },
+    { s: 'out', l: 'Plan: extract Column component, introduce drag handlers via pointer events.' },
+    { s: 'out', l: '→ creating components/Column.tsx' },
+    { s: 'out', l: '→ creating components/kanban-dnd.ts' },
+    { s: 'out', l: '→ editing App.tsx  (+142 −31)' },
+    { s: 'out', l: '→ editing state-store.ts  (+18 −2)' },
+    { s: 'out', l: 'running: pnpm -w typecheck' },
+    { s: 'out', l: 'tsc --noEmit (renderer) …' },
+    { s: 'err', l: 'apps/desktop/src/renderer/components/Column.tsx(42,9): TS2322: Type \'string\' is not assignable to type \'StoryStatus\'.' },
+    { s: 'out', l: 'fixing type narrowing on onDrop handler' },
+    { s: 'out', l: '→ editing components/Column.tsx  (+8 −4)' },
+    { s: 'out', l: 'running: pnpm -w typecheck' },
+    { s: 'info', l: 'typecheck ✓' },
+    { s: 'out', l: 'running: pnpm -w test --filter desktop' },
+  ];
+}
+function doneLogs() {
+  return [
+    { s: 'info', l: '✓ session started' },
+    { s: 'out', l: '→ reading files …' },
+    { s: 'out', l: '→ implementing feature' },
+    { s: 'info', l: 'typecheck ✓' },
+    { s: 'info', l: 'tests ✓  12 passed' },
+    { s: 'out', l: 'git add -A && git commit -m "feat: usage ring with reset countdown"' },
+    { s: 'out', l: 'git push -u origin zibby/4-usage-ring' },
+    { s: 'info', l: '✓ PR opened: https://github.com/zibby/zibby-2.0/pull/42' },
+  ];
+}
+function failedLogs() {
+  return [
+    { s: 'info', l: '✓ session started' },
+    { s: 'out', l: '→ implementing retry with backoff' },
+    { s: 'out', l: 'git push -u origin zibby/6-push-retry' },
+    { s: 'err', l: 'remote: Permission to zibby/zibby-2.0.git denied to bot.' },
+    { s: 'err', l: 'fatal: unable to access …: The requested URL returned 403' },
+    { s: 'out', l: 'retry 1/3 in 2s …' },
+    { s: 'err', l: 'remote: Permission denied (again)' },
+    { s: 'out', l: 'retry 2/3 in 4s …' },
+    { s: 'err', l: 'remote: Permission denied' },
+    { s: 'err', l: '✗ push failed after 3 attempts' },
+  ];
+}
+
+function sampleDiff() {
+  return [
+    {
+      file: 'apps/desktop/src/renderer/App.tsx',
+      add: 142, del: 31,
+      lines: [
+        { t: 'hunk', l: '@@ -188,7 +188,12 @@ export default function App() {' },
+        { t: 'ctx',  l: '  const [plan, setPlan] = useState<RefinedPlan | null>(null);' },
+        { t: 'del',  l: "  const [selectedIndex, setSelectedIndex] = useState<number>(0);" },
+        { t: 'add',  l: "  const [selectedId, setSelectedId] = useState<string | null>(null);" },
+        { t: 'add',  l: "  const [drawerTab, setDrawerTab] = useState<'logs' | 'diff' | 'details'>('logs');" },
+        { t: 'ctx',  l: '  const [error, setError] = useState<string | null>(null);' },
+        { t: 'hunk', l: '@@ -241,6 +246,11 @@' },
+        { t: 'add',  l: '  const moveTask = (id: string, to: StoryStatus) => {' },
+        { t: 'add',  l: '    setRuntime((r) => ({ ...r, [id]: { ...r[id], status: to } }));' },
+        { t: 'add',  l: '  };' },
+      ],
+    },
+    {
+      file: 'apps/desktop/src/renderer/components/Column.tsx',
+      add: 96, del: 0,
+      lines: [
+        { t: 'hunk', l: '@@ -0,0 +1,96 @@' },
+        { t: 'add',  l: "import { useState } from 'react';" },
+        { t: 'add',  l: "import type { Story, StoryStatus } from '@zibby/shared-types/ipc';" },
+        { t: 'add',  l: '' },
+        { t: 'add',  l: 'export function Column({ title, status, stories, onDrop }: Props) {' },
+        { t: 'add',  l: '  const [hover, setHover] = useState(false);' },
+        { t: 'add',  l: '  return (' },
+        { t: 'add',  l: '    <div className={`column ${hover ? \'col-drop-hint\' : \'\'}`} />' },
+        { t: 'add',  l: '  );' },
+        { t: 'add',  l: '}' },
+      ],
+    },
+  ];
+}
+function sampleDiffSmall() {
+  return [
+    {
+      file: 'apps/desktop/src/renderer/components/UsageRing.tsx',
+      add: 68, del: 0,
+      lines: [
+        { t: 'hunk', l: '@@ -0,0 +1,68 @@' },
+        { t: 'add',  l: 'export function UsageRing({ pct, size=36 }: { pct: number; size?: number }) {' },
+        { t: 'add',  l: '  const r = (size - 4) / 2;' },
+        { t: 'add',  l: '  const circ = 2 * Math.PI * r;' },
+        { t: 'add',  l: '  …' },
+        { t: 'add',  l: '}' },
+      ],
+    },
+  ];
+}
+
+// Usage stub
+const USAGE = {
+  fiveHour: { usedPct: 39, resetsInMs: mins(143), burnRate: 4200 },
+  weekly:   { usedPct: 37, resetsInMs: mins(60 * 24 * 3 + 60 * 7), burnRate: 260000 },
+};
+
+window.ZIBBY = { FOLDER, MODELS, SEED_TASKS, USAGE };
+
+  </script>
+  <script type="text/babel" data-file="primitives.jsx">
+/* global React */
+const { useState: uS, useEffect: uE, useRef: uR, useMemo: uM, useCallback: uC } = React;
+
+// ────────────────────────────────────────────────────────────
+// Primitives: Icon, Badge, Button, Tooltip
+// ────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 16, stroke = 1.75 }) => {
+  const paths = {
+    folder: <><path d="M3 6a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/></>,
+    git: <><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8.5 6h7a3 3 0 0 1 3 3v0"/></>,
+    play: <><path d="M7 5v14l12-7L7 5Z"/></>,
+    pause: <><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    x: <><path d="M6 6l12 12M18 6L6 18"/></>,
+    check: <><path d="M5 12.5l4.5 4.5L19 7"/></>,
+    chevron: <><path d="M9 6l6 6-6 6"/></>,
+    chevronDown: <><path d="M6 9l6 6 6-6"/></>,
+    chevronRight: <><path d="M9 6l6 6-6 6"/></>,
+    file: <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6"/></>,
+    search: <><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></>,
+    clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+    bolt: <><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8Z"/></>,
+    warn: <><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></>,
+    github: <><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.93.83.09-.65.35-1.1.63-1.35-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0C16.54 5.27 17.38 5.54 17.38 5.54c.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></>,
+    terminal: <><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M7 9l3 3-3 3M13 15h4"/></>,
+    diff: <><path d="M5 3v14a2 2 0 0 0 2 2h2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M19 7v10a2 2 0 0 1-2 2h-2"/><path d="M15 15l-2 2 2 2M9 5l2-2-2-2"/></>,
+    more: <><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></>,
+    link: <><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></>,
+    command: <><path d="M9 6H6a3 3 0 1 0 3 3V6Zm0 0h6m0 0v3a3 3 0 1 0 3-3h-3Zm0 0v6m0 0H6a3 3 0 1 0 3 3v-3Zm0 0h6m0 0a3 3 0 1 0-3 3v-3Z"/></>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,
+    moon: <><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></>,
+    bell: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8Z"/><path d="M10 21a2 2 0 0 0 4 0"/></>,
+    graph: <><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h8M8 18h8M6 8v8M18 8v8"/></>,
+    edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></>,
+    trash: <><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z"/></>,
+    archive: <><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></>,
+    copy: <><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
+    arrowRight: <><path d="M5 12h14M13 5l7 7-7 7"/></>,
+    filter: <><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></>,
+    sparkle: <><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17Z"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {paths[name]}
+    </svg>
+  );
+};
+
+const Btn = ({ variant = 'ghost', size = 'md', icon, children, style, ...rest }) => {
+  const base = {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    height: size === 'sm' ? 28 : size === 'lg' ? 38 : 32,
+    padding: size === 'sm' ? '0 10px' : '0 12px',
+    borderRadius: 8, fontSize: 13, fontWeight: 500,
+    cursor: 'pointer', border: '1px solid transparent',
+    transition: 'background .12s, border-color .12s, color .12s',
+    whiteSpace: 'nowrap',
+  };
+  const variants = {
+    primary: { background: 'var(--emerald)', color: '#04140d', border: '1px solid var(--emerald)' },
+    secondary: { background: 'var(--bg-3)', color: 'var(--text-0)', border: '1px solid var(--border)' },
+    ghost: { background: 'transparent', color: 'var(--text-1)', border: '1px solid transparent' },
+    outline: { background: 'transparent', color: 'var(--text-0)', border: '1px solid var(--border-2)' },
+    danger: { background: 'transparent', color: 'var(--rose)', border: '1px solid var(--border)' },
+  };
+  return (
+    <button style={{ ...base, ...variants[variant], ...style }} {...rest}
+      onMouseEnter={e => { if (variant === 'ghost') e.currentTarget.style.background = 'var(--bg-hover)'; }}
+      onMouseLeave={e => { if (variant === 'ghost') e.currentTarget.style.background = 'transparent'; }}>
+      {icon && <Icon name={icon} size={14} />}
+      {children}
+    </button>
+  );
+};
+
+const StatusPill = ({ status }) => {
+  const map = {
+    pending:   { label: 'pending',   color: 'var(--text-2)',  bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
+    queued:    { label: 'queued',    color: '#c9a96e',         bg: 'rgba(245,158,11,.10)', dot: '#f59e0b' },
+    running:   { label: 'running',   color: 'var(--emerald)',  bg: 'rgba(16,185,129,.12)', dot: 'var(--emerald)', pulse: true },
+    pushing:   { label: 'pushing',   color: 'var(--sky)',      bg: 'rgba(56,189,248,.12)', dot: 'var(--sky)', pulse: true },
+    done:      { label: 'success',   color: '#047857',  bg: 'rgba(16,185,129,.18)', dot: 'var(--emerald)' },
+    review:    { label: 'review',    color: 'var(--violet)',   bg: 'rgba(167,139,250,.12)', dot: 'var(--violet)', pulse: true },
+    failed:    { label: 'failed',    color: 'var(--rose)',     bg: 'rgba(244,63,94,.10)',  dot: 'var(--rose)' },
+    cancelled: { label: 'cancelled', color: 'var(--amber)',    bg: 'rgba(245,158,11,.10)', dot: 'var(--amber)' },
+    blocked:   { label: 'blocked',   color: 'var(--text-2)',   bg: 'var(--bg-3)',          dot: 'var(--text-3)' },
+  };
+  const s = map[status] ?? map.pending;
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'3px 8px 3px 7px',
+      borderRadius:999, fontSize:11, fontWeight:500, letterSpacing:'.02em',
+      background:s.bg, color:s.color, fontFamily:'var(--mono)' }}>
+      <span style={{width:6, height:6, borderRadius:'50%', background:s.dot,
+        animation: s.pulse ? 'pulse-dot 1.4s ease-in-out infinite' : 'none' }}/>
+      {s.label}
+    </span>
+  );
+};
+
+const Chip = ({ icon, children, tone = 'neutral', style }) => {
+  const tones = {
+    neutral: { c: 'var(--text-1)', bg: 'var(--bg-3)', b: 'var(--border)' },
+    accent:  { c: 'var(--emerald)', bg: 'rgba(16,185,129,.08)', b: 'rgba(16,185,129,.25)' },
+    violet:  { c: 'var(--violet)', bg: 'rgba(167,139,250,.10)', b: 'rgba(167,139,250,.25)' },
+    warn:    { c: 'var(--amber)', bg: 'rgba(245,158,11,.10)', b: 'rgba(245,158,11,.25)' },
+  };
+  const t = tones[tone];
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5,
+      height:22, padding:'0 8px', borderRadius:6, fontSize:11, fontWeight:500,
+      color:t.c, background:t.bg, border:`1px solid ${t.b}`, fontFamily:'var(--mono)', ...style }}>
+      {icon && <Icon name={icon} size={11} />}
+      {children}
+    </span>
+  );
+};
+
+// UsageRing — SVG ring progress
+const UsageRing = ({ pct, size = 44, stroke = 4, label }) => {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const dash = (pct / 100) * c;
+  const color = pct >= 90 ? 'var(--rose)' : pct >= 75 ? 'var(--amber)' : 'var(--emerald)';
+  return (
+    <div style={{position:'relative', width:size, height:size}}>
+      <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
+        <circle cx={size/2} cy={size/2} r={r} stroke="var(--border)" strokeWidth={stroke} fill="none"/>
+        <circle cx={size/2} cy={size/2} r={r} stroke={color} strokeWidth={stroke} fill="none"
+          strokeDasharray={`${dash} ${c}`} strokeLinecap="round"
+          style={{transition:'stroke-dasharray .4s ease'}}/>
+      </svg>
+      <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center',
+        justifyContent:'center', fontSize:10, fontWeight:600, fontFamily:'var(--mono)',
+        color:'var(--text-0)'}}>
+        {pct}%
+      </div>
+      {label && <div style={{textAlign:'center', fontSize:9, color:'var(--text-2)',
+        marginTop:2, letterSpacing:'.1em', textTransform:'uppercase'}}>{label}</div>}
+    </div>
+  );
+};
+
+// Format helpers
+const fmtDuration = (ms) => {
+  if (!ms || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+};
+const fmtCountdown = (ms) => {
+  if (ms <= 0) return '0s';
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+};
+const fmtNum = (n) => n.toLocaleString();
+
+Object.assign(window, { Icon, Btn, StatusPill, Chip, UsageRing, fmtDuration, fmtCountdown, fmtNum });
+
+  </script>
+  <script type="text/babel" data-file="task-card.jsx">
+/* global React */
+const { useState: tdS, useEffect: tdE, useRef: tdR, useMemo: tdM } = React;
+
+// ──────────────────────────────────────────────
+// Task Card (kanban item)
+// ──────────────────────────────────────────────
+function TaskCard({ task, onOpen, onRun, onEdit, onDelete, onPreview, onApprove, onReject, dragHandlers, isDragging, runtimeMs }) {
+  const waits = task.waitsOn?.length > 0;
+  const canRun = task.status === 'pending' || task.status === 'failed' || task.status === 'queued';
+  const inReview = task.status === 'review';
+  return (
+    <article
+      {...dragHandlers}
+      onClick={onOpen}
+      style={{
+        background: 'var(--bg-2)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: 12,
+        cursor: 'pointer',
+        transition: 'border-color .12s, transform .12s, box-shadow .12s',
+        opacity: isDragging ? 0.4 : 1,
+        position: 'relative',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+    >
+      {task.status === 'running' && (
+        <div style={{position:'absolute', top:0, left:0, right:0, height:2, borderRadius:'10px 10px 0 0',
+          overflow:'hidden'}}>
+          <div className="shimmer-bar" style={{height:'100%', width:'100%'}}/>
+        </div>
+      )}
+
+      <header style={{display:'flex', alignItems:'flex-start', gap:8, marginBottom:8}}>
+        <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--text-3)', marginTop:2}}>
+          #{task.index}
+        </span>
+        <h3 style={{margin:0, fontSize:13, fontWeight:600, color:'var(--text-0)',
+          lineHeight:1.35, flex:1, letterSpacing:'-.005em'}}>
+          {task.title}
+        </h3>
+        <button onClick={(e)=>{e.stopPropagation(); onEdit();}}
+          style={{background:'transparent', border:'none', color:'var(--text-3)', cursor:'pointer',
+            padding:2, borderRadius:4, display:'flex'}}
+          onMouseEnter={e => e.currentTarget.style.color='var(--text-0)'}
+          onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}
+          title="More">
+          <Icon name="more" size={14}/>
+        </button>
+      </header>
+
+      {task.description && (
+        <p style={{margin:'0 0 10px', fontSize:12, color:'var(--text-2)', lineHeight:1.5,
+          display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
+          overflow:'hidden'}}>
+          {task.description}
+        </p>
+      )}
+
+      {/* chips row */}
+      <div style={{display:'flex', flexWrap:'wrap', gap:5, marginBottom:10}}>
+        {task.branch && <Chip icon="git">{task.branch.replace('zibby/','')}</Chip>}
+        {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
+        {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
+        {waits && <Chip icon="clock" tone="warn">waits #{task.waitsOn.join(', #')}</Chip>}
+      </div>
+
+      {/* footer: meta + actions */}
+      <footer style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8}}>
+        <div style={{display:'flex', alignItems:'center', gap:10, fontSize:11,
+          fontFamily:'var(--mono)', color:'var(--text-3)'}}>
+          {task.status === 'running' && runtimeMs != null && (
+            <span style={{color:'var(--emerald)', display:'flex', alignItems:'center', gap:4}}>
+              <span className="dot-running"/> {fmtDuration(runtimeMs)}
+            </span>
+          )}
+          {task.status === 'done' && task.endedAt && task.startedAt && (
+            <span style={{display:'flex', alignItems:'center', gap:4}}>
+              <Icon name="check" size={11}/> {fmtDuration(task.endedAt - task.startedAt)}
+            </span>
+          )}
+          {task.status === 'failed' && task.endedAt && task.startedAt && (
+            <span style={{color:'var(--rose)', display:'flex', alignItems:'center', gap:4}}>
+              <Icon name="warn" size={11}/> {fmtDuration(task.endedAt - task.startedAt)}
+            </span>
+          )}
+          {task.tokens && (
+            <span title="tokens in / out">
+              ↑{(task.tokens.in/1000).toFixed(1)}k ↓{(task.tokens.out/1000).toFixed(1)}k
+            </span>
+          )}
+        </div>
+
+        {task.status !== 'review' && <StatusPill status={task.status}/>}
+      </footer>
+
+      {inReview && (
+        <div onClick={e => e.stopPropagation()}
+          style={{
+            marginTop:10, paddingTop:10, borderTop:'1px solid var(--border)',
+            display:'flex', gap:6, alignItems:'center',
+          }}>
+          <button onClick={onPreview}
+            title="Run app on this branch so you can review it manually"
+            style={{
+              flex:1, display:'inline-flex', alignItems:'center', justifyContent:'center',
+              gap:6, padding:'7px 10px',
+              background:'rgba(167,139,250,.12)',
+              border:'1px solid rgba(167,139,250,.35)',
+              color:'var(--violet)', borderRadius:6,
+              fontSize:12, fontWeight:600, cursor:'pointer',
+              transition:'background .12s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(167,139,250,.22)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(167,139,250,.12)'}>
+            <Icon name="play" size={12}/> Run preview
+          </button>
+        </div>
+      )}
+
+      {canRun && (
+        <button
+          onClick={(e)=>{e.stopPropagation(); onRun();}}
+          style={{
+            position:'absolute', inset:0, borderRadius:'var(--radius)',
+            background:'transparent', border:'none', cursor:'pointer',
+            pointerEvents:'none',
+          }}
+          aria-hidden
+        />
+      )}
+    </article>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Kanban Column
+// ──────────────────────────────────────────────
+function Column({ title, count, accent, tasks, onDropTask, children, id, headerAction }) {
+  const [hover, setHover] = tdS(false);
+  return (
+    <section
+      onDragOver={(e) => { e.preventDefault(); setHover(true); }}
+      onDragLeave={() => setHover(false)}
+      onDrop={(e) => {
+        setHover(false);
+        const id = e.dataTransfer.getData('text/task-id');
+        if (id) onDropTask?.(id);
+      }}
+      style={{
+        flex:1, minWidth:280,
+        background:'var(--bg-1)',
+        border:'1px solid var(--border)',
+        borderRadius:12, padding:12,
+        display:'flex', flexDirection:'column',
+        gap:10, minHeight:420,
+        transition:'background .12s, border-color .12s',
+        ...(hover ? { background:'var(--bg-2)', borderColor: accent } : {}),
+      }}
+      data-col={id}
+    >
+      <header style={{display:'flex', alignItems:'center', gap:8, padding:'2px 4px'}}>
+        <span style={{width:7, height:7, borderRadius:'50%', background:accent}}/>
+        <h2 style={{margin:0, fontSize:12, fontWeight:600, color:'var(--text-1)',
+          letterSpacing:'.08em', textTransform:'uppercase'}}>{title}</h2>
+        <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--text-3)',
+          background:'var(--bg-3)', padding:'1px 7px', borderRadius:999}}>
+          {count}
+        </span>
+        <div style={{flex:1}}/>
+        {headerAction}
+      </header>
+      <div style={{display:'flex', flexDirection:'column', gap:8, flex:1}}>
+        {children}
+        {tasks?.length === 0 && (
+          <div style={{flex:1, display:'flex', alignItems:'center', justifyContent:'center',
+            color:'var(--text-3)', fontSize:11, fontStyle:'italic', padding:'20px 10px',
+            border:'1px dashed var(--border)', borderRadius:8, minHeight:80}}>
+            drop tasks here
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+Object.assign(window, { TaskCard, Column });
+
+  </script>
+  <script type="text/babel" data-file="drawer.jsx">
+/* global React */
+const { useState: drS, useEffect: drE, useMemo: drM, useRef: drR } = React;
+
+// ──────────────────────────────────────────────
+// Task Detail Drawer with tabs: Logs / Diff / Details
+// ──────────────────────────────────────────────
+function TaskDrawer({ task, open, onClose, onRun, tab, setTab, runtimeMs }) {
+  drE(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === '1') setTab('logs');
+      if (e.key === '2') setTab('diff');
+      if (e.key === '3') setTab('details');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose, setTab]);
+
+  if (!task) return null;
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:50,
+          opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+          transition:'opacity .18s',
+        }}
+      />
+      <aside style={{
+        position:'fixed', top:0, right:0, bottom:0, width: 'min(720px, 92vw)',
+        background:'var(--bg-1)', borderLeft:'1px solid var(--border)',
+        zIndex:51, display:'flex', flexDirection:'column',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition:'transform .22s cubic-bezier(.2,.7,.3,1)',
+        boxShadow:'var(--shadow-2)',
+      }}>
+        {/* Header */}
+        <header style={{padding:'14px 18px 12px', borderBottom:'1px solid var(--border)'}}>
+          <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+            <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--text-3)'}}>#{task.index}</span>
+            <StatusPill status={task.status}/>
+            {task.status === 'running' && runtimeMs != null && (
+              <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--emerald)'}}>
+                {fmtDuration(runtimeMs)}
+              </span>
+            )}
+            <div style={{flex:1}}/>
+            <Btn icon="play" variant="primary" size="sm" onClick={onRun}>Run</Btn>
+            <Btn icon="x" variant="ghost" size="sm" onClick={onClose}/>
+          </div>
+          <h2 style={{margin:'2px 0 6px', fontSize:18, fontWeight:600, letterSpacing:'-.01em'}}>
+            {task.title}
+          </h2>
+          <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
+            {task.branch && <Chip icon="git">{task.branch}</Chip>}
+            {task.prUrl && <Chip icon="github" tone="accent">PR #{task.prUrl.split('/').pop()}</Chip>}
+            {task.model && <Chip icon="sparkle" tone="violet">{task.model}</Chip>}
+            {task.tokens && <Chip icon="bolt">↑{fmtNum(task.tokens.in)} ↓{fmtNum(task.tokens.out)}</Chip>}
+          </div>
+        </header>
+
+        {/* Tabs */}
+        <nav style={{display:'flex', gap:2, padding:'0 12px', borderBottom:'1px solid var(--border)',
+          background:'var(--bg-1)'}}>
+          {[
+            { k:'logs', label:'Logs', icon:'terminal', badge: task.logs?.length || null },
+            { k:'diff', label:'Diff', icon:'diff', badge: task.diff?.length || null },
+            { k:'details', label:'Details', icon:'edit', badge: null },
+          ].map(t => (
+            <button key={t.k} onClick={() => setTab(t.k)}
+              style={{
+                display:'inline-flex', alignItems:'center', gap:6,
+                padding:'10px 12px', fontSize:12, fontWeight:500,
+                background:'transparent', border:'none', cursor:'pointer',
+                color: tab === t.k ? 'var(--text-0)' : 'var(--text-2)',
+                borderBottom: tab === t.k ? '2px solid var(--emerald)' : '2px solid transparent',
+                marginBottom:-1,
+              }}>
+              <Icon name={t.icon} size={13}/>
+              {t.label}
+              {t.badge != null && (
+                <span style={{fontFamily:'var(--mono)', fontSize:10, color:'var(--text-3)',
+                  background:'var(--bg-3)', padding:'1px 6px', borderRadius:999}}>
+                  {t.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content */}
+        <div style={{flex:1, overflow:'auto'}}>
+          {tab === 'logs' && <LogsView task={task}/>}
+          {tab === 'diff' && <DiffView diff={task.diff}/>}
+          {tab === 'details' && <DetailsView task={task}/>}
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function LogsView({ task }) {
+  const ref = drR(null);
+  drE(() => {
+    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
+  }, [task.logs?.length]);
+
+  if (!task.logs || task.logs.length === 0) {
+    return (
+      <div style={{padding:40, textAlign:'center', color:'var(--text-3)', fontSize:12}}>
+        <Icon name="terminal" size={28}/>
+        <p style={{marginTop:8}}>No logs yet. Run this task to stream output.</p>
+      </div>
+    );
+  }
+  return (
+    <pre ref={ref} style={{
+      margin:0, padding:'14px 18px', fontSize:12, lineHeight:1.55,
+      fontFamily:'var(--mono)', color:'var(--text-1)',
+      whiteSpace:'pre-wrap', wordBreak:'break-word',
+      background:'var(--bg-0)',
+    }}>
+      {task.logs.map((l, i) => {
+        const color =
+          l.s === 'err' ? 'var(--rose)'
+          : l.s === 'info' ? 'var(--sky)'
+          : 'var(--text-1)';
+        const prefix =
+          l.s === 'err' ? '✗ '
+          : l.s === 'info' ? ''
+          : '  ';
+        return (
+          <div key={i} style={{color, display:'flex', gap:8}}>
+            <span style={{color:'var(--text-3)', userSelect:'none', minWidth:24, textAlign:'right'}}>
+              {String(i+1).padStart(3, ' ')}
+            </span>
+            <span style={{flex:1}}>{prefix}{l.l}</span>
+          </div>
+        );
+      })}
+      {task.status === 'running' && <div className="caret" style={{color:'var(--emerald)'}}/>}
+    </pre>
+  );
+}
+
+function DiffView({ diff }) {
+  if (!diff || diff.length === 0) {
+    return (
+      <div style={{padding:40, textAlign:'center', color:'var(--text-3)', fontSize:12}}>
+        <Icon name="diff" size={28}/>
+        <p style={{marginTop:8}}>No diff available. The task hasn't produced changes yet.</p>
+      </div>
+    );
+  }
+  return (
+    <div style={{padding:14}}>
+      {diff.map((f, i) => (
+        <DiffFile key={i} file={f}/>
+      ))}
+    </div>
+  );
+}
+
+function DiffFile({ file }) {
+  const [open, setOpen] = drS(true);
+  return (
+    <div style={{border:'1px solid var(--border)', borderRadius:8, marginBottom:10, overflow:'hidden'}}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{
+          width:'100%', display:'flex', alignItems:'center', gap:8,
+          padding:'8px 12px', background:'var(--bg-2)', border:'none',
+          cursor:'pointer', color:'var(--text-0)', fontSize:12,
+          fontFamily:'var(--mono)', textAlign:'left',
+        }}>
+        <span style={{transform: open ? 'rotate(90deg)' : 'none', transition:'transform .1s'}}>
+          <Icon name="chevron" size={12}/>
+        </span>
+        <span style={{flex:1}}>{file.file}</span>
+        <span style={{color:'var(--emerald)', fontSize:11}}>+{file.add}</span>
+        <span style={{color:'var(--rose)', fontSize:11}}>−{file.del}</span>
+      </button>
+      {open && (
+        <div style={{background:'var(--bg-0)', fontSize:12, fontFamily:'var(--mono)', lineHeight:1.55,
+          padding:'6px 0'}}>
+          {file.lines.map((line, i) => {
+            const bg = line.t === 'add' ? 'rgba(16,185,129,.08)'
+                     : line.t === 'del' ? 'rgba(244,63,94,.08)'
+                     : 'transparent';
+            const color = line.t === 'add' ? 'var(--emerald)'
+                        : line.t === 'del' ? 'var(--rose)'
+                        : line.t === 'hunk' ? 'var(--sky)'
+                        : 'var(--text-1)';
+            const gutter = line.t === 'add' ? '+'
+                         : line.t === 'del' ? '−'
+                         : line.t === 'hunk' ? ' '
+                         : ' ';
+            return (
+              <div key={i} style={{display:'flex', background:bg, color}}>
+                <span style={{userSelect:'none', color:'var(--text-3)', width:24, textAlign:'center'}}>{gutter}</span>
+                <span style={{flex:1, paddingRight:12, whiteSpace:'pre-wrap', wordBreak:'break-all'}}>{line.l}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailsView({ task }) {
+  return (
+    <div style={{padding:18, display:'flex', flexDirection:'column', gap:18}}>
+      <Section label="Description">
+        <p style={{margin:0, fontSize:13, color:'var(--text-1)', lineHeight:1.6, whiteSpace:'pre-wrap'}}>
+          {task.description}
+        </p>
+      </Section>
+
+      {task.acceptance?.length > 0 && (
+        <Section label="Acceptance criteria">
+          <ul style={{margin:0, padding:0, listStyle:'none', display:'flex', flexDirection:'column', gap:8}}>
+            {task.acceptance.map((a, i) => (
+              <li key={i} style={{display:'flex', gap:8, alignItems:'flex-start',
+                fontSize:13, color:'var(--text-1)', lineHeight:1.5}}>
+                <span style={{
+                  width:16, height:16, borderRadius:4, background:'var(--bg-3)',
+                  border:'1px solid var(--border-2)', display:'flex',
+                  alignItems:'center', justifyContent:'center', marginTop:1, flexShrink:0,
+                  color: task.status === 'done' ? 'var(--emerald)' : 'var(--text-3)',
+                }}>
+                  {task.status === 'done' && <Icon name="check" size={10} stroke={2.5}/>}
+                </span>
+                {a}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {task.affectedFiles?.length > 0 && (
+        <Section label="Affected files">
+          <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
+            {task.affectedFiles.map((f, i) => (
+              <code key={i} style={{
+                fontSize:12, padding:'3px 8px', background:'var(--bg-3)',
+                color:'var(--text-1)', borderRadius:5, fontFamily:'var(--mono)',
+                border:'1px solid var(--border)',
+              }}>{f}</code>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+        <KV k="Model" v={task.model || 'sonnet (default)'}/>
+        <KV k="Branch" v={task.branch || '—'} mono/>
+        <KV k="Status" v={task.status}/>
+        <KV k="Tokens" v={task.tokens ? `↑${fmtNum(task.tokens.in)}  ↓${fmtNum(task.tokens.out)}` : '—'} mono/>
+      </div>
+    </div>
+  );
+}
+
+function Section({ label, children }) {
+  return (
+    <div>
+      <h3 style={{margin:'0 0 8px', fontSize:10, fontWeight:600,
+        color:'var(--text-3)', letterSpacing:'.12em', textTransform:'uppercase'}}>{label}</h3>
+      {children}
+    </div>
+  );
+}
+function KV({ k, v, mono }) {
+  return (
+    <div style={{padding:'8px 10px', border:'1px solid var(--border)', borderRadius:8,
+      background:'var(--bg-2)'}}>
+      <div style={{fontSize:10, color:'var(--text-3)', letterSpacing:'.1em',
+        textTransform:'uppercase', marginBottom:2}}>{k}</div>
+      <div style={{fontSize:12, color:'var(--text-0)',
+        fontFamily: mono ? 'var(--mono)' : 'var(--sans)'}}>{v}</div>
+    </div>
+  );
+}
+
+Object.assign(window, { TaskDrawer });
+
+  </script>
+  <script type="text/babel" data-file="shell.jsx">
+/* global React */
+const { useState: shS, useEffect: shE, useMemo: shM, useRef: shR } = React;
+
+// ──────────────────────────────────────────────
+// Add Task Dialog
+// ──────────────────────────────────────────────
+function AddTaskDialog({ open, onClose, onAdd, allTasks = [], folder }) {
+  const [title, setTitle] = shS('');
+  const [description, setDescription] = shS('');
+  const [acceptance, setAcceptance] = shS('');
+  const [waitsOn, setWaitsOn] = shS([]);
+  const [planModel, setPlanModel] = shS('opus-4.5');
+  const [codeModel, setCodeModel] = shS('sonnet-4.5');
+  const [qaModel, setQaModel] = shS('sonnet-4.5');
+  const [planThink, setPlanThink] = shS('high');
+  const [codeThink, setCodeThink] = shS('medium');
+  const [qaThink, setQaThink] = shS('medium');
+  const [humanReview, setHumanReview] = shS(true);
+  // Tree visibility persists across dialog opens — so users who rely on drag&drop
+  // keep it on, and users who prefer a wider textarea keep it off.
+  const [showTree, setShowTree] = shS(() => {
+    try { return localStorage.getItem('zb.addTask.showTree') !== '0'; }
+    catch { return true; }
+  });
+  shE(() => {
+    try { localStorage.setItem('zb.addTask.showTree', showTree ? '1' : '0'); }
+    catch { /* noop */ }
+  }, [showTree]);
+
+  shE(() => {
+    if (open) {
+      setTitle(''); setDescription(''); setAcceptance(''); setWaitsOn([]);
+      setPlanModel('opus-4.5'); setCodeModel('sonnet-4.5'); setQaModel('sonnet-4.5');
+      setPlanThink('high'); setCodeThink('medium'); setQaThink('medium');
+      setHumanReview(true);
+    }
+  }, [open]);
+
+  shE(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const canAdd = description.trim().length > 0;
+
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,.55)', zIndex:60,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      animation:'fade-in .14s ease',
+    }}>
+      <div onClick={(e)=>e.stopPropagation()} style={{
+        width:'min(820px, 96vw)', maxHeight:'92vh',
+        background:'var(--bg-1)', border:'1px solid var(--border-2)',
+        borderRadius:14, padding:20, boxShadow:'var(--shadow-2)',
+        animation:'slide-up .2s ease',
+        display:'flex', flexDirection:'column', minHeight:0,
+      }}>
+        <header style={{display:'flex', alignItems:'center', gap:10, marginBottom:16}}>
+          <div style={{
+            width:32, height:32, borderRadius:8, background:'var(--accent-soft)',
+            display:'flex', alignItems:'center', justifyContent:'center', color:'var(--emerald)',
+          }}>
+            <Icon name="plus" size={16}/>
+          </div>
+          <h2 style={{margin:0, fontSize:15, fontWeight:600}}>New task</h2>
+          <div style={{flex:1}}/>
+          <button onClick={onClose} style={{background:'transparent', border:'none',
+            color:'var(--text-3)', cursor:'pointer', padding:4, borderRadius:4, display:'flex'}}>
+            <Icon name="x" size={16}/>
+          </button>
+        </header>
+
+        <div style={{display:'flex', flexDirection:'column', gap:14,
+          overflowY:'auto', flex:1, minHeight:0, paddingRight:4, margin:'0 -4px 0 0'}}>
+          <Field label="Title" hint="optional — we'll infer one from the description if empty">
+            <input autoFocus value={title} onChange={e=>setTitle(e.target.value)}
+              placeholder="What should the agent do?"
+              style={inputStyle}/>
+          </Field>
+
+          <Field label="Description / brief" required
+            hint={showTree
+              ? "drag files from the tree — they'll be inserted as @/path references"
+              : "click the tree icon to show the file tree"}>
+            <div style={{display:'grid',
+              gridTemplateColumns: showTree ? '1fr 240px' : '1fr auto', gap:10,
+              alignItems:'stretch'}}>
+              <DescriptionInput value={description} onChange={setDescription}/>
+              {showTree ? (
+                <FileTreePanel folder={folder} onHide={() => setShowTree(false)}/>
+              ) : (
+                <button onClick={() => setShowTree(true)}
+                  title="Show file tree"
+                  style={{
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    width:32, background:'var(--bg-2)',
+                    border:'1px solid var(--border)', borderRadius:8,
+                    color:'var(--text-3)', cursor:'pointer',
+                    transition:'color .12s, background .12s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = 'var(--emerald)';
+                    e.currentTarget.style.background = 'var(--bg-3)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = 'var(--text-3)';
+                    e.currentTarget.style.background = 'var(--bg-2)';
+                  }}>
+                  <Icon name="folder" size={14}/>
+                </button>
+              )}
+            </div>
+          </Field>
+
+          <Field label="Acceptance criteria" hint="one per line, optional">
+            <textarea value={acceptance} onChange={e=>setAcceptance(e.target.value)}
+              placeholder="Column drag works&#10;Counts are correct&#10;Persists to localStorage"
+              rows={3} style={{...inputStyle, resize:'vertical'}}/>
+          </Field>
+
+          <Field label="Blocked by" hint="task will wait until dependencies finish">
+            <BlockedByPicker allTasks={allTasks} value={waitsOn} onChange={setWaitsOn}/>
+          </Field>
+
+          <Field label="Review">
+            <label style={{
+              display:'flex', alignItems:'flex-start', gap:10,
+              padding:'10px 12px', background:'var(--bg-2)',
+              border:`1px solid ${humanReview ? 'var(--emerald)' : 'var(--border)'}`,
+              borderRadius:8, cursor:'pointer',
+              transition:'border-color .12s, background .12s',
+            }}>
+              <input type="checkbox" checked={humanReview}
+                onChange={e => setHumanReview(e.target.checked)}
+                style={{
+                  marginTop:2, width:14, height:14, accentColor:'var(--emerald)',
+                  cursor:'pointer', flexShrink:0,
+                }}/>
+              <div style={{display:'flex', flexDirection:'column', gap:2, flex:1}}>
+                <span style={{fontSize:12, fontWeight:500, color:'var(--text-0)',
+                  display:'flex', alignItems:'center', gap:6}}>
+                  Human review required
+                  {humanReview && (
+                    <span style={{
+                      fontSize:9, fontWeight:600, letterSpacing:'.08em',
+                      textTransform:'uppercase',
+                      padding:'1px 6px', borderRadius:3,
+                      background:'var(--accent-soft)', color:'var(--emerald)',
+                      fontFamily:'var(--mono)',
+                    }}>default</span>
+                  )}
+                </span>
+                <span style={{fontSize:11, color:'var(--text-3)'}}>
+                  Pause before merging so you can sign off on the agent's work.
+                </span>
+              </div>
+            </label>
+          </Field>
+
+          <Field label="Agents" hint="pick the model and thinking depth for each phase">
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8}}>
+              <ModelPick label="Plan" icon="sparkle"
+                model={planModel} onModelChange={setPlanModel}
+                think={planThink} onThinkChange={setPlanThink}/>
+              <ModelPick label="Code" icon="code"
+                model={codeModel} onModelChange={setCodeModel}
+                think={codeThink} onThinkChange={setCodeThink}/>
+              <ModelPick label="QA" icon="check"
+                model={qaModel} onModelChange={setQaModel}
+                think={qaThink} onThinkChange={setQaThink}/>
+            </div>
+          </Field>
+        </div>
+
+        <footer style={{display:'flex', alignItems:'center', justifyContent:'flex-end',
+          gap:8, marginTop:18, paddingTop:14, borderTop:'1px solid var(--border)'}}>
+          <div style={{display:'flex', gap:8}}>
+            <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
+            <Btn variant="primary" icon="check" onClick={() => canAdd && onAdd({
+              title:title.trim(), description:description.trim(),
+              acceptance: acceptance.split('\n').map(s=>s.trim()).filter(Boolean),
+              waitsOn,
+              humanReview,
+              agents: {
+                plan: { model: planModel, thinking: planThink },
+                code: { model: codeModel, thinking: codeThink },
+                qa:   { model: qaModel,   thinking: qaThink   },
+              },
+              model: codeModel,
+            })} disabled={!canAdd}>
+              Add task
+            </Btn>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle = {
+  width:'100%', padding:'8px 10px', background:'var(--bg-2)',
+  border:'1px solid var(--border)', borderRadius:8, color:'var(--text-0)',
+  fontSize:13, outline:'none', transition:'border-color .12s, box-shadow .12s',
+};
+
+function Field({ label, hint, required, children }) {
+  return (
+    <label style={{display:'flex', flexDirection:'column', gap:6}}>
+      <span style={{fontSize:11, fontWeight:500, color:'var(--text-2)',
+        letterSpacing:'.04em', display:'flex', gap:6, alignItems:'center'}}>
+        {label}{required && <span style={{color:'var(--emerald)'}}>*</span>}
+        {hint && <span style={{color:'var(--text-3)', fontWeight:400, fontStyle:'italic'}}>· {hint}</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Description input + File tree with drag-drop
+// ──────────────────────────────────────────────
+
+// Textarea that accepts files dropped from the FileTree and inserts their
+// @/path reference at the caret position (or appends if the textarea isn't
+// focused). Shows a drop overlay while dragging.
+function DescriptionInput({ value, onChange }) {
+  const ref = shR(null);
+  const [over, setOver] = shS(false);
+
+  const insertAtCaret = (text) => {
+    const el = ref.current;
+    if (!el) { onChange(value + text); return; }
+    const start = el.selectionStart ?? value.length;
+    const end = el.selectionEnd ?? value.length;
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    // Ensure a space before the ref when inserting mid-sentence
+    const needsSpaceBefore = before.length && !/\s$/.test(before);
+    const needsSpaceAfter = after.length && !/^\s/.test(after);
+    const inserted = (needsSpaceBefore ? ' ' : '') + text + (needsSpaceAfter ? ' ' : '');
+    const next = before + inserted + after;
+    onChange(next);
+    // Restore caret after inserted text
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = before.length + inserted.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  const onDragOver = (e) => {
+    // Accept either our custom type or generic text (plain-text fallback)
+    if (e.dataTransfer.types.includes('application/x-zibby-path') ||
+        e.dataTransfer.types.includes('text/plain')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      setOver(true);
+    }
+  };
+  const onDragLeave = () => setOver(false);
+  const onDrop = (e) => {
+    e.preventDefault();
+    setOver(false);
+    const path = e.dataTransfer.getData('application/x-zibby-path')
+              || e.dataTransfer.getData('text/plain');
+    if (path && path.startsWith('@/')) insertAtCaret(path);
+  };
+
+  return (
+    <div style={{position:'relative', display:'flex', minHeight:170}}>
+      <textarea ref={ref} value={value} onChange={e => onChange(e.target.value)}
+        onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+        placeholder="Describe the work. Drag a file or folder from the tree → it'll be inserted as @/path/to/file."
+        style={{...inputStyle, resize:'vertical', flex:1, minHeight:170,
+          outline: over ? '2px dashed var(--emerald)' : undefined,
+          outlineOffset: over ? -3 : undefined}}/>
+      {over && (
+        <div style={{
+          position:'absolute', inset:0, pointerEvents:'none',
+          background:'var(--accent-soft)', borderRadius:8,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontSize:12, color:'var(--emerald)', fontWeight:500,
+          fontFamily:'var(--mono)',
+        }}>
+          drop to insert @/path
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Lightweight file tree rendered in a scrollable panel next to the
+// description textarea. Each node is draggable; dropping into the textarea
+// inserts "@/relative/path". Folders expand/collapse.
+// A search input filters nodes by substring on name OR full path; matching
+// nodes (and their ancestor directories, so the path stays visible) are kept,
+// and matched substrings are highlighted. Ancestors of matches auto-expand.
+function FileTreePanel({ folder, onHide }) {
+  const tree = folder?.tree || [];
+  const [query, setQuery] = shS('');
+  const q = query.trim().toLowerCase();
+
+  // Recursively filter: keep a file if its name/path contains q; keep a dir
+  // if it matches OR any descendant matches (descendants are then filtered).
+  const filter = (nodes, parentPath) => {
+    const out = [];
+    for (const n of nodes) {
+      const full = parentPath ? `${parentPath}/${n.name}` : n.name;
+      const selfMatch = !q
+        || n.name.toLowerCase().includes(q)
+        || full.toLowerCase().includes(q);
+      if (n.type === 'dir') {
+        const kids = n.children ? filter(n.children, full) : [];
+        if (selfMatch || kids.length > 0) {
+          out.push({ ...n, children: selfMatch ? (n.children || []) : kids });
+        }
+      } else if (selfMatch) {
+        out.push(n);
+      }
+    }
+    return out;
+  };
+  const filtered = q ? filter(tree, '') : tree;
+
+  // Count matching files (leaves) so the header can show a result count
+  const countFiles = (nodes) => {
+    let c = 0;
+    for (const n of nodes) {
+      if (n.type === 'dir') c += countFiles(n.children || []);
+      else c += 1;
+    }
+    return c;
+  };
+  const matchCount = q ? countFiles(filtered) : null;
+
+  return (
+    <div style={{
+      background:'var(--bg-2)', border:'1px solid var(--border)',
+      borderRadius:8, display:'flex', flexDirection:'column',
+      overflow:'hidden', minHeight:170,
+    }}>
+      <div style={{
+        padding:'6px 10px', fontSize:10, fontWeight:600, letterSpacing:'.1em',
+        textTransform:'uppercase', color:'var(--text-3)',
+        borderBottom:'1px solid var(--border)',
+        display:'flex', alignItems:'center', gap:6,
+        background:'var(--bg-1)',
+      }}>
+        <Icon name="folder" size={11}/>
+        <span style={{flex:1, fontFamily:'var(--mono)', textTransform:'none',
+          letterSpacing:0, color:'var(--text-2)', fontSize:10,
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+          {folder?.name || 'project'}
+        </span>
+        <span style={{fontSize:9, color:'var(--text-3)'}} title="Drag to insert">⇢</span>
+        {onHide && (
+          <button onClick={onHide} title="Hide file tree"
+            style={{
+              background:'transparent', border:'none', color:'var(--text-3)',
+              cursor:'pointer', padding:2, borderRadius:4, display:'flex',
+              marginLeft:2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-1)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}>
+            <Icon name="x" size={11}/>
+          </button>
+        )}
+      </div>
+
+      {/* Search bar — substring match on name or path. Clear button appears
+          when there's a query. */}
+      <div style={{
+        padding:'6px 8px', borderBottom:'1px solid var(--border)',
+        position:'relative', display:'flex', alignItems:'center', gap:6,
+        background:'var(--bg-1)',
+      }}>
+        <span style={{position:'absolute', left:16, color:'var(--text-3)',
+          display:'flex', pointerEvents:'none'}}>
+          <Icon name="search" size={11}/>
+        </span>
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Filter files…"
+          spellCheck={false}
+          style={{
+            flex:1, padding:'5px 24px 5px 26px',
+            background:'var(--bg-2)', border:'1px solid var(--border)',
+            borderRadius:6, color:'var(--text-0)',
+            fontSize:11, outline:'none', fontFamily:'var(--mono)',
+          }}/>
+        {query && (
+          <button onClick={() => setQuery('')} title="Clear"
+            style={{
+              position:'absolute', right:12, background:'transparent',
+              border:'none', color:'var(--text-3)', cursor:'pointer',
+              padding:2, borderRadius:4, display:'flex',
+            }}>
+            <Icon name="x" size={10}/>
+          </button>
+        )}
+      </div>
+
+      {/* Result count (only while searching) */}
+      {q && (
+        <div style={{
+          padding:'4px 10px', fontSize:10, color:'var(--text-3)',
+          fontFamily:'var(--mono)', borderBottom:'1px solid var(--border)',
+          background:'var(--bg-1)',
+        }}>
+          {matchCount} {matchCount === 1 ? 'match' : 'matches'}
+        </div>
+      )}
+
+      <div style={{flex:1, overflowY:'auto', padding:'6px 4px', fontSize:12,
+        fontFamily:'var(--mono)'}}>
+        {filtered.length === 0
+          ? <div style={{padding:'8px 10px', color:'var(--text-3)', fontStyle:'italic'}}>
+              {q ? `No matches for "${query}"` : 'No folder opened.'}
+            </div>
+          : filtered.map((n, i) => (
+            <TreeNode key={n.name + i} node={n} path="" depth={0} query={q}/>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+// Highlight occurrences of `q` (lowercase) inside `text` using the accent color.
+// Case-insensitive; preserves original casing of the text.
+function highlightMatch(text, q) {
+  if (!q) return text;
+  const lower = text.toLowerCase();
+  const out = [];
+  let i = 0;
+  while (i < text.length) {
+    const at = lower.indexOf(q, i);
+    if (at === -1) { out.push(text.slice(i)); break; }
+    if (at > i) out.push(text.slice(i, at));
+    out.push(
+      <mark key={at} style={{
+        background:'var(--accent-soft)', color:'var(--emerald)',
+        padding:0, borderRadius:2, fontWeight:600,
+      }}>{text.slice(at, at + q.length)}</mark>
+    );
+    i = at + q.length;
+  }
+  return out;
+}
+
+function TreeNode({ node, path, depth, query }) {
+  // When searching, force-expand so matches stay visible; otherwise default
+  // to open at the first level and closed below.
+  const [openState, setOpen] = shS(depth < 1);
+  const open = query ? true : openState;
+  const fullPath = path ? `${path}/${node.name}` : node.name;
+  const ref = `@/${fullPath}`;
+  const isDir = node.type === 'dir';
+
+  const onDragStart = (e) => {
+    // Custom type to detect drops from our own tree; text/plain for fallback
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/x-zibby-path', ref);
+    e.dataTransfer.setData('text/plain', ref);
+    // Improve drag preview with just the ref text
+    try {
+      const ghost = document.createElement('div');
+      ghost.textContent = ref;
+      ghost.style.cssText = 'position:absolute;top:-9999px;left:-9999px;' +
+        'padding:4px 8px;background:#0f1114;color:#10b981;' +
+        'font:12px "JetBrains Mono",monospace;border:1px solid #10b981;' +
+        'border-radius:6px;';
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 0, 0);
+      setTimeout(() => document.body.removeChild(ghost), 0);
+    } catch { /* noop */ }
+  };
+
+  return (
+    <>
+      <div draggable onDragStart={onDragStart}
+        onClick={() => isDir && !query && setOpen(o => !o)}
+        title={`Drag to insert ${ref}`}
+        style={{
+          display:'flex', alignItems:'center', gap:4,
+          padding:`2px 6px 2px ${6 + depth * 12}px`,
+          borderRadius:4, cursor: isDir ? 'pointer' : 'grab',
+          color: isDir ? 'var(--text-1)' : 'var(--text-2)',
+          userSelect:'none',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-3)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+        {isDir ? (
+          <span style={{display:'flex', width:10, color:'var(--text-3)',
+            transform: open ? 'rotate(90deg)' : 'rotate(0)', transition:'transform .1s'}}>
+            <Icon name="chevronRight" size={10}/>
+          </span>
+        ) : (
+          <span style={{width:10}}/>
+        )}
+        <span style={{display:'flex', color: isDir ? 'var(--amber)' : 'var(--text-3)'}}>
+          <Icon name={isDir ? 'folder' : 'file'} size={11}/>
+        </span>
+        <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis',
+          whiteSpace:'nowrap'}}>{highlightMatch(node.name, query)}</span>
+      </div>
+      {isDir && open && node.children && node.children.map((c, i) => (
+        <TreeNode key={c.name + i} node={c} path={fullPath} depth={depth + 1} query={query}/>
+      ))}
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────
+// removable chips + a dropdown of remaining candidates. Only open/pending/running
+// tasks make sense as dependencies; done/failed/cancelled are filtered out.
+function BlockedByPicker({ allTasks, value, onChange }) {
+  const candidates = allTasks.filter(t =>
+    !['done','failed','cancelled'].includes(t.status) && !value.includes(t.id));
+  const selected = value.map(id => allTasks.find(t => t.id === id)).filter(Boolean);
+  const [pick, setPick] = shS('');
+
+  const add = (id) => {
+    if (!id) return;
+    onChange([...value, id]);
+    setPick('');
+  };
+  const remove = (id) => onChange(value.filter(v => v !== id));
+
+  if (allTasks.length === 0) {
+    return (
+      <div style={{
+        padding:'10px 12px', background:'var(--bg-2)', borderRadius:8,
+        border:'1px dashed var(--border-2)',
+        fontSize:12, color:'var(--text-3)', fontStyle:'italic',
+      }}>
+        No other tasks to depend on yet.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:8}}>
+      {selected.length > 0 && (
+        <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
+          {selected.map(t => (
+            <span key={t.id} style={{
+              display:'inline-flex', alignItems:'center', gap:6,
+              padding:'3px 4px 3px 8px',
+              background:'var(--bg-2)', border:'1px solid var(--border-2)',
+              borderRadius:999, fontSize:11, color:'var(--text-1)',
+              fontFamily:'var(--mono)', maxWidth:260,
+            }}>
+              <StatusDot status={t.status}/>
+              <span style={{color:'var(--text-3)'}}>#{t.index}</span>
+              <span style={{overflow:'hidden', textOverflow:'ellipsis',
+                whiteSpace:'nowrap', fontFamily:'var(--sans)'}}>
+                {t.title}
+              </span>
+              <button onClick={() => remove(t.id)} aria-label="Remove dependency"
+                style={{
+                  background:'transparent', border:'none', color:'var(--text-3)',
+                  cursor:'pointer', padding:3, borderRadius:4, display:'flex',
+                }}>
+                <Icon name="x" size={10}/>
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {candidates.length > 0 ? (
+        <div style={{position:'relative'}}>
+          <select value={pick} onChange={e => add(e.target.value)}
+            style={{
+              width:'100%', appearance:'none', WebkitAppearance:'none',
+              padding:'7px 28px 7px 10px',
+              background:'var(--bg-2)', border:'1px solid var(--border)', borderRadius:8,
+              color: pick ? 'var(--text-0)' : 'var(--text-3)',
+              fontSize:12, outline:'none', fontFamily:'inherit', cursor:'pointer',
+            }}>
+            <option value="">
+              {selected.length ? '+ Add another dependency…' : 'Select a task this depends on…'}
+            </option>
+            {candidates.map(t => (
+              <option key={t.id} value={t.id}>
+                #{t.index} · {t.title} ({t.status})
+              </option>
+            ))}
+          </select>
+          <div style={{position:'absolute', right:10, top:'50%',
+            transform:'translateY(-50%)', pointerEvents:'none',
+            color:'var(--text-3)', display:'flex'}}>
+            <Icon name="chevronDown" size={12}/>
+          </div>
+        </div>
+      ) : (
+        <div style={{fontSize:11, color:'var(--text-3)', fontStyle:'italic'}}>
+          All available tasks added as dependencies.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// tiny status dot for the blocked-by chips
+function StatusDot({ status }) {
+  const color = {
+    running:'var(--emerald)', pending:'var(--amber)', blocked:'var(--rose)',
+    queued:'var(--amber)', pushing:'var(--emerald)',
+    done:'var(--sky)', failed:'var(--rose)', cancelled:'var(--text-3)',
+  }[status] || 'var(--text-3)';
+  return (
+    <span style={{
+      width:6, height:6, borderRadius:6, background:color, flexShrink:0,
+      boxShadow: status === 'running' ? `0 0 0 2px ${color}22` : 'none',
+    }}/>
+  );
+}
+
+// Model picker — card with phase label + icon + dropdown.
+// Used in the AddTaskDialog to configure a different model per agent phase.
+const MODEL_CATALOG = [
+  { v:'opus-4.5',   name:'Opus 4.5',   tag:'reasoning',  cost:'$$$' },
+  { v:'sonnet-4.5', name:'Sonnet 4.5', tag:'balanced',   cost:'$$' },
+  { v:'sonnet-3.7', name:'Sonnet 3.7', tag:'balanced',   cost:'$$' },
+  { v:'haiku-4.5',  name:'Haiku 4.5',  tag:'fast',       cost:'$' },
+  { v:'gpt-5',      name:'GPT-5',      tag:'reasoning',  cost:'$$$' },
+  { v:'gemini-2.5', name:'Gemini 2.5', tag:'balanced',   cost:'$$' },
+];
+
+function ModelPick({ label, icon, model, onModelChange, think, onThinkChange }) {
+  const selected = MODEL_CATALOG.find(m => m.v === model) || MODEL_CATALOG[1];
+  const thinkLevels = [
+    { v:'off',    label:'Off',  dots:0, color:'var(--text-3)' },
+    { v:'low',    label:'Low',  dots:1, color:'var(--sky)' },
+    { v:'medium', label:'Med',  dots:2, color:'var(--amber)' },
+    { v:'high',   label:'High', dots:3, color:'var(--emerald)' },
+  ];
+  const activeThink = thinkLevels.find(l => l.v === think) || thinkLevels[2];
+  return (
+    <div style={{
+      background:'var(--bg-2)', border:'1px solid var(--border)', borderRadius:8,
+      padding:'8px 10px', display:'flex', flexDirection:'column', gap:7, minWidth:0,
+    }}>
+      <div style={{display:'flex', alignItems:'center', gap:6,
+        fontSize:10, fontWeight:600, letterSpacing:'.1em',
+        textTransform:'uppercase', color:'var(--text-3)'}}>
+        <Icon name={icon} size={11}/>{label}
+      </div>
+
+      {/* Model select */}
+      <div style={{position:'relative'}}>
+        <select value={model} onChange={e => onModelChange(e.target.value)}
+          style={{
+            width:'100%', appearance:'none', WebkitAppearance:'none',
+            padding:'5px 22px 5px 8px',
+            background:'var(--bg-1)', border:'1px solid var(--border)', borderRadius:6,
+            color:'var(--text-0)', fontSize:12, fontWeight:500, outline:'none',
+            fontFamily:'inherit', cursor:'pointer',
+          }}>
+          {MODEL_CATALOG.map(m => (
+            <option key={m.v} value={m.v}>{m.name}</option>
+          ))}
+        </select>
+        <div style={{position:'absolute', right:6, top:'50%', transform:'translateY(-50%)',
+          pointerEvents:'none', color:'var(--text-3)', display:'flex'}}>
+          <Icon name="chevronDown" size={11}/>
+        </div>
+      </div>
+
+      {/* Thinking level */}
+      <div>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between',
+          fontSize:9, letterSpacing:'.08em', textTransform:'uppercase',
+          color:'var(--text-3)', marginBottom:4}}>
+          <span style={{display:'flex', alignItems:'center', gap:4}}>
+            <Icon name="sparkle" size={9}/>Thinking
+          </span>
+          <span style={{fontFamily:'var(--mono)', color: activeThink.color, fontWeight:600,
+            textTransform:'none', letterSpacing:0}}>
+            {activeThink.label}
+          </span>
+        </div>
+        <div style={{display:'flex', gap:3}}>
+          {thinkLevels.map(lvl => {
+            const active = lvl.v === think;
+            return (
+              <button key={lvl.v} onClick={() => onThinkChange(lvl.v)}
+                title={`Thinking: ${lvl.label}`}
+                style={{
+                  flex:1, height:20, padding:0,
+                  background: active ? 'var(--bg-1)' : 'transparent',
+                  border: '1px solid',
+                  borderColor: active ? lvl.color : 'var(--border)',
+                  boxShadow: active ? `0 0 0 1px ${lvl.color}22 inset` : 'none',
+                  borderRadius:5, cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:2,
+                  transition:'all .12s',
+                }}>
+                {lvl.dots === 0 ? (
+                  <span style={{fontSize:9, color: active ? lvl.color : 'var(--text-3)',
+                    fontWeight:600}}>∅</span>
+                ) : (
+                  Array.from({length: lvl.dots}).map((_, i) => (
+                    <span key={i} style={{
+                      width:3, height:3, borderRadius:3,
+                      background: active ? lvl.color : 'var(--text-3)',
+                      opacity: active ? 1 : 0.5,
+                    }}/>
+                  ))
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center',
+        fontSize:10, fontFamily:'var(--mono)', color:'var(--text-3)'}}>
+        <span>{selected.tag}</span>
+        <span>{selected.cost}</span>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Command Palette (⌘K)
+// ──────────────────────────────────────────────
+function CommandPalette({ open, onClose, commands }) {
+  const [q, setQ] = shS('');
+  const [i, setI] = shS(0);
+  const inputRef = shR(null);
+
+  shE(() => {
+    if (open) { setQ(''); setI(0); setTimeout(() => inputRef.current?.focus(), 10); }
+  }, [open]);
+
+  const matches = shM(() => {
+    const ql = q.toLowerCase();
+    return commands.filter(c => !ql || c.label.toLowerCase().includes(ql) ||
+      c.hint?.toLowerCase().includes(ql));
+  }, [q, commands]);
+
+  shE(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowDown') { e.preventDefault(); setI(v => Math.min(v+1, matches.length-1)); }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setI(v => Math.max(v-1, 0)); }
+      if (e.key === 'Enter') { e.preventDefault(); matches[i]?.run(); onClose(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, matches, i, onClose]);
+
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,.55)', zIndex:70,
+      display:'flex', alignItems:'flex-start', justifyContent:'center',
+      paddingTop:'12vh', animation:'fade-in .12s ease',
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        width:'min(560px, 94vw)', background:'var(--bg-1)',
+        border:'1px solid var(--border-2)', borderRadius:12,
+        boxShadow:'var(--shadow-2)', overflow:'hidden',
+        animation:'slide-up .15s ease',
+      }}>
+        <div style={{display:'flex', alignItems:'center', gap:10, padding:'12px 14px',
+          borderBottom:'1px solid var(--border)'}}>
+          <Icon name="search" size={16}/>
+          <input ref={inputRef} value={q} onChange={e => { setQ(e.target.value); setI(0); }}
+            placeholder="Type a command or search tasks…"
+            style={{flex:1, background:'transparent', border:'none', color:'var(--text-0)',
+              fontSize:14, outline:'none'}}/>
+          <kbd style={kbd}>esc</kbd>
+        </div>
+        <div style={{maxHeight:360, overflowY:'auto', padding:6}}>
+          {matches.length === 0 && (
+            <div style={{padding:24, textAlign:'center', color:'var(--text-3)', fontSize:12}}>
+              No commands match "{q}"
+            </div>
+          )}
+          {matches.map((c, idx) => (
+            <button key={c.id} onMouseEnter={() => setI(idx)}
+              onClick={() => { c.run(); onClose(); }}
+              style={{
+                width:'100%', display:'flex', alignItems:'center', gap:10,
+                padding:'8px 10px', background: idx === i ? 'var(--bg-3)' : 'transparent',
+                border:'none', borderRadius:6, cursor:'pointer', textAlign:'left',
+                color: 'var(--text-0)', fontSize:13,
+              }}>
+              <span style={{width:20, display:'flex', alignItems:'center', justifyContent:'center',
+                color:'var(--text-2)'}}>
+                <Icon name={c.icon || 'chevron'} size={14}/>
+              </span>
+              <span style={{flex:1}}>{c.label}</span>
+              {c.hint && <span style={{fontSize:11, color:'var(--text-3)'}}>{c.hint}</span>}
+              {c.kbd && <kbd style={kbd}>{c.kbd}</kbd>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+const kbd = {
+  fontFamily:'var(--mono)', fontSize:10, padding:'2px 6px',
+  background:'var(--bg-3)', border:'1px solid var(--border)', borderRadius:4,
+  color:'var(--text-2)',
+};
+
+// ──────────────────────────────────────────────
+// Toast notifications
+// ──────────────────────────────────────────────
+function Toasts({ toasts, onDismiss }) {
+  return (
+    <div style={{position:'fixed', top:16, right:16, zIndex:80, display:'flex',
+      flexDirection:'column', gap:8, pointerEvents:'none'}}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          pointerEvents:'auto', minWidth:280,
+          background:'var(--bg-1)', border:'1px solid var(--border-2)',
+          borderLeft: `3px solid ${t.kind === 'done' ? 'var(--emerald)' : t.kind === 'failed' ? 'var(--rose)' : 'var(--sky)'}`,
+          borderRadius:10, padding:'10px 12px', boxShadow:'var(--shadow-2)',
+          display:'flex', alignItems:'flex-start', gap:10,
+          animation:'slide-up .2s ease',
+        }}>
+          <div style={{color: t.kind === 'done' ? 'var(--emerald)' : t.kind === 'failed' ? 'var(--rose)' : 'var(--sky)',
+            marginTop:1}}>
+            <Icon name={t.kind === 'done' ? 'check' : t.kind === 'failed' ? 'warn' : 'bell'} size={15}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12, fontWeight:600, color:'var(--text-0)'}}>{t.title}</div>
+            {t.desc && <div style={{fontSize:11, color:'var(--text-2)', marginTop:2}}>{t.desc}</div>}
+          </div>
+          <button onClick={() => onDismiss(t.id)}
+            style={{background:'transparent', border:'none', color:'var(--text-3)',
+              cursor:'pointer', padding:2, display:'flex'}}>
+            <Icon name="x" size={12}/>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Usage Panel (top-right)
+// ──────────────────────────────────────────────
+function UsagePanel({ usage, tick }) {
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', gap:14,
+      padding:'8px 12px', background:'var(--bg-1)',
+      border:'1px solid var(--border)', borderRadius:10,
+    }}>
+      <UsageMini label="5H" pct={usage.fiveHour.usedPct}
+        resets={usage.fiveHour.resetsInMs - tick}/>
+      <div style={{width:1, height:30, background:'var(--border)'}}/>
+      <UsageMini label="WEEK" pct={usage.weekly.usedPct}
+        resets={usage.weekly.resetsInMs - tick}/>
+    </div>
+  );
+}
+function UsageMini({ label, pct, resets }) {
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:8}}>
+      <UsageRing pct={pct} size={34} stroke={3}/>
+      <div style={{display:'flex', flexDirection:'column', gap:1}}>
+        <span style={{fontSize:9, letterSpacing:'.14em', fontWeight:600,
+          color:'var(--text-3)'}}>{label}</span>
+        <span style={{fontSize:10, fontFamily:'var(--mono)', color:'var(--text-1)'}}>
+          −{fmtCountdown(Math.max(0, resets))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Dependency Mini-graph
+// ──────────────────────────────────────────────
+function DependencyGraph({ tasks, onClickTask }) {
+  if (!tasks?.length) return null;
+  const deps = [];
+  tasks.forEach(t => t.waitsOn?.forEach(dep => deps.push({ from: dep, to: t.index })));
+  if (deps.length === 0) return null;
+
+  const cols = [0, 0, 0];
+  const place = {};
+  tasks.forEach(t => {
+    const depth = Math.min(2, Math.max(0, (t.waitsOn?.length || 0)));
+    place[t.index] = { col: depth, row: cols[depth]++ };
+  });
+
+  const W = 520, H = 80, CW = W / 3;
+  return (
+    <div style={{
+      padding:12, background:'var(--bg-1)', border:'1px solid var(--border)',
+      borderRadius:10, overflow:'hidden',
+    }}>
+      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+        <Icon name="graph" size={12}/>
+        <span style={{fontSize:10, fontWeight:600, letterSpacing:'.12em',
+          textTransform:'uppercase', color:'var(--text-2)'}}>Dependencies</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%', height:H, display:'block'}}>
+        {deps.map((d, i) => {
+          const a = place[d.from], b = place[d.to];
+          if (!a || !b) return null;
+          const x1 = a.col * CW + 50, y1 = 20 + a.row * 24;
+          const x2 = b.col * CW + 50, y2 = 20 + b.row * 24;
+          return <path key={i} d={`M${x1} ${y1} C${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`}
+            stroke="var(--border-2)" fill="none" strokeWidth="1"/>;
+        })}
+        {tasks.map(t => {
+          const p = place[t.index];
+          const x = p.col * CW + 50, y = 20 + p.row * 24;
+          const color = t.status === 'done' ? 'var(--emerald)'
+                      : t.status === 'running' ? 'var(--emerald)'
+                      : t.status === 'failed' ? 'var(--rose)'
+                      : 'var(--text-3)';
+          return (
+            <g key={t.index} style={{cursor:'pointer'}} onClick={() => onClickTask?.(t)}>
+              <circle cx={x} cy={y} r="5" fill={color}
+                style={{ filter: t.status === 'running' ? 'drop-shadow(0 0 4px var(--emerald))' : 'none' }}/>
+              <text x={x + 10} y={y + 3} fontSize="10" fill="var(--text-2)"
+                fontFamily="var(--mono)">
+                #{t.index} {t.title.slice(0, 22)}{t.title.length > 22 ? '…' : ''}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+Object.assign(window, { AddTaskDialog, CommandPalette, Toasts, UsagePanel, DependencyGraph });
+
+  </script>
+  <script type="text/babel" data-file="archive-modal.jsx">
+/* global React */
+const { useState: amS, useMemo: amM, useEffect: amE } = React;
+
+// ──────────────────────────────────────────────
+// Archive Modal
+// Full-screen searchable archive of completed tasks.
+// Grouped by date, with bulk-select + restore/delete actions.
+// ──────────────────────────────────────────────
+function ArchiveModal({ open, onClose, tasks, onRestore, onDelete, onOpenTask }) {
+  const [query, setQuery] = amS('');
+  const [statusFilter, setStatusFilter] = amS('all');
+  const [selected, setSelected] = amS(() => new Set());
+  const [sortBy, setSortBy] = amS('date-desc'); // date-desc | date-asc | title
+
+  // Reset selection whenever the archive is opened
+  amE(() => { if (open) { setSelected(new Set()); setQuery(''); setStatusFilter('all'); } }, [open]);
+
+  // Esc to close
+  amE(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  const filtered = amM(() => {
+    const q = query.trim().toLowerCase();
+    const list = tasks.filter(t =>
+      (statusFilter === 'all' || t.status === statusFilter) &&
+      (!q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) ||
+        (t.branch && t.branch.toLowerCase().includes(q)))
+    );
+    if (sortBy === 'title') list.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortBy === 'date-asc') list.sort((a, b) => (a.archivedAt || 0) - (b.archivedAt || 0));
+    else list.sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
+    return list;
+  }, [tasks, query, statusFilter, sortBy]);
+
+  // Group by relative date bucket: Today / Yesterday / This week / Earlier
+  const grouped = amM(() => {
+    const now = new Date(); now.setHours(0,0,0,0);
+    const day = 86400000;
+    const bucketsOrder = ['Today', 'Yesterday', 'This week', 'Earlier'];
+    const buckets = { Today:[], Yesterday:[], 'This week':[], Earlier:[] };
+    for (const t of filtered) {
+      const at = t.archivedAt ? new Date(t.archivedAt) : null;
+      if (!at) { buckets.Earlier.push(t); continue; }
+      const d = new Date(at); d.setHours(0,0,0,0);
+      const diff = (now - d) / day;
+      if (diff <= 0) buckets.Today.push(t);
+      else if (diff <= 1) buckets.Yesterday.push(t);
+      else if (diff <= 7) buckets['This week'].push(t);
+      else buckets.Earlier.push(t);
+    }
+    return bucketsOrder.map(k => [k, buckets[k]]).filter(([, v]) => v.length > 0);
+  }, [filtered]);
+
+  const toggle = (id) => setSelected(s => {
+    const next = new Set(s); if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allFilteredIds = filtered.map(t => t.id);
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
+  const toggleAll = () => setSelected(s => {
+    if (allSelected) return new Set([...s].filter(id => !allFilteredIds.includes(id)));
+    return new Set([...s, ...allFilteredIds]);
+  });
+
+  if (!open) return null;
+
+  const statuses = [...new Set(tasks.map(t => t.status))];
+
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:60,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      animation:'fade-in .14s ease', padding:24,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:'min(1100px, 96vw)', height:'min(780px, 92vh)',
+        background:'var(--bg-1)', border:'1px solid var(--border-2)',
+        borderRadius:14, boxShadow:'var(--shadow-2)',
+        animation:'slide-up .2s ease',
+        display:'flex', flexDirection:'column', overflow:'hidden',
+      }}>
+        {/* Header */}
+        <header style={{padding:'14px 20px', borderBottom:'1px solid var(--border)',
+          display:'flex', alignItems:'center', gap:12, background:'var(--bg-1)'}}>
+          <div style={{width:32, height:32, borderRadius:8, background:'var(--bg-3)',
+            display:'flex', alignItems:'center', justifyContent:'center', color:'var(--sky)'}}>
+            <Icon name="archive" size={16}/>
+          </div>
+          <div>
+            <h2 style={{margin:0, fontSize:15, fontWeight:600}}>Archive</h2>
+            <div style={{fontSize:11, color:'var(--text-3)', fontFamily:'var(--mono)'}}>
+              {tasks.length} archived task{tasks.length === 1 ? '' : 's'}
+              {filtered.length !== tasks.length && ` · ${filtered.length} shown`}
+            </div>
+          </div>
+          <div style={{flex:1}}/>
+          <button onClick={onClose} style={{background:'transparent', border:'none',
+            color:'var(--text-3)', cursor:'pointer', padding:6, borderRadius:6, display:'flex'}}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-3)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <Icon name="x" size={16}/>
+          </button>
+        </header>
+
+        {/* Toolbar: search + filters */}
+        <div style={{padding:'12px 20px', borderBottom:'1px solid var(--border)',
+          display:'flex', alignItems:'center', gap:10, flexWrap:'wrap'}}>
+          <div style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px',
+            background:'var(--bg-2)', border:'1px solid var(--border)', borderRadius:8,
+            minWidth:240, flex:'1 1 240px', maxWidth:360}}>
+            <Icon name="search" size={13}/>
+            <input value={query} onChange={e => setQuery(e.target.value)}
+              placeholder="Search archived…"
+              style={{flex:1, background:'transparent', border:'none',
+                color:'var(--text-0)', fontSize:12, outline:'none'}}/>
+            {query && (
+              <button onClick={() => setQuery('')}
+                style={{background:'transparent', border:'none', color:'var(--text-3)',
+                  cursor:'pointer', padding:0, display:'flex'}}>
+                <Icon name="x" size={11}/>
+              </button>
+            )}
+          </div>
+
+          <div style={{display:'flex', gap:4, background:'var(--bg-2)',
+            border:'1px solid var(--border)', borderRadius:8, padding:2}}>
+            {['all', ...statuses].map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                style={{
+                  padding:'4px 10px', fontSize:11, borderRadius:5,
+                  background: statusFilter === s ? 'var(--bg-3)' : 'transparent',
+                  border:'none', color: statusFilter === s ? 'var(--text-0)' : 'var(--text-2)',
+                  cursor:'pointer', fontFamily:'var(--mono)',
+                }}>{s}</button>
+            ))}
+          </div>
+
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+            style={{padding:'7px 10px', background:'var(--bg-2)',
+              border:'1px solid var(--border)', borderRadius:8, color:'var(--text-1)',
+              fontSize:11, fontFamily:'var(--mono)', outline:'none', cursor:'pointer'}}>
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="title">Title A→Z</option>
+          </select>
+
+          <div style={{flex:1}}/>
+
+          {selected.size > 0 ? (
+            <>
+              <span style={{fontSize:11, color:'var(--text-2)', fontFamily:'var(--mono)'}}>
+                {selected.size} selected
+              </span>
+              <Btn icon="arrowRight" variant="outline" size="sm"
+                onClick={() => { [...selected].forEach(onRestore); setSelected(new Set()); }}>
+                Restore
+              </Btn>
+              <Btn icon="trash" variant="outline" size="sm"
+                onClick={() => {
+                  if (confirm(`Permanently delete ${selected.size} task${selected.size===1?'':'s'}?`)) {
+                    onDelete([...selected]); setSelected(new Set());
+                  }
+                }}>
+                Delete
+              </Btn>
+            </>
+          ) : (
+            <button onClick={toggleAll} disabled={filtered.length === 0}
+              style={{fontSize:11, padding:'4px 10px', background:'transparent',
+                border:'1px solid var(--border)', borderRadius:6, color:'var(--text-2)',
+                cursor: filtered.length === 0 ? 'not-allowed' : 'pointer',
+                fontFamily:'var(--mono)', opacity: filtered.length === 0 ? .5 : 1}}>
+              {allSelected ? 'Deselect all' : 'Select all'}
+            </button>
+          )}
+        </div>
+
+        {/* List */}
+        <div style={{flex:1, overflowY:'auto', padding:'8px 0'}}>
+          {filtered.length === 0 ? (
+            <div style={{padding:'60px 20px', textAlign:'center', color:'var(--text-3)'}}>
+              <div style={{marginBottom:10, opacity:.4}}>
+                <Icon name="archive" size={32}/>
+              </div>
+              <div style={{fontSize:13, marginBottom:4}}>
+                {tasks.length === 0 ? 'Nothing archived yet' : 'No matches'}
+              </div>
+              <div style={{fontSize:11, fontFamily:'var(--mono)'}}>
+                {tasks.length === 0
+                  ? 'Use the archive button in the Done column to archive completed tasks.'
+                  : 'Try a different search or filter.'}
+              </div>
+            </div>
+          ) : grouped.map(([bucket, rows]) => (
+            <section key={bucket} style={{marginBottom:8}}>
+              <header style={{
+                padding:'8px 20px 4px', fontSize:10, fontWeight:600,
+                letterSpacing:'.1em', textTransform:'uppercase',
+                color:'var(--text-3)', position:'sticky', top:0,
+                background:'var(--bg-1)', zIndex:1,
+                display:'flex', alignItems:'center', gap:8,
+              }}>
+                {bucket}
+                <span style={{fontFamily:'var(--mono)', letterSpacing:0, textTransform:'none',
+                  color:'var(--text-3)', fontWeight:400}}>· {rows.length}</span>
+              </header>
+              {rows.map(t => (
+                <ArchiveRow key={t.id} task={t}
+                  selected={selected.has(t.id)}
+                  onToggle={() => toggle(t.id)}
+                  onRestore={() => onRestore(t.id)}
+                  onDelete={() => {
+                    if (confirm(`Delete "${t.title}" permanently?`)) onDelete([t.id]);
+                  }}
+                  onOpen={() => onOpenTask(t.id)}/>
+              ))}
+            </section>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArchiveRow({ task, selected, onToggle, onRestore, onDelete, onOpen }) {
+  const archivedAgo = task.archivedAt
+    ? fmtRelative(Date.now() - task.archivedAt)
+    : '—';
+  return (
+    <div style={{
+      padding:'10px 20px', display:'flex', alignItems:'center', gap:12,
+      borderBottom:'1px solid var(--border)',
+      background: selected ? 'var(--accent-soft)' : 'transparent',
+      cursor:'default', transition:'background .1s',
+    }}
+      onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'var(--bg-2)'; }}
+      onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent'; }}>
+
+      <input type="checkbox" checked={selected} onChange={onToggle}
+        style={{cursor:'pointer', accentColor:'var(--emerald)'}}/>
+
+      <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--text-3)',
+        width:30, flexShrink:0}}>#{task.index}</span>
+
+      <div style={{flex:1, minWidth:0, cursor:'pointer'}} onClick={onOpen}>
+        <div style={{fontSize:13, color:'var(--text-0)', fontWeight:500,
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+          marginBottom:2}}>
+          {task.title}
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:10, fontSize:11,
+          color:'var(--text-3)', fontFamily:'var(--mono)'}}>
+          {task.branch && (
+            <span style={{display:'flex', alignItems:'center', gap:4}}>
+              <Icon name="git" size={10}/> {task.branch.replace('zibby/','')}
+            </span>
+          )}
+          {task.prUrl && (
+            <span style={{color:'var(--emerald)'}}>PR #{task.prUrl.split('/').pop()}</span>
+          )}
+          {task.tokens && (
+            <span>↑{(task.tokens.in/1000).toFixed(1)}k ↓{(task.tokens.out/1000).toFixed(1)}k</span>
+          )}
+        </div>
+      </div>
+
+      <StatusPill status={task.status}/>
+
+      <span style={{fontSize:11, fontFamily:'var(--mono)', color:'var(--text-3)',
+        width:80, textAlign:'right', flexShrink:0}}>
+        {archivedAgo}
+      </span>
+
+      <div style={{display:'flex', gap:4}}>
+        <button onClick={onRestore} title="Restore to Done"
+          style={rowBtn}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,.15)'; e.currentTarget.style.color='var(--emerald)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color='var(--text-3)'; }}>
+          <Icon name="arrowRight" size={12}/>
+        </button>
+        <button onClick={onDelete} title="Delete permanently"
+          style={rowBtn}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,.15)'; e.currentTarget.style.color='var(--rose)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color='var(--text-3)'; }}>
+          <Icon name="trash" size={12}/>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const rowBtn = {
+  display:'flex', alignItems:'center', justifyContent:'center',
+  width:26, height:26, background:'transparent',
+  border:'1px solid var(--border)', borderRadius:5,
+  color:'var(--text-3)', cursor:'pointer',
+  transition:'background .12s, color .12s',
+};
+
+function fmtRelative(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(Date.now() - ms).toLocaleDateString();
+}
+
+window.ArchiveModal = ArchiveModal;
+
+  </script>
+  <script type="text/babel" data-file="dashboard.jsx">
+/* global React, ReactDOM */
+const { useState: apS, useEffect: apE, useMemo: apM, useRef: apR, useCallback: apC } = React;
+
+// Kanban column grouping
+const COLS = [
+  { id: 'queue',   title: 'Queued',  accent: 'var(--amber)',    statuses: ['pending', 'queued', 'blocked'] },
+  { id: 'running', title: 'Running', accent: 'var(--emerald)',  statuses: ['running', 'pushing'] },
+  { id: 'review',  title: 'Review',  accent: 'var(--violet)',   statuses: ['review'] },
+  { id: 'done',    title: 'Done',    accent: 'var(--sky)',      statuses: ['done', 'failed', 'cancelled'] },
+];
+const statusToCol = (s) => COLS.find(c => c.statuses.includes(s))?.id || 'queue';
+const dropColDefault = (colId) => {
+  if (colId === 'queue') return 'pending';
+  if (colId === 'running') return 'running';
+  if (colId === 'review') return 'review';
+  return 'done';
+};
+
+function Dashboard({ variant = 'a', tweaks, setTweak }) {
+  const [tasks, setTasks] = apS(() => window.ZIBBY.SEED_TASKS.map(t => ({ ...t })));
+  const [folder] = apS(window.ZIBBY.FOLDER);
+  const [usage] = apS(window.ZIBBY.USAGE);
+  // When true, show archived tasks in the Done column instead of active ones.
+  const [showArchived, setShowArchived] = apS(false);
+  const [archiveOpen, setArchiveOpen] = apS(false);
+
+  const theme = tweaks?.theme || 'dark';
+  const setTheme = (v) => setTweak?.('theme', typeof v === 'function' ? v(theme) : v);
+
+  // Theme-aware brand defaults. Only override if the user has explicitly set appName / accent.
+  const themedName = theme === 'light' ? 'DayCoder' : 'NightCoder';
+  const themedAccent = theme === 'light' ? '#f59e0b' : '#10b981';
+  const userName = tweaks?.appName && tweaks.appName !== 'NightCoder' && tweaks.appName !== 'DayCoder'
+    ? tweaks.appName : null;
+  const userAccent = tweaks?.accent && tweaks.accent !== '#10b981' && tweaks.accent !== '#f59e0b'
+    ? tweaks.accent : null;
+  const appName = userName || themedName;
+  const accent = userAccent || themedAccent;
+  const density = tweaks?.density || 'comfortable';
+  apE(() => { document.documentElement.style.setProperty('--emerald', accent); }, [accent]);
+  const [selectedId, setSelectedId] = apS(null);
+  const [drawerTab, setDrawerTab] = apS('logs');
+  const [addOpen, setAddOpen] = apS(false);
+  const [paletteOpen, setPaletteOpen] = apS(false);
+  const [search, setSearch] = apS('');
+  const [filterStatus, setFilterStatus] = apS('all');
+  const [tick, setTick] = apS(0);
+  const [toasts, setToasts] = apS([]);
+  const [dragId, setDragId] = apS(null);
+
+  // tick every second for countdowns and timers
+  apE(() => {
+    const id = setInterval(() => setTick(t => t + 1000), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // apply theme
+  apE(() => {
+    const el = document.querySelector(`.zb[data-variant="${variant}"]`);
+    if (el) el.className = `zb ${theme === 'light' ? 'theme-light' : ''}`;
+    el?.setAttribute('data-variant', variant);
+  }, [theme, variant]);
+
+  // global ⌘K
+  apE(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); setPaletteOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const selected = tasks.find(t => t.id === selectedId) || null;
+
+  const pushToast = (t) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(arr => [...arr, { id, ...t }]);
+    setTimeout(() => setToasts(arr => arr.filter(x => x.id !== id)), 5000);
+  };
+
+  const moveTask = (id, toCol) => {
+    setTasks(ts => ts.map(t => t.id === id
+      ? { ...t, status: dropColDefault(toCol),
+          startedAt: toCol === 'running' ? Date.now() : t.startedAt,
+          endedAt: (toCol === 'done' || toCol === 'review') ? Date.now() : t.endedAt }
+      : t));
+  };
+
+  // Preview/run the branch for a task under review. In a real app this would
+  // spawn a worktree run (pnpm dev etc) and pop open the preview URL.
+  const previewTask = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    pushToast({
+      kind:'info',
+      title:'Preview starting',
+      desc:`${t.branch || 'branch'} → http://localhost:5173`,
+    });
+  };
+
+  // Approve a review task — move it to Done.
+  const approveTask = (id) => {
+    moveTask(id, 'done');
+    const t = tasks.find(x => x.id === id);
+    if (t) pushToast({ kind:'success', title:'Task approved', desc:t.title });
+  };
+
+  // Reject from review — send back to queue as pending.
+  const rejectTask = (id) => {
+    setTasks(ts => ts.map(t => t.id === id ? { ...t, status:'pending', endedAt:null } : t));
+    const t = tasks.find(x => x.id === id);
+    if (t) pushToast({ kind:'warn', title:'Task sent back', desc:t.title });
+  };
+
+  const runTask = (id) => {
+    moveTask(id, 'running');
+    pushToast({ kind:'info', title:'Task started', desc: tasks.find(t=>t.id===id)?.title });
+  };
+
+  const addTask = (data) => {
+    // Title is optional — if empty, derive a short one from the description's
+    // first line so the card and command palette have something to show.
+    const fallbackTitle = (() => {
+      const first = (data.description || '').split('\n')[0].trim();
+      if (!first) return 'Untitled task';
+      return first.length > 60 ? first.slice(0, 57) + '…' : first;
+    })();
+    setTasks(ts => [...ts, {
+      id: 'n' + Math.random().toString(36).slice(2, 6),
+      index: ts.length, status: data.waitsOn?.length ? 'blocked' : 'pending',
+      waitsOn:[], logs:[], diff:null,
+      affectedFiles:[], tokens:null, branch:null, prUrl:null, startedAt:null, endedAt:null,
+      ...data,
+      title: data.title || fallbackTitle,
+    }]);
+    setAddOpen(false);
+  };
+
+  // Archive every task currently in the Done column (status done/failed/cancelled
+  // AND not already archived). Archived tasks stay in state but are hidden from
+  // the Done column. They live on in the Archive view, which has its own UI.
+  // Returns the number of tasks archived.
+  const archiveDone = () => {
+    const doneStatuses = ['done', 'failed', 'cancelled'];
+    const archivable = tasks.filter(t => doneStatuses.includes(t.status) && !t.archived);
+    if (archivable.length === 0) {
+      pushToast({ kind:'warn', title:'Nothing to archive', desc:'No completed tasks in Done.' });
+      return 0;
+    }
+    setTasks(ts => ts.map(t =>
+      doneStatuses.includes(t.status) && !t.archived
+        ? { ...t, archived:true, archivedAt:Date.now() } : t));
+    pushToast({
+      kind:'success',
+      title:`Archived ${archivable.length} task${archivable.length === 1 ? '' : 's'}`,
+      desc:'Open the Archive to find them.',
+    });
+    return archivable.length;
+  };
+
+  // Restore one archived task back to its previous status (it shows up in Done
+  // again, since done/failed/cancelled are the archivable statuses).
+  const restoreTask = (id) => {
+    setTasks(ts => ts.map(t => t.id === id ? { ...t, archived:false, archivedAt:null } : t));
+  };
+
+  // Permanently delete archived tasks.
+  const deleteArchived = (ids) => {
+    const set = new Set(ids);
+    setTasks(ts => ts.filter(t => !set.has(t.id)));
+  };
+
+  // filter + search
+  const visible = apM(() => {
+    const q = search.toLowerCase();
+    return tasks.filter(t =>
+      // Archived tasks never show on the kanban — they live in the Archive modal
+      !t.archived &&
+      (!q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) &&
+      (filterStatus === 'all' || t.status === filterStatus)
+    );
+  }, [tasks, search, filterStatus]);
+
+  const grouped = apM(() => {
+    const out = { queue:[], running:[], review:[], done:[] };
+    visible.forEach(t => out[statusToCol(t.status)].push(t));
+    return out;
+  }, [visible]);
+
+  const commands = apM(() => [
+    { id:'run-all', icon:'play', label:'Run all tasks', kbd:'⌘⏎',
+      run: () => { tasks.filter(t => t.status==='pending' || t.status==='queued').forEach(t => runTask(t.id)); } },
+    { id:'add', icon:'plus', label:'Add task', kbd:'n', run: () => setAddOpen(true) },
+    { id:'theme', icon: theme==='dark'?'sun':'moon', label:`Toggle theme (${theme==='dark'?'light':'dark'})`,
+      run: () => setTheme(t => t==='dark'?'light':'dark') },
+    { id:'folder', icon:'folder', label:'Change folder…', hint: folder.path, run: () => {} },
+    ...tasks.map(t => ({ id:'task-'+t.id, icon:'arrowRight',
+      label: `Go to: ${t.title}`, hint: `#${t.index} · ${t.status}`,
+      run: () => { setSelectedId(t.id); setDrawerTab('logs'); } })),
+  ], [tasks, theme, folder]);
+
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData('text/task-id', id);
+    e.dataTransfer.effectAllowed = 'move';
+    setDragId(id);
+  };
+  const handleDragEnd = () => setDragId(null);
+
+  return (
+    <div className={`zb ${theme === 'light' ? 'theme-light' : ''}`} data-variant={variant} data-density={density}
+      style={{ minHeight:'100%', background:'var(--bg-0)', color:'var(--text-0)',
+        display:'flex', flexDirection:'column', fontSize:13 }}>
+
+      {/* Top bar */}
+      <header style={{
+        padding:'14px 20px',
+        borderBottom:'1px solid var(--border)',
+        background:'var(--bg-1)',
+        display:'flex', alignItems:'center', gap:16,
+      }}>
+        <div style={{display:'flex', alignItems:'center', gap:10}}>
+          <BrandMark size={30} theme={theme} accent={accent}/>
+          <div>
+            <div style={{fontSize:13, fontWeight:700, letterSpacing:'-.01em'}}>{appName}</div>
+            <div style={{fontSize:10, color:'var(--text-3)', fontFamily:'var(--mono)'}}>
+              multi-agent coding workflow
+            </div>
+          </div>
+        </div>
+
+        {/* Folder */}
+        <div style={{display:'flex', alignItems:'center', gap:6, padding:'6px 10px',
+          background:'var(--bg-2)', border:'1px solid var(--border)', borderRadius:8}}>
+          <Icon name="folder" size={13}/>
+          <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--text-1)'}}>
+            {folder.path}
+          </span>
+          <div style={{width:1, height:14, background:'var(--border)', margin:'0 4px'}}/>
+          <Chip icon="git" tone="accent" style={{height:20}}>{folder.branch}</Chip>
+          <button style={{background:'transparent', border:'none', color:'var(--text-3)',
+            cursor:'pointer', padding:2, display:'flex', marginLeft:2}}>
+            <Icon name="chevronDown" size={12}/>
+          </button>
+        </div>
+
+        <div style={{flex:1}}/>
+
+        {/* search */}
+        <div style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px',
+          background:'var(--bg-2)', border:'1px solid var(--border)', borderRadius:8, minWidth:220}}>
+          <Icon name="search" size={13}/>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder="Search tasks"
+            style={{flex:1, background:'transparent', border:'none', color:'var(--text-0)',
+              fontSize:12, outline:'none'}}/>
+          <kbd style={{fontFamily:'var(--mono)', fontSize:10, padding:'1px 5px',
+            background:'var(--bg-3)', border:'1px solid var(--border)', borderRadius:3,
+            color:'var(--text-3)'}}>⌘K</kbd>
+        </div>
+
+        <UsagePanel usage={usage} tick={tick}/>
+
+        <button onClick={() => setTheme(t => t==='dark'?'light':'dark')}
+          style={{background:'var(--bg-2)', border:'1px solid var(--border)',
+            borderRadius:8, padding:'6px 8px', color:'var(--text-1)', cursor:'pointer',
+            display:'flex', alignItems:'center'}}
+          title="Toggle theme">
+          <Icon name={theme==='dark'?'sun':'moon'} size={14}/>
+        </button>
+      </header>
+
+      {/* Sub-bar: filters + actions */}
+      <div style={{padding:'12px 20px', display:'flex', alignItems:'center', gap:10,
+        background:'var(--bg-0)', borderBottom:'1px solid var(--border)'}}>
+        <span style={{fontSize:11, color:'var(--text-3)', fontFamily:'var(--mono)'}}>
+          {tasks.length} tasks · {tasks.filter(t=>t.status==='running').length} running
+        </span>
+        <div style={{width:1, height:14, background:'var(--border)'}}/>
+        {['all', 'pending', 'review', 'failed', 'interrupted'].map(s => (
+          <button key={s} onClick={() => setFilterStatus(s)}
+            style={{
+              padding:'3px 10px', fontSize:11, borderRadius:5,
+              background: filterStatus === s ? 'var(--bg-3)' : 'transparent',
+              border:'1px solid', borderColor: filterStatus === s ? 'var(--border-2)' : 'transparent',
+              color: filterStatus === s ? 'var(--text-0)' : 'var(--text-2)', cursor:'pointer',
+              fontFamily:'var(--mono)',
+            }}>
+            {s}
+          </button>
+        ))}
+        <div style={{flex:1}}/>
+        {tasks.some(t => t.archived) && (
+          <Btn icon="archive" variant="ghost" size="sm" onClick={() => setArchiveOpen(true)}>
+            Archive
+            <span style={{
+              marginLeft:6, padding:'1px 6px', borderRadius:999,
+              background:'var(--bg-3)', fontSize:10, fontFamily:'var(--mono)',
+              color:'var(--text-2)',
+            }}>
+              {tasks.filter(t => t.archived).length}
+            </span>
+          </Btn>
+        )}
+        <Btn icon="plus" variant="secondary" size="sm" onClick={() => setAddOpen(true)}>
+          Add task
+        </Btn>
+        <Btn icon="play" variant="primary" size="sm"
+          onClick={() => tasks.filter(t=>t.status==='pending').forEach(t=>runTask(t.id))}>
+          Run all
+        </Btn>
+      </div>
+
+      {/* Body: kanban */}
+      <main style={{flex:1, padding:'16px 20px 24px', display:'flex',
+        flexDirection:'column', gap:16, overflowY:'auto'}}>
+
+        <div style={{display:'flex', gap:14, flex:1}}>
+          {COLS.map(col => (
+            <Column key={col.id} id={col.id}
+              title={col.title}
+              accent={col.accent}
+              count={grouped[col.id].length} tasks={grouped[col.id]}
+              onDropTask={(id) => moveTask(id, col.id)}
+              headerAction={col.id === 'done' ? (
+                <button onClick={archiveDone}
+                  title="Archive all completed tasks"
+                  style={{
+                    background:'transparent', border:'none',
+                    color:'var(--text-3)',
+                    cursor:'pointer', padding:4, borderRadius:4,
+                    display:'flex', alignItems:'center',
+                    transition:'color .12s, background .12s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = 'var(--text-0)';
+                    e.currentTarget.style.background = 'var(--bg-3)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = 'var(--text-3)';
+                    e.currentTarget.style.background = 'transparent';
+                  }}>
+                  <Icon name="archive" size={13}/>
+                </button>
+              ) : null}>
+              {grouped[col.id].map(t => (
+                <TaskCard key={t.id} task={t} runtimeMs={t.startedAt ? tick + (Date.now() - t.startedAt) : null}
+                  isDragging={dragId === t.id}
+                  dragHandlers={{
+                    draggable:true,
+                    onDragStart:(e)=>handleDragStart(e, t.id),
+                    onDragEnd: handleDragEnd,
+                  }}
+                  onOpen={() => { setSelectedId(t.id); setDrawerTab('logs'); }}
+                  onEdit={() => { setSelectedId(t.id); setDrawerTab('details'); }}
+                  onRun={() => runTask(t.id)}
+                  onPreview={() => previewTask(t.id)}
+                  onApprove={() => approveTask(t.id)}
+                  onReject={() => rejectTask(t.id)}
+                  onDelete={() => setTasks(ts => ts.filter(x => x.id !== t.id))}
+                />
+              ))}
+            </Column>
+          ))}
+        </div>
+      </main>
+
+      <TaskDrawer task={selected} open={!!selected} onClose={() => setSelectedId(null)}
+        onRun={() => selected && runTask(selected.id)} tab={drawerTab} setTab={setDrawerTab}
+        runtimeMs={selected?.startedAt ? tick + (Date.now() - selected.startedAt) : null}/>
+
+      <AddTaskDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addTask} allTasks={tasks} folder={folder}/>
+
+      <ArchiveModal open={archiveOpen} onClose={() => setArchiveOpen(false)}
+        tasks={tasks.filter(t => t.archived)}
+        onRestore={(id) => { restoreTask(id); pushToast({kind:'info', title:'Task restored'}); }}
+        onDelete={(ids) => { deleteArchived(ids); pushToast({kind:'warn', title:`Deleted ${ids.length} task${ids.length===1?'':'s'}`}); }}
+        onOpenTask={(id) => { setArchiveOpen(false); setSelectedId(id); setDrawerTab('logs'); }}/>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands}/>
+
+      <Toasts toasts={toasts} onDismiss={(id) => setToasts(arr => arr.filter(t => t.id !== id))}/>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Brand">
+          <TweakText label="App name" value={appName} onChange={v => setTweak('appName', v)}/>
+          <TweakColor label="Accent" value={accent} onChange={v => setTweak('accent', v)}/>
+        </TweakSection>
+        <TweakSection label="Appearance">
+          <TweakRadio label="Theme" value={theme}
+            options={['dark','light']}
+            onChange={v => setTweak('theme', v)}/>
+          <TweakRadio label="Density" value={density}
+            options={['compact','comfortable']}
+            onChange={v => setTweak('density', v)}/>
+        </TweakSection>
+        <TweakSection label="Layout">
+          <TweakToggle label="Monospace logs" value={tweaks?.monoLogs !== false}
+            onChange={v => setTweak('monoLogs', v)}/>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+window.Dashboard = Dashboard;
+
+  </script>
+  <script type="text/babel" data-file="app-root.jsx">
+function Root() {
+  const [t, setT] = useTweaks(TWEAK_DEFAULTS);
+  return <Dashboard variant="a" tweaks={t} setTweak={setT}/>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+
+  </script>
+  <script>
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "appName": "NightCoder",
+      "accent": "#10b981",
+      "theme": "light",
+      "density": "comfortable",
+      "monoLogs": true
+    }/*EDITMODE-END*/;
+  </script>
+</body>
+</html>
