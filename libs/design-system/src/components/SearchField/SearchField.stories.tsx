@@ -34,12 +34,12 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>With leading icon</div>
-        <SearchField startAdornment={<Icon value={IconName.Search} size={13} />} />
+        <SearchField startAdornment={<Icon value={IconName.Search} size="sm" />} />
       </div>
       <div>
         <div style={label}>With shortcut hint</div>
         <SearchField
-          startAdornment={<Icon value={IconName.Search} size={13} />}
+          startAdornment={<Icon value={IconName.Search} size="sm" />}
           endAdornment={<Kbd>⌘K</Kbd>}
           placeholder="Search tasks"
         />
@@ -48,16 +48,16 @@ export const Overview: Story = {
         <div style={label}>Filled</div>
         <SearchField
           defaultValue="refactor"
-          startAdornment={<Icon value={IconName.Search} size={13} />}
+          startAdornment={<Icon value={IconName.Search} size="sm" />}
         />
       </div>
       <div>
         <div style={label}>Disabled</div>
-        <SearchField disabled startAdornment={<Icon value={IconName.Search} size={13} />} />
+        <SearchField disabled startAdornment={<Icon value={IconName.Search} size="sm" />} />
       </div>
       <div>
         <div style={label}>Custom width via wrapperClassName</div>
-        <SearchField wrapperClassName="w-full" startAdornment={<Icon value={IconName.Search} size={13} />} />
+        <SearchField wrapperClassName="w-full" startAdornment={<Icon value={IconName.Search} size="sm" />} />
       </div>
     </div>
   ),
@@ -68,7 +68,7 @@ export const Playground: Story = {
     placeholder: 'Search tasks',
     minWidth: 260,
     disabled: false,
-    startAdornment: <Icon value={IconName.Search} size={13} />,
+    startAdornment: <Icon value={IconName.Search} size="sm" />,
     endAdornment: <Kbd>⌘K</Kbd>,
   },
   argTypes: {

@@ -1,6 +1,9 @@
 import type { CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Icon, IconName } from './Icon';
+import type { Size } from '../../tokens';
+
+const sizes: Size[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
 const meta = {
   title: 'Design System/Icon',
@@ -61,17 +64,17 @@ export const Overview: Story = {
       <div style={grid}>
         {iconNames.map((name) => (
           <div key={name} style={cell}>
-            <Icon value={name} size={20} />
+            <Icon value={name} size="lg" />
             <span style={label}>{name}</span>
           </div>
         ))}
       </div>
       <div style={{ ...sectionLabel, marginTop: 24 }}>Sizes</div>
       <div style={row}>
-        {[12, 14, 16, 20, 24, 32, 48].map((s) => (
+        {sizes.map((s) => (
           <div key={s} style={cell}>
             <Icon value={IconName.Sparkle} size={s} />
-            <span style={label}>{s}px</span>
+            <span style={label}>{s}</span>
           </div>
         ))}
       </div>
@@ -79,7 +82,7 @@ export const Overview: Story = {
       <div style={row}>
         {[1, 1.5, 2, 2.5].map((w) => (
           <div key={w} style={cell}>
-            <Icon value={IconName.Bell} size={28} strokeWidth={w} />
+            <Icon value={IconName.Bell} size="xl" strokeWidth={w} />
             <span style={label}>{w}</span>
           </div>
         ))}
@@ -106,13 +109,13 @@ export const Overview: Story = {
 export const Playground: Story = {
   args: {
     value: IconName.Sparkle,
-    size: 32,
+    size: 'xl',
     strokeWidth: 1.75,
     className: '',
   },
   argTypes: {
     value: { control: 'select', options: iconNames },
-    size: { control: { type: 'range', min: 8, max: 96, step: 1 } },
+    size: { control: 'select', options: sizes },
     strokeWidth: { control: { type: 'range', min: 0.5, max: 3, step: 0.25 } },
     className: { control: 'text' },
   },

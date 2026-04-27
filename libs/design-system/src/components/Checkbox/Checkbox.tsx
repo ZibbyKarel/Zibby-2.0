@@ -1,5 +1,6 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Icon, IconName } from '../Icon';
+import type { Size } from '../../tokens';
 
 export type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> & {
   label?: ReactNode;
@@ -15,11 +16,11 @@ const boxSize = {
   lg: 'h-5 w-5',
 } as const;
 
-const checkPx = {
-  sm: 10,
-  md: 12,
-  lg: 14,
-} as const;
+const checkSize: Record<'sm' | 'md' | 'lg', Size> = {
+  sm: 'xs',
+  md: 'xs',
+  lg: 'sm',
+};
 
 const labelSize = {
   sm: 'text-xs',
@@ -55,7 +56,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             {...props}
           />
           <span className="pointer-events-none absolute inset-0 m-auto flex items-center justify-center text-[#04140d] opacity-0 peer-checked:opacity-100 transition-opacity">
-            <Icon value={IconName.Check} size={checkPx[size]} strokeWidth={3} />
+            <Icon value={IconName.Check} size={checkSize[size]} strokeWidth={3} />
           </span>
         </span>
         {label && <span className={`${labelSize[size]} text-[var(--text-0)]`}>{label}</span>}

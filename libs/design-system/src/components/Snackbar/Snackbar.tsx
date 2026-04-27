@@ -64,7 +64,7 @@ export function Snackbar({
       }}
     >
       <span style={{ color }} className="mt-0.5 flex shrink-0">
-        {icon ?? <Icon value={defaultIconFor[severity]} size={15} />}
+        {icon ?? <Icon value={defaultIconFor[severity]} size="sm" />}
       </span>
       <div className="flex-1 min-w-0">
         {title && <div className="text-xs font-semibold text-[var(--text-0)]">{title}</div>}
@@ -79,7 +79,7 @@ export function Snackbar({
           onClick={onClose}
           className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
         >
-          <Icon value={IconName.X} size={12} />
+          <Icon value={IconName.X} size="xs" />
         </button>
       )}
     </div>

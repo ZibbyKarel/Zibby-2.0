@@ -58,10 +58,10 @@ export const Overview: Story = {
       <div>
         <div style={label}>With icon</div>
         <div style={row}>
-          <FilterChip icon={<Icon value={IconName.Filter} size={11} />}>
+          <FilterChip icon={<Icon value={IconName.Filter} size="xs" />}>
             Interrupted
           </FilterChip>
-          <FilterChip active tone="warn" icon={<Icon value={IconName.Filter} size={11} />}>
+          <FilterChip active tone="warn" icon={<Icon value={IconName.Filter} size="xs" />}>
             Interrupted
           </FilterChip>
         </div>

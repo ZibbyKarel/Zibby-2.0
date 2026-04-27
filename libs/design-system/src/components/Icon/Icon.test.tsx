@@ -11,11 +11,17 @@ describe('Icon', () => {
     expect(svg).toBeInstanceOf(SVGElement);
   });
 
-  it('applies the requested size to width and height', () => {
-    const { container } = render(<Icon value={IconName.Check} size={24} />);
+  it.each([
+    ['xs', '12'],
+    ['sm', '14'],
+    ['md', '16'],
+    ['lg', '20'],
+    ['xl', '24'],
+  ] as const)('maps size token %s to %spx', (size, px) => {
+    const { container } = render(<Icon value={IconName.Check} size={size} />);
     const svg = container.querySelector('svg')!;
-    expect(svg.getAttribute('width')).toBe('24');
-    expect(svg.getAttribute('height')).toBe('24');
+    expect(svg.getAttribute('width')).toBe(px);
+    expect(svg.getAttribute('height')).toBe(px);
   });
 
   it('forwards strokeWidth to the underlying svg', () => {

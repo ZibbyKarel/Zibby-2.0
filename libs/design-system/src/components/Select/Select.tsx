@@ -29,7 +29,7 @@ const sizeClasses = {
 
 const Caret = () => (
   <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-3)]">
-    <Icon value={IconName.ChevronDown} size={14} />
+    <Icon value={IconName.ChevronDown} size="sm" />
   </span>
 );
 

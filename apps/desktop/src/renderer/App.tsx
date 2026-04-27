@@ -549,14 +549,14 @@ export default function App() {
           {folder ? (
             <Surface background="bg2" bordered radius="sm" paddingX={10} paddingY={6}>
               <Stack direction="row" align="center" gap={6}>
-                <Icon value={IconName.Folder} size={13} />
+                <Icon value={IconName.Folder} size="sm" />
                 <Surface maxWidth={260}>
                   <Text size="sm" mono tone="muted" truncate data-testid={TestIds.TopBar.folderPath}>
                     {folder.path}
                   </Text>
                 </Surface>
                 <Divider orientation="vertical" />
-                <DsChip tone="accent" size="sm" icon={<Icon value={IconName.Git} size={11} />}>main</DsChip>
+                <DsChip tone="accent" size="sm" icon={<Icon value={IconName.Git} size="xs" />}>main</DsChip>
                 <IconButton
                   aria-label="Change folder"
                   size="sm"
@@ -584,7 +584,7 @@ export default function App() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tasks"
-            startAdornment={<Icon value={IconName.Search} size={13} />}
+            startAdornment={<Icon value={IconName.Search} size="sm" />}
             endAdornment={<Kbd>⌘K</Kbd>}
             data-testid={TestIds.TopBar.searchInput}
           />

@@ -305,7 +305,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             align="center"
             justify="center"
           >
-            <Icon value={IconName.Plus} size={16} />
+            <Icon value={IconName.Plus} size="md" />
           </Surface>
           <Text as="h2" size="lg" weight="semibold">New task</Text>
           <Text size="xs" mono tone="faint">
@@ -349,7 +349,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                 align="center"
                 gap={6}
               >
-                <Icon value={IconName.Search} size={12} />
+                <Icon value={IconName.Search} size="xs" />
                 <input
                   value={treeFilter}
                   onChange={(e) => setTreeFilter(e.target.value)}
@@ -550,7 +550,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                         align="center"
                         gap={8}
                       >
-                        <Icon value={IconName.File} size={13} />
+                        <Icon value={IconName.File} size="sm" />
                         <Surface grow minWidth={0} title={p}>
                           <Text size="sm" mono tone="muted" truncate>{basename(p)}</Text>
                         </Surface>
@@ -686,10 +686,10 @@ function TreeNode({
         interactive
       >
         <Surface width={12} direction="row" align="center">
-          {isDir ? <Icon value={isOpen ? IconName.ChevronDown : IconName.ChevronRight} size={10} /> : null}
+          {isDir ? <Icon value={isOpen ? IconName.ChevronDown : IconName.ChevronRight} size="xs" /> : null}
         </Surface>
         <Surface direction="row" align="center">
-          <Icon value={isDir ? IconName.Folder : IconName.File} size={11} />
+          <Icon value={isDir ? IconName.Folder : IconName.File} size="xs" />
         </Surface>
         <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>{node.name}</Text>
       </Surface>

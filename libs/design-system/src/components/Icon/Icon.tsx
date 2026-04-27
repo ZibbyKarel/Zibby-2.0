@@ -1,4 +1,5 @@
 import { forwardRef, type SVGAttributes } from 'react';
+import type { Size } from '../../tokens';
 import {
   AlertCircle,
   AlertTriangle,
@@ -157,11 +158,20 @@ const registry: Record<IconName, LucideIcon> = {
   [IconName.Zap]:           Zap,
 };
 
+/** Pixel diameter rendered for each {@link Size} token. */
+const sizePx: Record<Size, number> = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 20,
+  xl: 24,
+};
+
 export type IconProps = Omit<SVGAttributes<SVGSVGElement>, 'children'> & {
   /** The icon to render. Pass the `IconName.X` constant. */
   value: IconName;
-  /** Diameter in pixels. Defaults to 16. */
-  size?: number;
+  /** T-shirt size token. Defaults to `'md'` (16px). */
+  size?: Size;
   /** Stroke width — pass-through to lucide. Defaults to 1.75. */
   strokeWidth?: number;
 };
@@ -171,9 +181,17 @@ export type IconProps = Omit<SVGAttributes<SVGSVGElement>, 'children'> & {
  * the `value` prop instead of bare strings.
  */
 export const Icon = forwardRef<SVGSVGElement, IconProps>(function Icon(
-  { value, size = 16, strokeWidth = 1.75, ...props },
+  { value, size = 'md', strokeWidth = 1.75, ...props },
   ref,
 ) {
   const Glyph = registry[value];
-  return <Glyph ref={ref} size={size} strokeWidth={strokeWidth} aria-hidden {...props} />;
+  return (
+    <Glyph
+      ref={ref}
+      size={sizePx[size]}
+      strokeWidth={strokeWidth}
+      aria-hidden
+      {...props}
+    />
+  );
 });

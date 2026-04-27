@@ -124,17 +124,17 @@ export function TaskDrawer({
             {task.title}
           </Text>
           <Stack direction="row" wrap gap={6}>
-            {task.branch && <Chip icon={<Icon value={IconName.Git} size={11} />}>{task.branch}</Chip>}
+            {task.branch && <Chip icon={<Icon value={IconName.Git} size="xs" />}>{task.branch}</Chip>}
             {task.prUrl && (
-              <Chip tone="accent" icon={<Icon value={IconName.Github} size={11} />}>
+              <Chip tone="accent" icon={<Icon value={IconName.Github} size="xs" />}>
                 PR #{task.prUrl.split('/').pop()}
               </Chip>
             )}
             {task.model && (
-              <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size={11} />}>{task.model}</Chip>
+              <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size="xs" />}>{task.model}</Chip>
             )}
             {tokens != null && (
-              <Chip icon={<Icon value={IconName.Zap} size={11} />}>
+              <Chip icon={<Icon value={IconName.Zap} size="xs" />}>
                 ↑{fmtNum(tokens.in)} ↓{fmtNum(tokens.out)}
               </Chip>
             )}
@@ -147,20 +147,20 @@ export function TaskDrawer({
               {
                 key: 'logs',
                 label: 'Logs',
-                icon: <Icon value={IconName.Terminal} size={13} />,
+                icon: <Icon value={IconName.Terminal} size="sm" />,
                 badge: task.logs.length || undefined,
                 testId: TestIds.Drawer.tab('logs'),
               },
               {
                 key: 'diff',
                 label: 'Diff',
-                icon: <Icon value={IconName.Diff} size={13} />,
+                icon: <Icon value={IconName.Diff} size="sm" />,
                 testId: TestIds.Drawer.tab('diff'),
               },
               {
                 key: 'details',
                 label: 'Details',
-                icon: <Icon value={IconName.Edit} size={13} />,
+                icon: <Icon value={IconName.Edit} size="sm" />,
                 testId: TestIds.Drawer.tab('details'),
               },
             ]}
@@ -224,7 +224,7 @@ function LogsView({ task }: { task: TaskVM }) {
         gap={8}
         data-testid={TestIds.Drawer.logsEmpty}
       >
-        <Icon value={IconName.Terminal} size={28} />
+        <Icon value={IconName.Terminal} size="xl" />
         <Text size="sm" tone="faint">No logs yet. Run this task to stream output.</Text>
       </Surface>
     );
@@ -444,7 +444,7 @@ function DiffFileBlock({ file }: { file: TaskDiffFile }) {
         textAlign="left"
         onClick={() => setCollapsed((c) => !c)}
       >
-        <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size={12} />
+        <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size="xs" />
         <Surface background="bg3" radius="pill" paddingX={6} paddingY={1}>
           <Text size="xs" mono tone={changeKindTone(file.changeKind)} tracking="wide" transform="uppercase">
             {file.changeKind}
@@ -546,7 +546,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
         : "No changes on the task's branch compared to the base branch.";
     return (
       <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
-        <Icon value={IconName.Diff} size={28} />
+        <Icon value={IconName.Diff} size="xl" />
         <Text size="sm" tone="faint">{msg}</Text>
         <Button
           size="sm"
@@ -759,7 +759,7 @@ function DetailsView({
                   shrink={false}
                 >
                   {task.status === 'done' && (
-                    <Icon value={IconName.Check} size={10} strokeWidth={2.5} />
+                    <Icon value={IconName.Check} size="xs" strokeWidth={2.5} />
                   )}
                 </Surface>
                 <Text size="md" tone="muted">{a}</Text>
@@ -922,7 +922,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
               align="center"
               gap={8}
             >
-              <Icon value={IconName.File} size={13} />
+              <Icon value={IconName.File} size="sm" />
               <Surface grow minWidth={0} title={f.name}>
                 <Text size="sm" mono tone="muted" truncate>{f.name}</Text>
               </Surface>

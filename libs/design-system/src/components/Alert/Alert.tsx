@@ -37,7 +37,7 @@ export function Alert({
       style={{ borderColor: p.border, background: p.bg, color: p.color }}
     >
       <span className="mt-0.5 flex shrink-0">
-        {icon ?? <Icon value={p.icon} size={16} />}
+        {icon ?? <Icon value={p.icon} size="md" />}
       </span>
       <div className="flex-1 min-w-0 text-[var(--text-0)]">
         {title && <div className="text-xs font-semibold" style={{ color: p.color }}>{title}</div>}
@@ -52,7 +52,7 @@ export function Alert({
           onClick={onClose}
           className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
         >
-          <Icon value={IconName.X} size={12} />
+          <Icon value={IconName.X} size="xs" />
         </button>
       )}
     </div>

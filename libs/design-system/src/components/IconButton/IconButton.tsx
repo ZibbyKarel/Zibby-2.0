@@ -41,10 +41,10 @@ const sizeClasses: Record<IconButtonSize, string> = {
   lg: 'h-10 w-10 text-base',
 };
 
-const iconSizes: Record<IconButtonSize, number> = {
-  sm: 12,
-  md: 14,
-  lg: 16,
+const iconSizes: Record<IconButtonSize, Size> = {
+  sm: 'xs',
+  md: 'sm',
+  lg: 'md',
 };
 
 export enum IconButtonDataTestIds {

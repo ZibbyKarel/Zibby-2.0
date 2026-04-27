@@ -41,10 +41,10 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: 'h-10 px-4 text-base',
 };
 
-const iconSizes: Record<ButtonSize, number> = {
-  sm: 12,
-  md: 14,
-  lg: 16,
+const iconSizes: Record<ButtonSize, Size> = {
+  sm: 'xs',
+  md: 'sm',
+  lg: 'md',
 };
 
 export enum ButtonDataTestIds {

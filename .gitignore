@@ -37,6 +37,4 @@ vite.config.*.timestamp*
 .worktrees/
 docs/superpowers/
 design.zip
-design/
 .nightcoder/
-graphify-out/

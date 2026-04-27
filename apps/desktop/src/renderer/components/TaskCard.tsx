@@ -108,14 +108,14 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
 
       <Stack direction="row" wrap gap={5}>
         {task.branch && (
-          <Chip icon={<Icon value={IconName.Git} size={11} />}>
+          <Chip icon={<Icon value={IconName.Git} size="xs" />}>
             {task.branch.replace('nightcoder/', '')}
           </Chip>
         )}
         {task.prUrl && (
           <Chip
             tone="accent"
-            icon={<Icon value={IconName.Github} size={11} />}
+            icon={<Icon value={IconName.Github} size="xs" />}
             title={task.prUrl}
             onClick={(e) => { e.stopPropagation(); void window.nightcoder.openExternal(task.prUrl!); }}
             data-testid={TestIds.TaskCard.prChip(task.index)}
@@ -124,23 +124,23 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           </Chip>
         )}
         {task.model && (
-          <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size={11} />}>{task.model}</Chip>
+          <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size="xs" />}>{task.model}</Chip>
         )}
         {waits && (
-          <Chip tone="warn" icon={<Icon value={IconName.Clock} size={11} />}>
+          <Chip tone="warn" icon={<Icon value={IconName.Clock} size="xs" />}>
             waits #{task.waitsOn.join(', #')}
           </Chip>
         )}
         {pausedByLimit && (
-          <Chip tone="warn" icon={<Icon value={IconName.Clock} size={11} />}>
+          <Chip tone="warn" icon={<Icon value={IconName.Clock} size="xs" />}>
             paused · resumes {formatResumeAt(task.limitResetsAt!)}
           </Chip>
         )}
         {canResume && !pausedByLimit && (
-          <Chip tone="warn" icon={<Icon value={IconName.Warn} size={11} />}>interrupted</Chip>
+          <Chip tone="warn" icon={<Icon value={IconName.Warn} size="xs" />}>interrupted</Chip>
         )}
         {task.status === 'merging' && (
-          <Chip tone="sky" icon={<Icon value={IconName.Clock} size={11} />}>auto-merging</Chip>
+          <Chip tone="sky" icon={<Icon value={IconName.Clock} size="xs" />}>auto-merging</Chip>
         )}
       </Stack>
 
@@ -172,13 +172,13 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           )}
           {task.status === 'done' && task.endedAt && task.startedAt && (
             <Stack direction="row" align="center" gap={4}>
-              <Icon value={IconName.Check} size={11} />
+              <Icon value={IconName.Check} size="xs" />
               <Text size="xs" mono tone="faint">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
           )}
           {task.status === 'failed' && task.endedAt && task.startedAt && (
             <Stack direction="row" align="center" gap={4}>
-              <Icon value={IconName.Warn} size={11} />
+              <Icon value={IconName.Warn} size="xs" />
               <Text size="xs" mono tone="rose">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
           )}

@@ -86,7 +86,7 @@ export function Drawer({
                 onClick={onClose}
                 className="flex cursor-pointer items-center border-none bg-transparent p-1 text-[var(--text-3)] hover:text-[var(--text-1)]"
               >
-                <Icon value={IconName.X} size={14} strokeWidth={2} />
+                <Icon value={IconName.X} size="sm" strokeWidth={2} />
               </button>
             )}
           </header>

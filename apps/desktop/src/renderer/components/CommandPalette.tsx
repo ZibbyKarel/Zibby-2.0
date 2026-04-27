@@ -80,7 +80,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
         data-testid={TestIds.CommandPalette.root}
       >
         <Surface bordered={{ bottom: true }} paddingX={14} paddingY={12} direction="row" align="center" gap={10}>
-          <Icon value={IconName.Search} size={16} />
+          <Icon value={IconName.Search} size="md" />
           <input
             ref={inputRef}
             value={q}
@@ -123,7 +123,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
               data-testid={TestIds.CommandPalette.item(c.id)}
             >
               <Surface width={20} direction="row" align="center" justify="center">
-                <Icon value={c.icon ?? IconName.ArrowRight} size={14} />
+                <Icon value={c.icon ?? IconName.ArrowRight} size="sm" />
               </Surface>
               <Stack direction="row" align="center" grow>
                 <Text size="md">{c.label}</Text>

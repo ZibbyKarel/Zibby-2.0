@@ -24,15 +24,15 @@ export type ChipProps = {
 
 const sizes: Record<
   ChipSize,
-  { h: string; px: string; gap: string; text: string; icon: number }
+  { h: string; px: string; gap: string; text: string; icon: Size }
 > = {
-  sm: { h: 'h-5', px: 'px-1.5', gap: 'gap-1', text: 'text-[10px]', icon: 9 },
+  sm: { h: 'h-5', px: 'px-1.5', gap: 'gap-1', text: 'text-[10px]', icon: 'xs' },
   md: {
     h: 'h-[22px]',
     px: 'px-2',
     gap: 'gap-1.5',
     text: 'text-[11px]',
-    icon: 11,
+    icon: 'xs',
   },
 };
 
