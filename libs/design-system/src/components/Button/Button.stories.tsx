@@ -48,6 +48,7 @@ const icon = IconName.AlertTriangle;
  * rendered side by side as the visual-regression baseline.
  */
 export const Overview: Story = {
+  args: { label: 'Button' },
   render: () => (
     <div style={stack}>
       <div>
