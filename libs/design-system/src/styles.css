@@ -9,6 +9,17 @@
 
 @import "tailwindcss";
 
+/*
+ * Tell Tailwind v4 to scan this library's source for utility classes.
+ *
+ * `@tailwindcss/vite` uses Vite's `root` (the renderer in this monorepo) for
+ * automatic source detection, so files under `libs/design-system/src/` are
+ * invisible to it by default. Without this, classes used inside design-system
+ * components (`h-7`, `gap-1.5`, `bg-[var(--emerald)]`, etc.) never reach the
+ * generated CSS and the components render unstyled.
+ */
+@source "./**/*.{ts,tsx}";
+
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
