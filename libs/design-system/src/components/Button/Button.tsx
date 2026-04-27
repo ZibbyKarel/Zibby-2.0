@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { Icon, IconName } from '../Icon';
 
 export type ButtonVariant =
   | 'primary'
@@ -16,8 +17,8 @@ export type ButtonProps = Omit<
   label: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  startIcon?: ReactNode;
-  endIcon?: ReactNode;
+  startIcon?: IconName;
+  endIcon?: IconName;
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -63,9 +64,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`${base} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`.trim()}
         {...props}
       >
-        {startIcon}
+        {startIcon && <Icon value={startIcon} />}
         {label}
-        {endIcon}
+        {endIcon && <Icon value={endIcon} />}
       </button>
     );
   },
