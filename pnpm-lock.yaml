@@ -120,6 +120,9 @@ importers:
       '@nightcoder/design-system':
         specifier: workspace:*
         version: link:../../libs/design-system
+      '@nightcoder/form':
+        specifier: workspace:*
+        version: link:../../libs/form
       '@nightcoder/orchestrator':
         specifier: workspace:*
         version: link:../../libs/orchestrator

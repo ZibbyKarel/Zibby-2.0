@@ -15,6 +15,7 @@
   "dependencies": {
     "@nightcoder/ai-refiner": "workspace:*",
     "@nightcoder/design-system": "workspace:*",
+    "@nightcoder/form": "workspace:*",
     "@nightcoder/orchestrator": "workspace:*",
     "@nightcoder/project-state": "workspace:*",
     "@nightcoder/shared-types": "workspace:*",

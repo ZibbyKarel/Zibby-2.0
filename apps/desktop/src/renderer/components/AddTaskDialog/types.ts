@@ -1,5 +1,15 @@
 import type { PhaseModels } from '@nightcoder/shared-types/ipc';
 
+export type AddTaskFormValues = {
+  title: string;
+  description: string;
+  acceptance: string;
+  requiresHumanReview: boolean;
+  phaseModels: PhaseModels;
+  blockerTaskIds: string[];
+  attachedFilePaths: string[];
+};
+
 export type NewTaskData = {
   title: string;
   description: string;
