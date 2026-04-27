@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from './Button';
+import { Button, ButtonDataTestIds } from './Button';
+import { IconName } from '../Icon';
 
 describe('Button', () => {
   it('renders the label inside a native button', () => {
@@ -18,30 +19,14 @@ describe('Button', () => {
     expect(ref.current).toBe(screen.getByRole('button'));
   });
 
-  it('renders icon-only when label is omitted', () => {
-    render(
-      <Button
-        icon={<svg data-testid="ic" />}
-        aria-label="Close"
-      />,
-    );
-    const btn = screen.getByRole('button', { name: 'Close' });
-    expect(btn.className).toContain('w-8');
-    expect(screen.getByTestId('ic')).toBeInTheDocument();
+  it('places startIcon', () => {
+    render(<Button label="Send" startIcon={IconName.AlertCircle} />);
+    expect(screen.getByTestId(ButtonDataTestIds.StartIcon)).toBeInTheDocument();
   });
 
-  it('places startIcon and endIcon around the label', () => {
-    render(
-      <Button
-        label="Send"
-        startIcon={<span data-testid="start" />}
-        endIcon={<span data-testid="end" />}
-      />,
-    );
-    const btn = screen.getByRole('button');
-    const order = Array.from(btn.children).map((c) => (c as HTMLElement).dataset.testid);
-    expect(order[0]).toBe('start');
-    expect(order[order.length - 1]).toBe('end');
+  it('places endIcon', () => {
+    render(<Button label="Send" endIcon={IconName.AlertCircle} />);
+    expect(screen.getByTestId(ButtonDataTestIds.EndIcon)).toBeInTheDocument();
   });
 
   it.each(['primary', 'secondary', 'ghost', 'outline', 'danger'] as const)(

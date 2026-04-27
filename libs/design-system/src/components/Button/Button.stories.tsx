@@ -1,6 +1,7 @@
-import type { CSSProperties } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from './Button';
+import { IconName } from '../Icon';
 
 const meta = {
   title: 'Design System/Button',
@@ -40,17 +41,7 @@ const variants = [
 ] as const;
 const sizes = ['sm', 'md', 'lg'] as const;
 
-const dot = (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 14 14"
-    fill="currentColor"
-    aria-hidden
-  >
-    <circle cx="7" cy="7" r="4" />
-  </svg>
-);
+const icon = IconName.AlertTriangle;
 
 /**
  * Every supported variant, size, icon configuration and disabled state
@@ -77,16 +68,32 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Icons</div>
-        <div style={row}>
-          <Button label="Start" startIcon={dot} variant="secondary" />
-          <Button label="End" endIcon={dot} variant="secondary" />
-          <Button
-            label="Both"
-            startIcon={dot}
-            endIcon={dot}
-            variant="secondary"
-          />
-        </div>
+        {sizes.map((size) => (
+          <Fragment key={size}>
+            <div style={row}>
+              <Button
+                label="Start"
+                startIcon={icon}
+                variant="secondary"
+                size={size}
+              />
+              <Button
+                label="End"
+                endIcon={icon}
+                variant="secondary"
+                size={size}
+              />
+              <Button
+                label="Both"
+                startIcon={icon}
+                endIcon={icon}
+                variant="secondary"
+                size={size}
+              />
+            </div>
+            <br />
+          </Fragment>
+        ))}
       </div>
       <div>
         <div style={label}>Disabled</div>

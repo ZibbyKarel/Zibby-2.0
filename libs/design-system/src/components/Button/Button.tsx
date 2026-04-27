@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { Icon, IconName } from '../Icon';
 
 export type ButtonVariant =
@@ -40,6 +40,12 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: 'h-10 px-4 text-base',
 };
 
+export enum ButtonDataTestIds {
+  StartIcon = 'btn-start-icon',
+  EndIcon = 'btn-end-icon',
+  Label = 'btn-label',
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
     {
@@ -64,9 +70,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`${base} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`.trim()}
         {...props}
       >
-        {startIcon && <Icon value={startIcon} />}
-        {label}
-        {endIcon && <Icon value={endIcon} />}
+        {startIcon && (
+          <Icon value={startIcon} data-testid={ButtonDataTestIds.StartIcon} />
+        )}
+        <div data-testid={ButtonDataTestIds.Label}>{label}</div>
+        {endIcon && (
+          <Icon value={endIcon} data-testid={ButtonDataTestIds.EndIcon} />
+        )}
       </button>
     );
   },
