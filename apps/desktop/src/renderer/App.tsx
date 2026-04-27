@@ -1,28 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
-import { TestIds } from '@nightcoder/test-ids';
-
-import {
-  Alert,
-  Button,
-  Chip as DsChip,
-  DesignSystemProvider,
-  Divider,
-  FilterChip,
-  Icon,
-  IconButton,
-  IconName,
-  Kbd,
-  SearchField,
-  Spacer,
-  Stack,
-  Surface,
-  Text,
-} from '@nightcoder/design-system';
-import { BrandMark } from './components/icons';
-import { TaskCard } from './components/TaskCard';
-import { Column } from './components/Column';
+import { Alert, DesignSystemProvider, IconName, Surface } from '@nightcoder/design-system';
 import { TaskDrawer } from './components/TaskDrawer';
 import type { DrawerTab } from './components/TaskDrawer';
 import { AddTaskDialog, type BlockerOption, type NewTaskData } from './components/AddTaskDialog';
@@ -30,20 +9,15 @@ import { CommandPalette } from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
 import type { Toast } from './components/Toasts';
-import { UsagePanel } from './components/UsagePanel';
+import { TopBar } from './components/TopBar';
+import { SubBar } from './components/SubBar';
+import { BoardArea } from './components/BoardArea';
 import {
   toTasks, statusToCol, emptyRuntime, isTerminal,
 } from './viewModel';
 import type { StoryRuntime, LogLine, TaskVM } from './viewModel';
 
 type SelectedFolder = Extract<PickFolderResult, { kind: 'selected' }>;
-
-const COLS = [
-  { id: 'queue'   as const, title: 'Queued',  accent: 'amber'   as const },
-  { id: 'running' as const, title: 'Running', accent: 'emerald' as const },
-  { id: 'review'  as const, title: 'Review',  accent: 'violet'  as const },
-  { id: 'done'    as const, title: 'Done',    accent: 'sky'     as const },
-];
 
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(
@@ -179,7 +153,6 @@ export default function App() {
               status: ev.status,
               startedAt: ev.status === 'running' && !cur.startedAt ? Date.now() : cur.startedAt,
               endedAt: isTerminal(ev.status) ? (cur.endedAt ?? Date.now()) : cur.endedAt,
-              // Clear the stored reset time once a new status takes over.
               limitResetsAt: ev.status === 'interrupted' ? cur.limitResetsAt : null,
             };
             if (ev.status === 'done') {
@@ -396,7 +369,6 @@ export default function App() {
       const stories = prev?.stories ?? [];
       const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
       newTaskId = taskId;
-      // First blocker (if any) is the branch parent; all blockers become DAG edges.
       const primaryBlockerId = data.blockerTaskIds?.[0];
       const nextStories = [...stories, {
         taskId,
@@ -409,10 +381,6 @@ export default function App() {
         blockerTaskId: primaryBlockerId,
         requiresHumanReview: data.requiresHumanReview,
       }];
-      // Mirror all blocker selections into the DAG as dependency edges so the
-      // board, run ordering, and block cascade behave as the UI implies.
-      // blockerTaskId on the story is the source of truth for branch/PR-target
-      // resolution; the edges are derived data.
       const nextDeps = prev?.dependencies ? [...prev.dependencies] : [];
       for (const blockerId of (data.blockerTaskIds ?? [])) {
         const blockerIndex = stories.findIndex((s) => s.taskId === blockerId);
@@ -522,146 +490,32 @@ export default function App() {
   };
   const handleDragEnd = () => setDragId(null);
 
-  // ── Render ─────────────────────────────────────────────────
   const runtimeMs = (t: TaskVM) => t.startedAt && t.status === 'running' ? Date.now() - t.startedAt : null;
 
   return (
     <DesignSystemProvider theme={theme} layout="column">
-      {/* Top bar */}
-      <Surface
-        as="header"
-        background="bg1"
-        bordered={{ bottom: true }}
-        paddingX={20}
-        paddingY={14}
-        data-testid={TestIds.TopBar.root}
-      >
-        <Stack direction="row" align="center" gap={16}>
-          <Stack direction="row" align="center" gap={10} data-testid={TestIds.TopBar.brand}>
-            <BrandMark theme={theme} size={30} />
-            <Stack direction="column">
-              <Text size="md" weight="semibold" tracking="tight">
-                {theme === 'light' ? 'DayCoder' : 'NightCoder'}
-              </Text>
-              <Text size="xs" tone="faint" mono>multi-agent coding workflow</Text>
-            </Stack>
-          </Stack>
+      <TopBar
+        theme={theme}
+        folderPath={folder?.path ?? null}
+        search={search}
+        tick={tick}
+        onSearchChange={(e) => setSearch(e.target.value)}
+        onThemeToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onPickFolder={() => void pickFolder()}
+      />
 
-          {folder ? (
-            <Surface background="bg2" bordered radius="sm" paddingX={10} paddingY={6}>
-              <Stack direction="row" align="center" gap={6}>
-                <Icon value={IconName.Folder} size="sm" />
-                <Surface maxWidth={260}>
-                  <Text size="sm" mono tone="muted" truncate data-testid={TestIds.TopBar.folderPath}>
-                    {folder.path}
-                  </Text>
-                </Surface>
-                <Divider orientation="vertical" />
-                <DsChip tone="accent" size="sm" icon={<Icon value={IconName.Git} size="xs" />}>main</DsChip>
-                <IconButton
-                  aria-label="Change folder"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => void pickFolder()}
-                  icon={IconName.ChevronDown}
-                  data-testid={TestIds.TopBar.changeFolderBtn}
-                />
-              </Stack>
-            </Surface>
-          ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => void pickFolder()}
-              startIcon={IconName.Folder}
-              label="Pick folder"
-              data-testid={TestIds.TopBar.pickFolderBtn}
-            />
-          )}
-
-          <Spacer />
-
-          <SearchField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tasks"
-            startAdornment={<Icon value={IconName.Search} size="sm" />}
-            endAdornment={<Kbd>⌘K</Kbd>}
-            data-testid={TestIds.TopBar.searchInput}
-          />
-
-          <UsagePanel tick={tick} />
-
-          <IconButton
-            aria-label="Toggle theme"
-            title="Toggle theme"
-            variant="secondary"
-            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            icon={theme === 'dark' ? IconName.Sun : IconName.Moon}
-            data-testid={TestIds.TopBar.themeToggle}
-          />
-        </Stack>
-      </Surface>
-
-      {/* Sub-bar */}
-      <Surface
-        background="bg0"
-        bordered={{ bottom: true }}
-        paddingX={20}
-        paddingY={12}
-        data-testid={TestIds.SubBar.root}
-      >
-        <Stack direction="row" align="center" gap={10}>
-          <Text size="xs" tone="faint" mono data-testid={TestIds.SubBar.taskCount}>
-            {tasks.length} tasks · {tasks.filter((t) => t.status === 'running').length} running
-          </Text>
-          <Divider orientation="vertical" />
-          {([
-            { key: 'interrupted'     as const, label: 'Interrupted',         tone: 'warn'   as const, testId: TestIds.SubBar.filterInterrupted },
-            { key: 'cancelled_error' as const, label: 'Cancelled / Error',   tone: 'rose'   as const, testId: TestIds.SubBar.filterCancelledErr },
-            { key: 'pending'         as const, label: 'Pending',             tone: 'sky'    as const, testId: TestIds.SubBar.filterPending },
-          ]).map(({ key, label, tone, testId }) => (
-            <FilterChip
-              key={key}
-              tone={tone}
-              size="md"
-              active={activeFilters.has(key)}
-              onToggle={() => toggleFilter(key)}
-              data-testid={testId}
-            >
-              {label}
-            </FilterChip>
-          ))}
-          <Spacer />
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={!folder || syncing}
-            onClick={() => void syncTaskStates()}
-            title="Synchronize task states with their pull requests"
-            startIcon={IconName.Refresh}
-            label={syncing ? 'Synchronizing…' : 'Synchronize'}
-            data-testid={TestIds.SubBar.syncBtn}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setAddOpen(true)}
-            startIcon={IconName.Plus}
-            label="Add task"
-            data-testid={TestIds.SubBar.addTaskBtn}
-          />
-          <Button
-            size="sm"
-            variant="primary"
-            disabled={!hasRunnableTasks}
-            onClick={() => void runAll()}
-            startIcon={IconName.Play}
-            label="Run all"
-            data-testid={TestIds.SubBar.runAllBtn}
-          />
-        </Stack>
-      </Surface>
+      <SubBar
+        taskCount={tasks.length}
+        runningCount={tasks.filter((t) => t.status === 'running').length}
+        activeFilters={activeFilters}
+        onToggleFilter={toggleFilter}
+        hasFolder={!!folder}
+        syncing={syncing}
+        onSync={() => void syncTaskStates()}
+        onAddTask={() => setAddOpen(true)}
+        onRunAll={() => void runAll()}
+        hasRunnableTasks={hasRunnableTasks}
+      />
 
       {error && (
         <Surface paddingX={20} paddingY={10}>
@@ -669,50 +523,18 @@ export default function App() {
         </Surface>
       )}
 
-      {/* Main body */}
-      <Surface
-        as="main"
-        grow
-        direction="column"
-        gap={16}
-        paddingX={20}
-        paddingTop={16}
-        paddingBottom={24}
-        overflowY="auto"
-        data-testid={TestIds.Board.root}
-      >
-        <Stack direction="row" gap={14} grow>
-          {COLS.map((col) => (
-            <Column
-              key={col.id}
-              id={col.id}
-              title={col.title}
-              accent={col.accent}
-              count={grouped[col.id].length}
-              isEmpty={grouped[col.id].length === 0}
-              onDropTask={(id) => void handleDrop(id, col.id)}
-            >
-              {grouped[col.id].map((t) => (
-                <TaskCard
-                  key={t.id}
-                  task={t}
-                  runtimeMs={runtimeMs(t)}
-                  isDragging={dragId === t.id}
-                  dragHandlers={{
-                    draggable: true,
-                    onDragStart: (e: React.DragEvent) => handleDragStart(e, t.id),
-                    onDragEnd: handleDragEnd,
-                  }}
-                  onOpen={() => { setSelectedIndex(t.index); setDrawerTab('logs'); }}
-                  onEdit={() => { setSelectedIndex(t.index); setDrawerTab('details'); }}
-                  onRun={() => void runTask(t.index)}
-                  onDelete={() => deleteTask(t.index)}
-                />
-              ))}
-            </Column>
-          ))}
-        </Stack>
-      </Surface>
+      <BoardArea
+        grouped={grouped}
+        dragId={dragId}
+        onDropTask={(id, col) => void handleDrop(id, col)}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onOpenTask={(idx) => { setSelectedIndex(idx); setDrawerTab('logs'); }}
+        onEditTask={(idx) => { setSelectedIndex(idx); setDrawerTab('details'); }}
+        onRunTask={(idx) => void runTask(idx)}
+        onDeleteTask={deleteTask}
+        runtimeMs={runtimeMs}
+      />
 
       <TaskDrawer
         task={selected}
