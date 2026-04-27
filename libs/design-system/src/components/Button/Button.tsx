@@ -1,5 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { Icon, IconName } from '../Icon';
+import type { Size } from '../../tokens';
 
 export type ButtonVariant =
   | 'primary'
@@ -7,7 +8,7 @@ export type ButtonVariant =
   | 'ghost'
   | 'outline'
   | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = Extract<Size, 'sm' | 'md' | 'lg'>;
 
 export type ButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -38,6 +39,12 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: 'h-7 px-2.5 text-xs',
   md: 'h-8 px-3 text-sm',
   lg: 'h-10 px-4 text-base',
+};
+
+const iconSizes: Record<ButtonSize, number> = {
+  sm: 12,
+  md: 14,
+  lg: 16,
 };
 
 export enum ButtonDataTestIds {
@@ -71,11 +78,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {startIcon && (
-          <Icon value={startIcon} data-testid={ButtonDataTestIds.StartIcon} />
+          <Icon
+            value={startIcon}
+            size={iconSizes[size]}
+            data-testid={ButtonDataTestIds.StartIcon}
+          />
         )}
         <div data-testid={ButtonDataTestIds.Label}>{label}</div>
         {endIcon && (
-          <Icon value={endIcon} data-testid={ButtonDataTestIds.EndIcon} />
+          <Icon
+            value={endIcon}
+            size={iconSizes[size]}
+            data-testid={ButtonDataTestIds.EndIcon}
+          />
         )}
       </button>
     );

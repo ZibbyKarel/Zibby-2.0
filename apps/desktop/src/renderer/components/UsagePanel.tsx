@@ -87,8 +87,8 @@ function UsageMini({
     <Stack direction="row" align="center" gap={8} data-testid={testId}>
       <CircularProgress value={pct} size={34} thickness={3} />
       <Stack direction="column" gap={1}>
-        <Text size="xxs" weight="semibold" tone="faint" tracking="wider">{label}</Text>
-        <Text size="xxs" mono tone="muted">-{fmtCountdown(resetsInMs)}</Text>
+        <Text size="xs" weight="semibold" tone="faint" tracking="wider">{label}</Text>
+        <Text size="xs" mono tone="muted">-{fmtCountdown(resetsInMs)}</Text>
       </Stack>
     </Stack>
   );

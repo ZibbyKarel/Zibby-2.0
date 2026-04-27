@@ -316,7 +316,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             aria-label="Close"
             size="sm"
             variant="ghost"
-            icon={<Icon value={IconName.X} size={16} />}
+            icon={IconName.X}
             onClick={onClose}
             data-testid={TestIds.AddTaskDialog.closeBtn}
           />
@@ -362,7 +362,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     aria-label="Clear filter"
                     size="sm"
                     variant="ghost"
-                    icon={<Icon value={IconName.X} size={11} />}
+                    icon={IconName.X}
                     onClick={() => setTreeFilter('')}
                   />
                 )}
@@ -476,7 +476,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     <Stack key={key} direction="row" align="center" gap={8}>
                       <Surface width={110} direction="column">
                         <Text size="sm" weight="medium" tone="muted">{label}</Text>
-                        <Text size="xxs" tone="faint">{hint}</Text>
+                        <Text size="xs" tone="faint">{hint}</Text>
                       </Surface>
                       <Surface grow>
                         <Select
@@ -559,7 +559,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                           title="Remove"
                           size="sm"
                           variant="ghost"
-                          icon={<Icon value={IconName.X} size={12} />}
+                          icon={IconName.X}
                           onClick={() => removeFile(p)}
                         />
                       </Surface>
@@ -571,7 +571,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
                     size="sm"
                     variant="secondary"
                     label="Attach files"
-                    startIcon={<Icon value={IconName.Paperclip} size={13} />}
+                    startIcon={IconName.Paperclip}
                     onClick={() => void pickFiles()}
                     data-testid={TestIds.AddTaskDialog.attachFilesBtn}
                   />
@@ -602,7 +602,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
           <Button
             variant="primary"
             label="Add task"
-            startIcon={<Icon value={IconName.Check} size={13} />}
+            startIcon={IconName.Check}
             disabled={!canAdd}
             onClick={() => canAdd && onAdd({
               title: title.trim() || description.trim().split(' ').slice(0, 6).join(' '),

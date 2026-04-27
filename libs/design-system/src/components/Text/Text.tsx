@@ -6,8 +6,9 @@ import {
   type ReactNode,
 } from 'react';
 import { useTokens } from '../../DesignSystemContext';
+import type { Size } from '../../tokens';
 
-export type TextSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type TextSize = Size;
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 export type TextTone =
   | 'default' // text.0
@@ -63,7 +64,6 @@ export type TextProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
 };
 
 const sizeMap: Record<TextSize, number> = {
-  xxs: 9,
   xs: 11,
   sm: 12,
   md: 13,

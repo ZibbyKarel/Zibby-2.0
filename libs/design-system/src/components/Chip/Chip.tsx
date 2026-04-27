@@ -1,10 +1,10 @@
 import { type ReactNode, type MouseEvent } from 'react';
 import { Icon, IconName } from '../Icon';
 import { useChipTokens } from '../../DesignSystemContext';
-import type { ChipToneKey } from '../../tokens';
+import type { ChipToneKey, Size } from '../../tokens';
 
 export type ChipTone = ChipToneKey;
-export type ChipSize = 'sm' | 'md';
+export type ChipSize = Extract<Size, 'sm' | 'md'>;
 
 export type ChipProps = {
   children: ReactNode;

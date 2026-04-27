@@ -1,9 +1,9 @@
 import { type ReactNode, type MouseEvent, type KeyboardEvent } from 'react';
 import { useChipTokens } from '../../DesignSystemContext';
-import type { ChipToneKey } from '../../tokens';
+import type { ChipToneKey, Size } from '../../tokens';
 
 export type FilterChipTone = ChipToneKey;
-export type FilterChipSize = 'sm' | 'md';
+export type FilterChipSize = Extract<Size, 'sm' | 'md'>;
 
 export type FilterChipProps = {
   children: ReactNode;

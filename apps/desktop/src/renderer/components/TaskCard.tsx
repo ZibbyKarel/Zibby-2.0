@@ -87,7 +87,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           title="Details"
           size="sm"
           variant="ghost"
-          icon={<Icon value={IconName.More} size={14} />}
+          icon={IconName.More}
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           data-testid={TestIds.TaskCard.editBtn(task.index)}
         />
@@ -194,7 +194,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
               size="sm"
               variant="secondary"
               label="resume"
-              startIcon={<Icon value={IconName.Play} size={11} />}
+              startIcon={IconName.Play}
               title="Resume this interrupted task"
               onClick={(e) => { e.stopPropagation(); onRun(); }}
               data-testid={TestIds.TaskCard.resumeBtn(task.index)}
@@ -205,7 +205,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             variant="primary"
             label="run"
             disabled={!canRun}
-            startIcon={<Icon value={IconName.Play} size={11} />}
+            startIcon={IconName.Play}
             title={canRun ? 'Run this task' : 'Task is not in a runnable state'}
             onClick={(e) => { e.stopPropagation(); onRun(); }}
             data-testid={TestIds.TaskCard.runBtn(task.index)}
@@ -215,7 +215,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             title="Remove"
             size="sm"
             variant="ghost"
-            icon={<Icon value={IconName.Trash} size={12} />}
+            icon={IconName.Trash}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             data-testid={TestIds.TaskCard.deleteBtn(task.index)}
           />

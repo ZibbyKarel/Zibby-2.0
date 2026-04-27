@@ -104,7 +104,7 @@ export function TaskDrawer({
             <Button
               size="sm"
               variant="primary"
-              startIcon={<Icon value={IconName.Play} size={11} />}
+              startIcon={IconName.Play}
               label={canResume ? 'Resume' : 'Run'}
               disabled={!runnable}
               title={runnable ? undefined : 'Task is not in a runnable state'}
@@ -115,7 +115,7 @@ export function TaskDrawer({
               aria-label="Close drawer"
               size="sm"
               variant="ghost"
-              icon={<Icon value={IconName.X} size={14} />}
+              icon={IconName.X}
               onClick={onClose}
               data-testid={TestIds.Drawer.closeBtn}
             />
@@ -273,7 +273,7 @@ function LogsView({ task }: { task: TaskVM }) {
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
               variant="secondary"
-              icon={<Icon value={IconName.ChevronDown} size={16} />}
+              icon={IconName.ChevronDown}
               onClick={scrollToBottom}
             />
           </Surface>
@@ -446,7 +446,7 @@ function DiffFileBlock({ file }: { file: TaskDiffFile }) {
       >
         <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size={12} />
         <Surface background="bg3" radius="pill" paddingX={6} paddingY={1}>
-          <Text size="xxs" mono tone={changeKindTone(file.changeKind)} tracking="wide" transform="uppercase">
+          <Text size="xs" mono tone={changeKindTone(file.changeKind)} tracking="wide" transform="uppercase">
             {file.changeKind}
           </Text>
         </Surface>
@@ -531,7 +531,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
             size="sm"
             variant="secondary"
             label="Retry"
-            startIcon={<Icon value={IconName.Refresh} size={13} />}
+            startIcon={IconName.Refresh}
             onClick={() => void refresh()}
           />
         </Stack>
@@ -552,7 +552,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           size="sm"
           variant="ghost"
           label="Refresh"
-          startIcon={<Icon value={IconName.Refresh} size={13} />}
+          startIcon={IconName.Refresh}
           onClick={() => void refresh()}
         />
       </Surface>
@@ -587,7 +587,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           size="sm"
           variant="primary"
           label={merging ? 'Merging…' : 'Squash and Merge'}
-          startIcon={<Icon value={IconName.Git} size={13} />}
+          startIcon={IconName.Git}
           onClick={() => void squashAndMerge()}
           disabled={merging || loading || !task.prUrl}
           title={
@@ -601,7 +601,7 @@ function DiffPanel({ task }: { task: TaskVM }) {
           size="sm"
           variant="ghost"
           label={loading ? 'Refreshing…' : 'Refresh'}
-          startIcon={<Icon value={IconName.Refresh} size={13} />}
+          startIcon={IconName.Refresh}
           onClick={() => void refresh()}
           disabled={loading || merging}
           data-testid={TestIds.Drawer.diffRefreshBtn}
@@ -714,7 +714,7 @@ function DetailsView({
           <Button
             variant="primary"
             label="Save"
-            startIcon={<Icon value={IconName.Check} size={13} />}
+            startIcon={IconName.Check}
             disabled={!title.trim() || !description.trim()}
             onClick={handleSave}
             data-testid={TestIds.Drawer.detailsSaveBtn}
@@ -731,7 +731,7 @@ function DetailsView({
           size="sm"
           variant="outline"
           label="Edit"
-          startIcon={<Icon value={IconName.Edit} size={13} />}
+          startIcon={IconName.Edit}
           onClick={() => setEditing(true)}
           data-testid={TestIds.Drawer.detailsEditBtn}
         />
@@ -820,7 +820,7 @@ function Section({
 }) {
   return (
     <Surface direction="column" gap={8}>
-      <Text as="h3" size="xxs" weight="semibold" tone="faint" tracking="wider" transform="uppercase">
+      <Text as="h3" size="xs" weight="semibold" tone="faint" tracking="wider" transform="uppercase">
         {label}
       </Text>
       {children}
@@ -831,7 +831,7 @@ function Section({
 function KV({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <Surface bordered radius="sm" background="bg2" paddingX={10} paddingY={8} direction="column" gap={2}>
-      <Text size="xxs" tone="faint" tracking="wider" transform="uppercase">{k}</Text>
+      <Text size="xs" tone="faint" tracking="wider" transform="uppercase">{k}</Text>
       <Text size="sm" mono={mono}>{v}</Text>
     </Surface>
   );
@@ -933,7 +933,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                icon={<Icon value={IconName.Trash} size={13} />}
+                icon={IconName.Trash}
                 onClick={() => void onRemove(f.name)}
               />
             </Surface>
@@ -945,7 +945,7 @@ function AttachedFilesPanel({ taskId }: { taskId: string }) {
           size="sm"
           variant="secondary"
           label="Attach files"
-          startIcon={<Icon value={IconName.Paperclip} size={13} />}
+          startIcon={IconName.Paperclip}
           onClick={() => void onAdd()}
           disabled={busy}
         />

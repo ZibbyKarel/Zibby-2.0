@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IconButton } from './IconButton';
-import { Icon, IconName } from '../Icon';
+import { IconName } from '../Icon';
 
 const meta = {
   title: 'Design System/IconButton',
@@ -24,20 +24,40 @@ const label: CSSProperties = {
   marginBottom: 6,
 };
 
+const variants = ['ghost', 'secondary', 'outline', 'primary', 'danger'] as const;
+const sizes = ['sm', 'md', 'lg'] as const;
+const iconNames = Object.values(IconName);
+
 /** Every variant × every size, plus the disabled and custom-classed states. */
 export const Overview: Story = {
-  args: { 'aria-label': 'Refresh', icon: <Icon value={IconName.Refresh} /> },
+  args: { 'aria-label': 'Refresh', icon: IconName.Refresh },
   render: () => (
     <div style={col}>
-      {(['ghost', 'secondary', 'outline', 'primary', 'danger'] as const).map((variant) => (
+      {variants.map((variant) => (
         <div key={variant}>
           <div style={label}>{variant}</div>
           <div style={row}>
-            <IconButton aria-label="Small refresh" icon={<Icon value={IconName.Refresh} size={12} />} variant={variant} size="sm" />
-            <IconButton aria-label="Refresh" icon={<Icon value={IconName.Refresh} />} variant={variant} size="md" />
-            <IconButton aria-label="Big refresh" icon={<Icon value={IconName.Refresh} size={20} />} variant={variant} size="lg" />
-            <IconButton aria-label="Disabled" icon={<Icon value={IconName.Refresh} />} variant={variant} disabled />
-            <IconButton aria-label="With custom class" icon={<Icon value={IconName.Sparkle} />} variant={variant} className="opacity-80" />
+            {sizes.map((size) => (
+              <IconButton
+                key={size}
+                aria-label={`${size} refresh`}
+                icon={IconName.Refresh}
+                variant={variant}
+                size={size}
+              />
+            ))}
+            <IconButton
+              aria-label="Disabled"
+              icon={IconName.Refresh}
+              variant={variant}
+              disabled
+            />
+            <IconButton
+              aria-label="With custom class"
+              icon={IconName.Sparkle}
+              variant={variant}
+              className="opacity-80"
+            />
           </div>
         </div>
       ))}
@@ -49,18 +69,16 @@ export const Overview: Story = {
 export const Playground: Story = {
   args: {
     'aria-label': 'Refresh',
-    icon: <Icon value={IconName.Refresh} />,
+    icon: IconName.Refresh,
     variant: 'ghost',
     size: 'md',
     disabled: false,
   },
   argTypes: {
     onClick: { action: 'click' },
-    variant: {
-      control: 'select',
-      options: ['ghost', 'secondary', 'outline', 'primary', 'danger'],
-    },
-    size: { control: 'select', options: ['sm', 'md', 'lg'] },
+    icon: { control: 'select', options: iconNames },
+    variant: { control: 'select', options: variants },
+    size: { control: 'select', options: sizes },
     disabled: { control: 'boolean' },
     'aria-label': { control: 'text' },
   },

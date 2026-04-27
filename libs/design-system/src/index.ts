@@ -124,6 +124,7 @@ export {
   tokensForTheme,
   tokensToCssVars,
   type Theme,
+  type Size,
   type DesignTokens,
   type PartialDesignTokens,
   type ColorTokens,

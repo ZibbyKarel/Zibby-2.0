@@ -30,7 +30,6 @@ export const Overview: Story = {
       <div>
         <div style={label}>Sizes</div>
         <Stack direction="column" gap={4}>
-          <Text size="xxs">xxs · the quick brown fox</Text>
           <Text size="xs">xs · the quick brown fox</Text>
           <Text size="sm">sm · the quick brown fox</Text>
           <Text size="md">md · the quick brown fox</Text>
@@ -111,7 +110,7 @@ export const Playground: Story = {
   },
   argTypes: {
     children: { control: 'text' },
-    size:      { control: 'select', options: ['xxs', 'xs', 'sm', 'md', 'lg', 'xl'] },
+    size:      { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     weight:    { control: 'select', options: ['normal', 'medium', 'semibold', 'bold'] },
     tone:      { control: 'select', options: ['default', 'muted', 'subtle', 'faint', 'inverse', 'emerald', 'rose', 'amber', 'sky', 'violet', 'inherit'] },
     tracking:  { control: 'select', options: ['normal', 'tight', 'wide', 'wider'] },

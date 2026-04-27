@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
+import type { Size } from '../../tokens';
 
-export type KbdSize = 'sm' | 'md';
+export type KbdSize = Extract<Size, 'sm' | 'md'>;
 
 export type KbdProps = {
   children: ReactNode;

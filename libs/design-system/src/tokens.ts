@@ -13,6 +13,12 @@
 
 export type Theme = 'dark' | 'light';
 
+/**
+ * Shared t-shirt size scale for sizeable components (Button, IconButton, Chip, …).
+ * Components narrow this with `Extract<Size, …>` to advertise the subset they support.
+ */
+export type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 export type ColorTokens = {
   text: { 0: string; 1: string; 2: string; 3: string };
   bg:   { 0: string; 1: string; 2: string; 3: string; hover: string };

@@ -542,7 +542,7 @@ export default function App() {
               <Text size="md" weight="semibold" tracking="tight">
                 {theme === 'light' ? 'DayCoder' : 'NightCoder'}
               </Text>
-              <Text size="xxs" tone="faint" mono>multi-agent coding workflow</Text>
+              <Text size="xs" tone="faint" mono>multi-agent coding workflow</Text>
             </Stack>
           </Stack>
 
@@ -562,7 +562,7 @@ export default function App() {
                   size="sm"
                   variant="ghost"
                   onClick={() => void pickFolder()}
-                  icon={<Icon value={IconName.ChevronDown} size={12} />}
+                  icon={IconName.ChevronDown}
                   data-testid={TestIds.TopBar.changeFolderBtn}
                 />
               </Stack>
@@ -572,7 +572,7 @@ export default function App() {
               size="sm"
               variant="secondary"
               onClick={() => void pickFolder()}
-              startIcon={<Icon value={IconName.Folder} size={13} />}
+              startIcon={IconName.Folder}
               label="Pick folder"
               data-testid={TestIds.TopBar.pickFolderBtn}
             />
@@ -596,7 +596,7 @@ export default function App() {
             title="Toggle theme"
             variant="secondary"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            icon={<Icon value={theme === 'dark' ? IconName.Sun : IconName.Moon} size={14} />}
+            icon={theme === 'dark' ? IconName.Sun : IconName.Moon}
             data-testid={TestIds.TopBar.themeToggle}
           />
         </Stack>
@@ -638,7 +638,7 @@ export default function App() {
             disabled={!folder || syncing}
             onClick={() => void syncTaskStates()}
             title="Synchronize task states with their pull requests"
-            startIcon={<Icon value={IconName.Refresh} size={13} />}
+            startIcon={IconName.Refresh}
             label={syncing ? 'Synchronizing…' : 'Synchronize'}
             data-testid={TestIds.SubBar.syncBtn}
           />
@@ -646,7 +646,7 @@ export default function App() {
             size="sm"
             variant="secondary"
             onClick={() => setAddOpen(true)}
-            startIcon={<Icon value={IconName.Plus} size={13} />}
+            startIcon={IconName.Plus}
             label="Add task"
             data-testid={TestIds.SubBar.addTaskBtn}
           />
@@ -655,7 +655,7 @@ export default function App() {
             variant="primary"
             disabled={!hasRunnableTasks}
             onClick={() => void runAll()}
-            startIcon={<Icon value={IconName.Play} size={13} />}
+            startIcon={IconName.Play}
             label="Run all"
             data-testid={TestIds.SubBar.runAllBtn}
           />
