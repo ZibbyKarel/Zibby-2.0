@@ -13,22 +13,42 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const row: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' };
-const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12 };
-const label: CSSProperties = { fontSize: 11, color: 'var(--text-2)', letterSpacing: '.08em', textTransform: 'uppercase' };
+const row: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  flexWrap: 'wrap',
+};
+const stack: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+const label: CSSProperties = {
+  fontSize: 11,
+  color: 'var(--text-2)',
+  letterSpacing: '.08em',
+  textTransform: 'uppercase',
+};
 
-const variants = ['primary', 'secondary', 'ghost', 'outline', 'danger'] as const;
+const variants = [
+  'primary',
+  'secondary',
+  'ghost',
+  'outline',
+  'danger',
+] as const;
 const sizes = ['sm', 'md', 'lg'] as const;
 
 const dot = (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="currentColor"
+    aria-hidden
+  >
     <circle cx="7" cy="7" r="4" />
-  </svg>
-);
-
-const x = (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-    <path d="M3 3l8 8M11 3l-8 8" />
   </svg>
 );
 
@@ -60,17 +80,12 @@ export const Overview: Story = {
         <div style={row}>
           <Button label="Start" startIcon={dot} variant="secondary" />
           <Button label="End" endIcon={dot} variant="secondary" />
-          <Button label="Both" startIcon={dot} endIcon={dot} variant="secondary" />
-        </div>
-      </div>
-      <div>
-        <div style={label}>Icon-only</div>
-        <div style={row}>
-          {sizes.map((s) => (
-            <Button key={s} icon={x} size={s} variant="ghost" aria-label={`Close ${s}`} />
-          ))}
-          <Button icon={x} variant="outline" aria-label="Close outline" />
-          <Button icon={x} variant="danger" aria-label="Close danger" />
+          <Button
+            label="Both"
+            startIcon={dot}
+            endIcon={dot}
+            variant="secondary"
+          />
         </div>
       </div>
       <div>

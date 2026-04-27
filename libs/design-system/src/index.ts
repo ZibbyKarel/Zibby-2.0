@@ -10,7 +10,6 @@ export {
   type IconButtonVariant,
   type IconButtonSize,
 } from './components/IconButton';
-export { Input, type InputProps } from './components/Input';
 export { SearchField, type SearchFieldProps } from './components/SearchField';
 export { TextField, type TextFieldProps } from './components/TextField';
 export { Textarea, type TextareaProps } from './components/Textarea';

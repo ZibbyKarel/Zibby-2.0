@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
-import './styles.css';
+import '../styles.css';
 import {
   defaultTokens,
   mergeTokens,
