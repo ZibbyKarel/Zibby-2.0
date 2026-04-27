@@ -396,6 +396,8 @@ export default function App() {
       const stories = prev?.stories ?? [];
       const taskId = taskIdForNewStory(data.title, collectTaskIds(stories));
       newTaskId = taskId;
+      // First blocker (if any) is the branch parent; all blockers become DAG edges.
+      const primaryBlockerId = data.blockerTaskIds?.[0];
       const nextStories = [...stories, {
         taskId,
         title: data.title,
@@ -404,17 +406,16 @@ export default function App() {
         affectedFiles: [],
         model: data.model,
         phaseModels: data.phaseModels,
-        blockerTaskId: data.blockerTaskId,
+        blockerTaskId: primaryBlockerId,
         requiresHumanReview: data.requiresHumanReview,
       }];
-      // If the user picked a blocker, mirror it into the DAG as a
-      // dependency edge so the board, run ordering, and block cascade
-      // behave as the UI implies. blockerTaskId on the story is the
-      // source of truth for branch/PR-target resolution; the edge is
-      // derived data.
+      // Mirror all blocker selections into the DAG as dependency edges so the
+      // board, run ordering, and block cascade behave as the UI implies.
+      // blockerTaskId on the story is the source of truth for branch/PR-target
+      // resolution; the edges are derived data.
       const nextDeps = prev?.dependencies ? [...prev.dependencies] : [];
-      if (data.blockerTaskId) {
-        const blockerIndex = stories.findIndex((s) => s.taskId === data.blockerTaskId);
+      for (const blockerId of (data.blockerTaskIds ?? [])) {
+        const blockerIndex = stories.findIndex((s) => s.taskId === blockerId);
         const newIndex = nextStories.length - 1;
         if (blockerIndex >= 0) {
           const already = nextDeps.some((d) => d.from === blockerIndex && d.to === newIndex);

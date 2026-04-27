@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { PhaseModels, PhaseModel, RepoTreeEntry, ThinkingLevel } from '@nightcoder/shared-types/ipc';
+import type {
+  PhaseModels,
+  PhaseModel,
+  RepoTreeEntry,
+  ThinkingLevel,
+} from '@nightcoder/shared-types/ipc';
 import {
   Button,
-  Checkbox,
   Icon,
   IconButton,
   IconName,
@@ -22,7 +26,8 @@ export type NewTaskData = {
   model?: string;
   attachedFilePaths: string[];
   phaseModels?: PhaseModels;
-  blockerTaskId?: string;
+  /** All selected dependency task IDs. First entry (if any) is used as the branch parent. */
+  blockerTaskIds?: string[];
   /**
    * When false, the orchestrator runs the task end-to-end: it auto-resolves any
    * rebase conflicts via the AI executor and auto-merges the PR once it is
@@ -49,27 +54,31 @@ type Props = {
 };
 
 type PhaseKey = 'planning' | 'implementation' | 'qa';
-const PHASES: readonly { key: PhaseKey; label: string; hint: string }[] = [
-  { key: 'planning',       label: 'Planning',       hint: 'break the brief into a plan' },
-  { key: 'implementation', label: 'Implementation', hint: 'write the code (used today)' },
-  { key: 'qa',             label: 'QA',             hint: 'verify tests & acceptance' },
+const PHASES: readonly { key: PhaseKey; label: string; icon: IconName }[] = [
+  { key: 'planning', label: 'Plan', icon: IconName.ScrollText },
+  { key: 'implementation', label: 'Code', icon: IconName.Zap },
+  { key: 'qa', label: 'QA', icon: IconName.Check },
 ];
 
 const MODEL_OPTIONS: readonly { value: string; label: string }[] = [
-  { value: '',       label: 'Default (sonnet)' },
   { value: 'sonnet', label: 'Sonnet' },
-  { value: 'opus',   label: 'Opus' },
-  { value: 'haiku',  label: 'Haiku' },
+  { value: 'opus', label: 'Opus' },
+  { value: 'haiku', label: 'Haiku' },
 ];
 
-const THINKING_OPTIONS: readonly { value: ThinkingLevel; label: string }[] = [
-  { value: 'off',    label: 'No extra thinking' },
-  { value: 'low',    label: 'Think briefly' },
-  { value: 'medium', label: 'Think carefully' },
-  { value: 'high',   label: 'Think deeply' },
+const THINKING_LEVELS: readonly {
+  value: ThinkingLevel;
+  label: string;
+  dots: number;
+}[] = [
+  { value: 'off', label: 'Off', dots: 0 },
+  { value: 'low', label: 'Low', dots: 1 },
+  { value: 'medium', label: 'Med', dots: 2 },
+  { value: 'high', label: 'High', dots: 3 },
 ];
 
 const DRAG_MIME = 'application/x-nightcoder-path';
+const TREE_STORAGE_KEY = 'nc.addTask.showTree';
 
 function basename(p: string): string {
   const idx = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -77,7 +86,10 @@ function basename(p: string): string {
 }
 
 /** Recursively keep only nodes whose path or descendants match the query. */
-function filterTree(nodes: readonly RepoTreeEntry[], query: string): RepoTreeEntry[] {
+function filterTree(
+  nodes: readonly RepoTreeEntry[],
+  query: string,
+): RepoTreeEntry[] {
   if (!query) return [...nodes];
   const q = query.toLowerCase();
   const out: RepoTreeEntry[] = [];
@@ -87,7 +99,10 @@ function filterTree(nodes: readonly RepoTreeEntry[], query: string): RepoTreeEnt
       if (kids.length > 0 || n.path.toLowerCase().includes(q)) {
         out.push({ ...n, children: kids });
       }
-    } else if (n.path.toLowerCase().includes(q) || n.name.toLowerCase().includes(q)) {
+    } else if (
+      n.path.toLowerCase().includes(q) ||
+      n.name.toLowerCase().includes(q)
+    ) {
       out.push(n);
     }
   }
@@ -95,7 +110,10 @@ function filterTree(nodes: readonly RepoTreeEntry[], query: string): RepoTreeEnt
 }
 
 /** Collect every dir path under a tree — used to auto-expand when filtering. */
-function collectDirPaths(nodes: readonly RepoTreeEntry[], into: Set<string>): void {
+function collectDirPaths(
+  nodes: readonly RepoTreeEntry[],
+  into: Set<string>,
+): void {
   for (const n of nodes) {
     if (n.kind === 'dir') {
       into.add(n.path);
@@ -104,15 +122,30 @@ function collectDirPaths(nodes: readonly RepoTreeEntry[], into: Set<string>): vo
   }
 }
 
-export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions }: Props) {
+function readTreeStoragePref(): boolean {
+  try {
+    return localStorage.getItem(TREE_STORAGE_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+export function AddTaskDialog({
+  open,
+  onClose,
+  onAdd,
+  folderPath,
+  blockerOptions,
+}: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [acceptance, setAcceptance] = useState('');
   const [phaseModels, setPhaseModels] = useState<PhaseModels>({});
-  const [blockerTaskId, setBlockerTaskId] = useState<string>('');
+  const [blockerTaskIds, setBlockerTaskIds] = useState<string[]>([]);
   const [requiresHumanReview, setRequiresHumanReview] = useState<boolean>(true);
   const [attachedFilePaths, setAttachedFilePaths] = useState<string[]>([]);
   const [pickError, setPickError] = useState<string | null>(null);
+  const [showTree, setShowTree] = useState<boolean>(readTreeStoragePref);
 
   const [tree, setTree] = useState<RepoTreeEntry[]>([]);
   const [treeLoading, setTreeLoading] = useState(false);
@@ -123,53 +156,81 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
 
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Persist tree visibility preference
+  useEffect(() => {
+    try {
+      localStorage.setItem(TREE_STORAGE_KEY, showTree ? '1' : '0');
+    } catch {
+      /* noop */
+    }
+  }, [showTree]);
+
   // ── Reset state whenever the dialog opens ─────────────────────────────
   useEffect(() => {
     if (!open) return;
-    setTitle(''); setDescription(''); setAcceptance('');
-    setPhaseModels({}); setBlockerTaskId('');
+    setTitle('');
+    setDescription('');
+    setAcceptance('');
+    setPhaseModels({});
+    setBlockerTaskIds([]);
     setRequiresHumanReview(true);
-    setAttachedFilePaths([]); setPickError(null);
-    setTreeFilter(''); setExpanded(new Set()); setDropActive(false);
+    setAttachedFilePaths([]);
+    setPickError(null);
+    setTreeFilter('');
+    setExpanded(new Set());
+    setDropActive(false);
   }, [open]);
 
   // ── Load repo tree when the dialog opens and a folder is set ─────────
   useEffect(() => {
     if (!open || !folderPath) {
-      setTree([]); setTreeError(null); setTreeLoading(false);
+      setTree([]);
+      setTreeError(null);
+      setTreeLoading(false);
       return;
     }
     let cancelled = false;
-    setTreeLoading(true); setTreeError(null);
-    window.nightcoder.listRepoTree({ folderPath })
+    setTreeLoading(true);
+    setTreeError(null);
+    window.nightcoder
+      .listRepoTree({ folderPath })
       .then((res) => {
         if (cancelled) return;
         if (res.kind === 'ok') {
           setTree(res.tree);
         } else {
-          setTree([]); setTreeError(res.message);
+          setTree([]);
+          setTreeError(res.message);
         }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setTree([]); setTreeError(err instanceof Error ? err.message : String(err));
+        setTree([]);
+        setTreeError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setTreeLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setTreeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open, folderPath]);
 
-  // ── Esc closes, ignoring typing inside form controls ─────────────────
+  // ── Esc closes ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  const filteredTree = useMemo(() => filterTree(tree, treeFilter), [tree, treeFilter]);
+  const filteredTree = useMemo(
+    () => filterTree(tree, treeFilter),
+    [tree, treeFilter],
+  );
 
-  // When the user filters the tree, auto-expand every remaining directory so
-  // matches aren't hidden behind a collapsed parent.
   const effectiveExpanded = useMemo(() => {
     if (!treeFilter) return expanded;
     const s = new Set(expanded);
@@ -185,8 +246,6 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
     setPhaseModels((prev) => {
       const current = prev[key] ?? {};
       const next: PhaseModel = { ...current, ...patch };
-      // Drop the phase entirely if it's been cleared — keeps the persisted
-      // shape minimal and makes backward-compat easy.
       if (!next.model && (!next.thinking || next.thinking === 'off')) {
         const { [key]: _omit, ...rest } = prev;
         void _omit;
@@ -205,7 +264,10 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
         const seen = new Set(prev);
         const next = [...prev];
         for (const p of result.paths) {
-          if (!seen.has(p)) { next.push(p); seen.add(p); }
+          if (!seen.has(p)) {
+            next.push(p);
+            seen.add(p);
+          }
         }
         return next;
       });
@@ -221,16 +283,21 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
   const toggleDir = (dirPath: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(dirPath)) next.delete(dirPath); else next.add(dirPath);
+      if (next.has(dirPath)) next.delete(dirPath);
+      else next.add(dirPath);
       return next;
     });
   };
 
-  // ── Drop target: insert @path at the caret position ──────────────────
+  // ── Drop into description: insert @path at caret ──────────────────────
   const insertAtCaret = (text: string) => {
     const ta = descriptionRef.current;
     if (!ta) {
-      setDescription((prev) => (prev.length > 0 && !prev.endsWith(' ') ? `${prev} ${text}` : `${prev}${text}`));
+      setDescription((prev) =>
+        prev.length > 0 && !prev.endsWith(' ')
+          ? `${prev} ${text}`
+          : `${prev}${text}`,
+      );
       return;
     }
     const start = ta.selectionStart ?? description.length;
@@ -242,7 +309,6 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
     const insertion = `${needsLeadingSpace ? ' ' : ''}${text}${needsTrailingSpace ? ' ' : ''}`;
     const next = `${before}${insertion}${after}`;
     setDescription(next);
-    // Re-place the caret after the insertion once React commits.
     requestAnimationFrame(() => {
       const el = descriptionRef.current;
       if (!el) return;
@@ -253,7 +319,8 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
   };
 
   const onDescriptionDrop = (e: React.DragEvent<HTMLTextAreaElement>) => {
-    const path = e.dataTransfer.getData(DRAG_MIME) || e.dataTransfer.getData('text/plain');
+    const path =
+      e.dataTransfer.getData(DRAG_MIME) || e.dataTransfer.getData('text/plain');
     if (!path) return;
     e.preventDefault();
     setDropActive(false);
@@ -276,7 +343,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
     >
       <Surface
         onClick={(e) => e.stopPropagation()}
-        width="min(960px, 96vw)"
+        width="min(820px, 96vw)"
         maxHeight="92vh"
         background="bg1"
         bordered
@@ -286,6 +353,7 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
         direction="column"
         data-testid={TestIds.AddTaskDialog.root}
       >
+        {/* ── Header ─────────────────────────────────────────────── */}
         <Surface
           as="header"
           bordered={{ bottom: true }}
@@ -307,9 +375,8 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
           >
             <Icon value={IconName.Plus} size="md" />
           </Surface>
-          <Text as="h2" size="lg" weight="semibold">New task</Text>
-          <Text size="xs" mono tone="faint">
-            drag a file from the tree into the description to reference it with @path
+          <Text as="h2" size="lg" weight="semibold">
+            New task
           </Text>
           <Surface grow />
           <IconButton
@@ -322,266 +389,346 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
           />
         </Surface>
 
-        <Surface direction="row" grow minHeight={0}>
-          {/* ── File tree panel ─────────────────────────────────── */}
-          <Surface
-            as="aside"
-            width={300}
-            shrink={false}
-            bordered={{ right: true }}
-            background="bg0"
-            direction="column"
-            minHeight={0}
-          >
-            <Surface
-              bordered={{ bottom: true }}
-              paddingX={12}
-              paddingTop={12}
-              paddingBottom={8}
-            >
-              <Surface
-                background="bg2"
-                bordered
-                radius="sm"
-                paddingX={8}
-                paddingY={6}
-                direction="row"
-                align="center"
-                gap={6}
-              >
-                <Icon value={IconName.Search} size="xs" />
-                <input
-                  value={treeFilter}
-                  onChange={(e) => setTreeFilter(e.target.value)}
-                  placeholder="Filter files…"
-                  aria-label="Filter files"
-                  className="ds-bare-input ds-mono"
-                />
-                {treeFilter && (
-                  <IconButton
-                    aria-label="Clear filter"
-                    size="sm"
-                    variant="ghost"
-                    icon={IconName.X}
-                    onClick={() => setTreeFilter('')}
-                  />
-                )}
-              </Surface>
+        {/* ── Form ────────────────────────────────────────────────── */}
+        <Surface
+          grow
+          minHeight={0}
+          overflowY="auto"
+          paddingX={20}
+          paddingTop={18}
+          paddingBottom={20}
+          direction="column"
+          gap={14}
+        >
+          <TextField
+            label="Title"
+            helperText="optional — inferred from description if empty"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What should the agent do?"
+            data-testid={TestIds.AddTaskDialog.titleInput}
+          />
+
+          {/* Description + collapsible file tree side by side */}
+          <Surface direction="column" gap={6}>
+            <Surface direction="row" align="center" gap={6}>
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Description / brief{' '}
+                <Text as="span" size="xs" tone="rose">
+                  *
+                </Text>
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                {showTree
+                  ? '· drag files from the tree to insert @path'
+                  : '· click the tree icon to show the file tree'}
+              </Text>
             </Surface>
-            <Surface
-              grow
-              overflowY="auto"
-              paddingX={4}
-              paddingTop={8}
-              paddingBottom={12}
-              minHeight={0}
-            >
-              {!folderPath && (
-                <Surface paddingX={12} paddingY={10}>
-                  <Text size="xs" tone="faint">Pick a folder to see its file tree.</Text>
-                </Surface>
-              )}
-              {folderPath && treeLoading && (
-                <Surface paddingX={12} paddingY={10}>
-                  <Text size="xs" tone="faint">Loading tree…</Text>
-                </Surface>
-              )}
-              {folderPath && treeError && (
-                <Surface paddingX={12} paddingY={10}>
-                  <Text size="xs" tone="rose">Couldn&apos;t load tree: {treeError}</Text>
-                </Surface>
-              )}
-              {folderPath && !treeLoading && !treeError && filteredTree.length === 0 && (
-                <Surface paddingX={12} paddingY={10}>
-                  <Text size="xs" tone="faint">
-                    {treeFilter ? 'No files match this filter.' : 'No files found.'}
-                  </Text>
-                </Surface>
-              )}
-              {folderPath && filteredTree.length > 0 && (
-                <TreeList
-                  nodes={filteredTree}
-                  depth={0}
-                  expanded={effectiveExpanded}
-                  onToggle={toggleDir}
+            <Surface direction="row" align="stretch" gap={10}>
+              <Surface grow minWidth={0} position="relative">
+                <Textarea
+                  ref={descriptionRef}
+                  required
+                  autoFocus
+                  invalid={dropActive}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onDragOver={(e) => {
+                    if (
+                      e.dataTransfer.types.includes(DRAG_MIME) ||
+                      e.dataTransfer.types.includes('text/plain')
+                    ) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                      setDropActive(true);
+                    }
+                  }}
+                  onDragLeave={() => setDropActive(false)}
+                  onDrop={onDescriptionDrop}
+                  placeholder="Describe the work. Drag files from the tree to reference them with @path."
+                  rows={6}
+                  data-testid={TestIds.AddTaskDialog.descriptionInput}
                 />
+              </Surface>
+
+              {showTree ? (
+                <Surface
+                  width={240}
+                  shrink={false}
+                  background="bg0"
+                  bordered
+                  radius="sm"
+                  direction="column"
+                  overflowY="hidden"
+                >
+                  {/* Tree panel header */}
+                  <Surface
+                    bordered={{ bottom: true }}
+                    paddingX={10}
+                    paddingTop={6}
+                    paddingBottom={6}
+                    direction="row"
+                    align="center"
+                    gap={6}
+                    background="bg1"
+                  >
+                    <Icon value={IconName.Folder} size="xs" />
+                    <Surface grow minWidth={0}>
+                      <Text size="xs" mono tone="muted" truncate>
+                        {folderPath ? basename(folderPath) : 'project'}
+                      </Text>
+                    </Surface>
+                    <IconButton
+                      aria-label="Hide file tree"
+                      size="sm"
+                      variant="ghost"
+                      icon={IconName.X}
+                      onClick={() => setShowTree(false)}
+                    />
+                  </Surface>
+                  {/* Tree search */}
+                  <Surface
+                    bordered={{ bottom: true }}
+                    paddingX={8}
+                    paddingTop={6}
+                    paddingBottom={6}
+                    background="bg1"
+                    direction="row"
+                    align="center"
+                    gap={6}
+                  >
+                    <Icon value={IconName.Search} size="xs" />
+                    <input
+                      value={treeFilter}
+                      onChange={(e) => setTreeFilter(e.target.value)}
+                      placeholder="Filter files…"
+                      aria-label="Filter files"
+                      className="ds-bare-input ds-mono"
+                    />
+                    {treeFilter && (
+                      <IconButton
+                        aria-label="Clear filter"
+                        size="sm"
+                        variant="ghost"
+                        icon={IconName.X}
+                        onClick={() => setTreeFilter('')}
+                      />
+                    )}
+                  </Surface>
+                  {/* Tree body */}
+                  <Surface
+                    grow
+                    overflowY="auto"
+                    paddingX={4}
+                    paddingTop={6}
+                    paddingBottom={8}
+                    minHeight={0}
+                  >
+                    {!folderPath && (
+                      <Surface paddingX={10} paddingY={8}>
+                        <Text size="xs" tone="faint">
+                          Pick a folder to see its file tree.
+                        </Text>
+                      </Surface>
+                    )}
+                    {folderPath && treeLoading && (
+                      <Surface paddingX={10} paddingY={8}>
+                        <Text size="xs" tone="faint">
+                          Loading…
+                        </Text>
+                      </Surface>
+                    )}
+                    {folderPath && treeError && (
+                      <Surface paddingX={10} paddingY={8}>
+                        <Text size="xs" tone="rose">
+                          Couldn&apos;t load tree: {treeError}
+                        </Text>
+                      </Surface>
+                    )}
+                    {folderPath &&
+                      !treeLoading &&
+                      !treeError &&
+                      filteredTree.length === 0 && (
+                        <Surface paddingX={10} paddingY={8}>
+                          <Text size="xs" tone="faint">
+                            {treeFilter ? 'No files match.' : 'No files found.'}
+                          </Text>
+                        </Surface>
+                      )}
+                    {folderPath && filteredTree.length > 0 && (
+                      <TreeList
+                        nodes={filteredTree}
+                        depth={0}
+                        expanded={effectiveExpanded}
+                        onToggle={toggleDir}
+                      />
+                    )}
+                  </Surface>
+                </Surface>
+              ) : (
+                <button
+                  onClick={() => setShowTree(true)}
+                  title="Show file tree"
+                  aria-label="Show file tree"
+                  className="ds-tree-toggle-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    flexShrink: 0,
+                    background: 'var(--bg-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    color: 'var(--text-3)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Icon value={IconName.Folder} size="sm" />
+                </button>
               )}
             </Surface>
           </Surface>
 
-          {/* ── Form ────────────────────────────────────────────── */}
-          <Surface
-            grow
-            minWidth={0}
-            overflowY="auto"
-            paddingX={20}
-            paddingTop={18}
-            paddingBottom={20}
-            direction="column"
-            gap={14}
-          >
-            <TextField
-              label="Title"
-              helperText="optional"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What should the agent do?"
-              data-testid={TestIds.AddTaskDialog.titleInput}
-            />
-            <Textarea
-              ref={descriptionRef}
-              label="Description / brief"
-              helperText="drop a file from the tree to paste @path"
-              required
-              autoFocus
-              invalid={dropActive}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onDragOver={(e) => {
-                if (e.dataTransfer.types.includes(DRAG_MIME) || e.dataTransfer.types.includes('text/plain')) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'copy';
-                  setDropActive(true);
-                }
-              }}
-              onDragLeave={() => setDropActive(false)}
-              onDrop={onDescriptionDrop}
-              placeholder="Describe the work. Drag files from the tree to reference them with @path."
-              rows={5}
-              data-testid={TestIds.AddTaskDialog.descriptionInput}
-            />
+          <Textarea
+            label="Acceptance criteria"
+            helperText="one per line, optional"
+            value={acceptance}
+            onChange={(e) => setAcceptance(e.target.value)}
+            placeholder={'Column drag works\nCounts are correct'}
+            rows={3}
+            data-testid={TestIds.AddTaskDialog.acceptanceInput}
+          />
 
-            <Textarea
-              label="Acceptance criteria"
-              helperText="one per line, optional"
-              value={acceptance}
-              onChange={(e) => setAcceptance(e.target.value)}
-              placeholder={'Column drag works\nCounts are correct'}
-              rows={3}
-              data-testid={TestIds.AddTaskDialog.acceptanceInput}
-            />
-
-            {/* ── Phases section ─────────────────────────────── */}
-            <Surface as="section" direction="column" gap={8}>
-              <Surface direction="column" gap={2}>
-                <Text size="xs" weight="medium" tone="muted" tracking="wide">Phase models</Text>
-                <Text size="xs" tone="faint" italic>
-                  Implementation drives today&apos;s single run. Planning / QA are saved for the upcoming multi-phase executor.
-                </Text>
-              </Surface>
-              <Stack direction="column" gap={8}>
-                {PHASES.map(({ key, label, hint }) => {
-                  const cur = phaseModels[key] ?? {};
-                  return (
-                    <Stack key={key} direction="row" align="center" gap={8}>
-                      <Surface width={110} direction="column">
-                        <Text size="sm" weight="medium" tone="muted">{label}</Text>
-                        <Text size="xs" tone="faint">{hint}</Text>
-                      </Surface>
-                      <Surface grow>
-                        <Select
-                          aria-label={`${label} model`}
-                          value={cur.model ?? ''}
-                          onChange={(e) => setPhase(key, { model: e.target.value || undefined })}
-                          options={MODEL_OPTIONS}
-                          data-testid={TestIds.AddTaskDialog.phaseModelSelect(key)}
-                        />
-                      </Surface>
-                      <Surface grow>
-                        <Select
-                          aria-label={`${label} thinking`}
-                          value={cur.thinking ?? 'off'}
-                          onChange={(e) => setPhase(key, { thinking: e.target.value as ThinkingLevel })}
-                          options={THINKING_OPTIONS}
-                          data-testid={TestIds.AddTaskDialog.phaseThinkingSelect(key)}
-                        />
-                      </Surface>
-                    </Stack>
-                  );
-                })}
-              </Stack>
+          {/* ── Blocked by (multi-select) ──────────────────────── */}
+          <Surface direction="column" gap={6}>
+            <Surface direction="column" gap={2}>
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Blocked by
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                task will wait until selected dependencies finish
+              </Text>
             </Surface>
-
-            {/* ── Blocker selector ──────────────────────────── */}
-            <Select
-              label="Blocked by"
-              helperText="optional — branch off this task and target its PR branch"
-              value={blockerTaskId}
-              onChange={(e) => setBlockerTaskId(e.target.value)}
-              options={[
-                { value: '', label: 'No blocker (branch off main)' },
-                ...(blockerOptions ?? []).map((opt) => ({
-                  value: opt.taskId,
-                  label: opt.hint ? `${opt.hint} — ${opt.title}` : opt.title,
-                })),
-              ]}
-              data-testid={TestIds.AddTaskDialog.blockerSelect}
+            <BlockedByPicker
+              options={blockerOptions ?? []}
+              value={blockerTaskIds}
+              onChange={setBlockerTaskIds}
             />
+          </Surface>
 
-            {/* ── Review / auto-merge gate ──────────────────── */}
-            <Checkbox
-              label="Requires human review"
-              helperText="Uncheck to let NightCoder auto-resolve any rebase conflicts and squash-merge the PR once it's mergeable."
+          {/* ── Review gate ────────────────────────────────────── */}
+          <Surface direction="column" gap={6}>
+            <Text size="xs" weight="medium" tone="muted" tracking="wide">
+              Review
+            </Text>
+            <ReviewCard
               checked={requiresHumanReview}
-              onChange={(e) => setRequiresHumanReview(e.target.checked)}
+              onChange={setRequiresHumanReview}
               data-testid={TestIds.AddTaskDialog.requiresReviewCheckbox}
             />
+          </Surface>
 
-            {/* ── Attachments (existing flow) ───────────────── */}
-            <Surface direction="column" gap={6}>
-              <Surface direction="row" align="center" gap={6}>
-                <Text size="xs" weight="medium" tone="muted" tracking="wide">Attached files</Text>
-                <Text size="xs" tone="faint" italic>
-                  · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with the agent
-                </Text>
-              </Surface>
-              <Surface direction="column" gap={8}>
-                {attachedFilePaths.length > 0 && (
-                  <Stack direction="column" gap={4}>
-                    {attachedFilePaths.map((p) => (
-                      <Surface
-                        key={p}
-                        bordered
-                        radius="sm"
-                        background="bg2"
-                        paddingX={8}
-                        paddingY={6}
-                        direction="row"
-                        align="center"
-                        gap={8}
-                      >
-                        <Icon value={IconName.File} size="sm" />
-                        <Surface grow minWidth={0} title={p}>
-                          <Text size="sm" mono tone="muted" truncate>{basename(p)}</Text>
-                        </Surface>
-                        <IconButton
-                          aria-label={`Remove ${basename(p)}`}
-                          title="Remove"
-                          size="sm"
-                          variant="ghost"
-                          icon={IconName.X}
-                          onClick={() => removeFile(p)}
-                        />
-                      </Surface>
-                    ))}
-                  </Stack>
-                )}
-                <Stack direction="row">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    label="Attach files"
-                    startIcon={IconName.Paperclip}
-                    onClick={() => void pickFiles()}
-                    data-testid={TestIds.AddTaskDialog.attachFilesBtn}
+          {/* ── Agents / phase models ──────────────────────────── */}
+          <Surface as="section" direction="column" gap={8}>
+            <Surface direction="column" gap={2}>
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Agents
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                pick the model and thinking depth for each phase
+              </Text>
+            </Surface>
+            <Surface direction="row" gap={8}>
+              {PHASES.map(({ key, label, icon }) => {
+                const cur = phaseModels[key] ?? {};
+                return (
+                  <ModelPick
+                    key={key}
+                    label={label}
+                    icon={icon}
+                    model={cur.model ?? ''}
+                    onModelChange={(m) =>
+                      setPhase(key, { model: m || undefined })
+                    }
+                    thinking={cur.thinking ?? 'off'}
+                    onThinkingChange={(t) => setPhase(key, { thinking: t })}
+                    modelSelectTestId={TestIds.AddTaskDialog.phaseModelSelect(
+                      key,
+                    )}
+                    thinkingSelectTestId={TestIds.AddTaskDialog.phaseThinkingSelect(
+                      key,
+                    )}
                   />
+                );
+              })}
+            </Surface>
+          </Surface>
+
+          {/* ── Attached files ────────────────────────────────── */}
+          <Surface direction="column" gap={6}>
+            <Surface direction="row" align="center" gap={6}>
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Attached files
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with
+                the agent
+              </Text>
+            </Surface>
+            <Surface direction="column" gap={8}>
+              {attachedFilePaths.length > 0 && (
+                <Stack direction="column" gap={4}>
+                  {attachedFilePaths.map((p) => (
+                    <Surface
+                      key={p}
+                      bordered
+                      radius="sm"
+                      background="bg2"
+                      paddingX={8}
+                      paddingY={6}
+                      direction="row"
+                      align="center"
+                      gap={8}
+                    >
+                      <Icon value={IconName.File} size="sm" />
+                      <Surface grow minWidth={0} title={p}>
+                        <Text size="sm" mono tone="muted" truncate>
+                          {basename(p)}
+                        </Text>
+                      </Surface>
+                      <IconButton
+                        aria-label={`Remove ${basename(p)}`}
+                        title="Remove"
+                        size="sm"
+                        variant="ghost"
+                        icon={IconName.X}
+                        onClick={() => removeFile(p)}
+                      />
+                    </Surface>
+                  ))}
                 </Stack>
-                {pickError && <Text size="xs" tone="rose">{pickError}</Text>}
-              </Surface>
+              )}
+              <Stack direction="row">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  label="Attach files"
+                  startIcon={IconName.Paperclip}
+                  onClick={() => void pickFiles()}
+                  data-testid={TestIds.AddTaskDialog.attachFilesBtn}
+                />
+              </Stack>
+              {pickError && (
+                <Text size="xs" tone="rose">
+                  {pickError}
+                </Text>
+              )}
             </Surface>
           </Surface>
         </Surface>
 
+        {/* ── Footer ─────────────────────────────────────────────── */}
         <Surface
           as="footer"
           bordered={{ top: true }}
@@ -604,16 +751,26 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
             label="Add task"
             startIcon={IconName.Check}
             disabled={!canAdd}
-            onClick={() => canAdd && onAdd({
-              title: title.trim() || description.trim().split(' ').slice(0, 6).join(' '),
-              description: description.trim(),
-              acceptance: acceptance.split('\n').map((s) => s.trim()).filter(Boolean),
-              model: phaseModels.implementation?.model || undefined,
-              attachedFilePaths,
-              phaseModels: Object.keys(phaseModels).length > 0 ? phaseModels : undefined,
-              blockerTaskId: blockerTaskId || undefined,
-              requiresHumanReview,
-            })}
+            onClick={() =>
+              canAdd &&
+              onAdd({
+                title:
+                  title.trim() ||
+                  description.trim().split(' ').slice(0, 6).join(' '),
+                description: description.trim(),
+                acceptance: acceptance
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+                model: phaseModels.implementation?.model || undefined,
+                attachedFilePaths,
+                phaseModels:
+                  Object.keys(phaseModels).length > 0 ? phaseModels : undefined,
+                blockerTaskIds:
+                  blockerTaskIds.length > 0 ? blockerTaskIds : undefined,
+                requiresHumanReview,
+              })
+            }
             data-testid={TestIds.AddTaskDialog.submitBtn}
           />
         </Surface>
@@ -621,6 +778,352 @@ export function AddTaskDialog({ open, onClose, onAdd, folderPath, blockerOptions
     </Surface>
   );
 }
+
+// ── BlockedByPicker ──────────────────────────────────────────────────────────
+
+type BlockedByPickerProps = {
+  options: readonly BlockerOption[];
+  value: string[];
+  onChange: (ids: string[]) => void;
+};
+
+function BlockedByPicker({ options, value, onChange }: BlockedByPickerProps) {
+  const candidates = options.filter((o) => !value.includes(o.taskId));
+  const selected = value
+    .map((id) => options.find((o) => o.taskId === id))
+    .filter(Boolean) as BlockerOption[];
+
+  const add = (taskId: string) => {
+    if (!taskId) return;
+    onChange([...value, taskId]);
+  };
+  const remove = (taskId: string) =>
+    onChange(value.filter((v) => v !== taskId));
+
+  if (options.length === 0) {
+    return (
+      <Surface
+        bordered
+        radius="sm"
+        background="bg2"
+        paddingX={12}
+        paddingY={10}
+      >
+        <Text size="xs" tone="faint" italic>
+          No other tasks to depend on yet.
+        </Text>
+      </Surface>
+    );
+  }
+
+  return (
+    <Surface
+      direction="column"
+      gap={8}
+      data-testid={TestIds.AddTaskDialog.blockerSelect}
+    >
+      {selected.length > 0 && (
+        <Surface direction="row" gap={6} style={{ flexWrap: 'wrap' }}>
+          {selected.map((opt) => (
+            <Surface
+              key={opt.taskId}
+              bordered
+              radius="pill"
+              background="bg2"
+              paddingLeft={8}
+              paddingRight={4}
+              paddingTop={3}
+              paddingBottom={3}
+              direction="row"
+              align="center"
+              gap={6}
+            >
+              {opt.hint && (
+                <Text size="xs" mono tone="faint">
+                  {opt.hint}
+                </Text>
+              )}
+              <Text size="xs" tone="muted" truncate style={{ maxWidth: 200 }}>
+                {opt.title}
+              </Text>
+              <IconButton
+                aria-label={`Remove ${opt.title}`}
+                size="sm"
+                variant="ghost"
+                icon={IconName.X}
+                onClick={() => remove(opt.taskId)}
+              />
+            </Surface>
+          ))}
+        </Surface>
+      )}
+      {candidates.length > 0 && (
+        <Surface grow>
+          <Select
+            aria-label="Add a dependency"
+            value=""
+            onChange={(e) => add(e.target.value)}
+            options={[
+              {
+                value: '',
+                label:
+                  selected.length > 0
+                    ? '+ Add another dependency…'
+                    : 'Select a task this depends on…',
+              },
+              ...candidates.map((o) => ({
+                value: o.taskId,
+                label: o.hint ? `${o.hint} — ${o.title}` : o.title,
+              })),
+            ]}
+          />
+        </Surface>
+      )}
+    </Surface>
+  );
+}
+
+// ── ReviewCard ───────────────────────────────────────────────────────────────
+
+type ReviewCardProps = {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  'data-testid'?: string;
+};
+
+function ReviewCard({
+  checked,
+  onChange,
+  'data-testid': testId,
+}: ReviewCardProps) {
+  return (
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+        padding: '10px 12px',
+        background: 'var(--bg-2)',
+        border: `1px solid ${checked ? 'var(--emerald)' : 'var(--border)'}`,
+        borderRadius: 8,
+        cursor: 'pointer',
+        transition: 'border-color .12s',
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        data-testid={testId}
+        style={{
+          marginTop: 2,
+          width: 14,
+          height: 14,
+          accentColor: 'var(--emerald)',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}
+      />
+      <Surface direction="column" gap={2} grow>
+        <Surface direction="row" align="center" gap={6}>
+          <Text size="sm" weight="medium">
+            Human review required
+          </Text>
+          {checked && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '.08em',
+                textTransform: 'uppercase',
+                padding: '1px 6px',
+                borderRadius: 3,
+                background: 'var(--accent-soft)',
+                color: 'var(--emerald)',
+                fontFamily: 'var(--mono)',
+              }}
+            >
+              default
+            </span>
+          )}
+        </Surface>
+        <Text size="xs" tone="faint">
+          Pause before merging so you can sign off on the agent&apos;s work.
+        </Text>
+      </Surface>
+    </label>
+  );
+}
+
+// ── ModelPick card ───────────────────────────────────────────────────────────
+
+const PHASE_ICON_MAP: Record<string, IconName> = {
+  sparkle: IconName.Sparkle,
+  zap: IconName.Zap,
+  check: IconName.Check,
+};
+
+type ModelPickProps = {
+  label: string;
+  icon: string;
+  model: string;
+  onModelChange: (model: string) => void;
+  thinking: ThinkingLevel;
+  onThinkingChange: (level: ThinkingLevel) => void;
+  modelSelectTestId?: string;
+  thinkingSelectTestId?: string;
+};
+
+function ModelPick({
+  label,
+  icon,
+  model,
+  onModelChange,
+  thinking,
+  onThinkingChange,
+  modelSelectTestId,
+  thinkingSelectTestId,
+}: ModelPickProps) {
+  const iconValue = PHASE_ICON_MAP[icon] ?? IconName.Sparkle;
+  const activeLevel =
+    THINKING_LEVELS.find((l) => l.value === thinking) ?? THINKING_LEVELS[0];
+
+  return (
+    <Surface
+      grow
+      minWidth={0}
+      bordered
+      radius="sm"
+      background="bg2"
+      paddingX={10}
+      paddingTop={8}
+      paddingBottom={8}
+      direction="column"
+      gap={8}
+    >
+      {/* Phase label */}
+      <Surface direction="row" align="center" gap={6}>
+        <Icon value={iconValue} size="xs" />
+        <Text
+          size="xs"
+          weight="semibold"
+          tone="faint"
+          tracking="wide"
+          style={{ textTransform: 'uppercase' }}
+        >
+          {label}
+        </Text>
+      </Surface>
+
+      {/* Model dropdown */}
+      <Select
+        aria-label={`${label} model`}
+        value={model}
+        onChange={(e) => onModelChange(e.target.value)}
+        options={MODEL_OPTIONS}
+        data-testid={modelSelectTestId}
+      />
+
+      {/* Thinking segmented control */}
+      <Surface direction="column" gap={4}>
+        <Surface direction="row" align="center" justify="between">
+          <Surface direction="row" align="center" gap={4}>
+            <Icon value={IconName.Sparkle} size="xs" />
+            <Text
+              size="xs"
+              tone="faint"
+              style={{
+                textTransform: 'uppercase',
+                letterSpacing: '.08em',
+                fontSize: 9,
+              }}
+            >
+              Thinking
+            </Text>
+          </Surface>
+          <Text
+            size="xs"
+            mono
+            style={{ color: thinkingLevelColor(activeLevel.value) }}
+          >
+            {activeLevel.label}
+          </Text>
+        </Surface>
+        <Surface direction="row" gap={3}>
+          {THINKING_LEVELS.map((lvl) => {
+            const active = lvl.value === thinking;
+            const color = thinkingLevelColor(lvl.value);
+            return (
+              <button
+                key={lvl.value}
+                onClick={() => onThinkingChange(lvl.value)}
+                title={`Thinking: ${lvl.label}`}
+                data-testid={
+                  lvl.value === thinking ? thinkingSelectTestId : undefined
+                }
+                style={{
+                  flex: 1,
+                  height: 20,
+                  padding: 0,
+                  background: active ? 'var(--bg-1)' : 'transparent',
+                  border: `1px solid ${active ? color : 'var(--border)'}`,
+                  boxShadow: active ? `0 0 0 1px ${color}22 inset` : 'none',
+                  borderRadius: 5,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                  transition: 'all .12s',
+                }}
+              >
+                {lvl.dots === 0 ? (
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: active ? color : 'var(--text-3)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    ∅
+                  </span>
+                ) : (
+                  Array.from({ length: lvl.dots }).map((_, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: 3,
+                        height: 3,
+                        borderRadius: 3,
+                        background: active ? color : 'var(--text-3)',
+                        opacity: active ? 1 : 0.5,
+                      }}
+                    />
+                  ))
+                )}
+              </button>
+            );
+          })}
+        </Surface>
+      </Surface>
+    </Surface>
+  );
+}
+
+function thinkingLevelColor(level: ThinkingLevel): string {
+  switch (level) {
+    case 'low':
+      return 'var(--sky)';
+    case 'medium':
+      return 'var(--amber)';
+    case 'high':
+      return 'var(--emerald)';
+    default:
+      return 'var(--text-3)';
+  }
+}
+
+// ── TreeList / TreeNode ──────────────────────────────────────────────────────
 
 function TreeList({
   nodes,
@@ -686,15 +1189,27 @@ function TreeNode({
         interactive
       >
         <Surface width={12} direction="row" align="center">
-          {isDir ? <Icon value={isOpen ? IconName.ChevronDown : IconName.ChevronRight} size="xs" /> : null}
+          {isDir ? (
+            <Icon
+              value={isOpen ? IconName.ChevronDown : IconName.ChevronRight}
+              size="xs"
+            />
+          ) : null}
         </Surface>
         <Surface direction="row" align="center">
           <Icon value={isDir ? IconName.Folder : IconName.File} size="xs" />
         </Surface>
-        <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>{node.name}</Text>
+        <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>
+          {node.name}
+        </Text>
       </Surface>
       {isDir && isOpen && node.children && node.children.length > 0 && (
-        <TreeList nodes={node.children} depth={depth + 1} expanded={expanded} onToggle={onToggle} />
+        <TreeList
+          nodes={node.children}
+          depth={depth + 1}
+          expanded={expanded}
+          onToggle={onToggle}
+        />
       )}
     </Surface>
   );
