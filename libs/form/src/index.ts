@@ -1,4 +1,7 @@
 export { Form, type FormProps } from './Form';
+export { useFormControls } from './Form';
+export type { FormControls, FormControlsOptions } from './Form';
+export { Controller, useFormContext, useWatch } from 'react-hook-form';
 export { FormInput, type FormInputProps } from './FormInput';
 export {
   FormPasswordInput,

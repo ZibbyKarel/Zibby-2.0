@@ -45,7 +45,8 @@ const stack: CSSProperties = {
 
 /**
  * The canonical use-case: a tiny login form. Children consume the form
- * context, no `control` prop required.
+ * context via FormProvider — no `control` prop required on field-level
+ * components.
  */
 export const Overview: Story = {
   render: () => {

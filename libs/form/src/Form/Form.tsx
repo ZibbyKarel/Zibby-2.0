@@ -1,86 +1,41 @@
-import {
-  forwardRef,
-  useImperativeHandle,
-  type FormHTMLAttributes,
-  type ReactNode,
-  type Ref,
-} from 'react';
-import {
-  FormProvider,
-  useForm,
-  type FieldValues,
-  type SubmitErrorHandler,
-  type SubmitHandler,
-  type UseFormProps,
-  type UseFormReturn,
-} from 'react-hook-form';
+import type { FormHTMLAttributes, ReactNode } from 'react';
+import { type FieldValues, type UseFormProps } from 'react-hook-form';
+import { useFormControls } from './useFormControls';
 
-type ConfigProps<T extends FieldValues> = Pick<
-  UseFormProps<T>,
-  | 'defaultValues'
-  | 'mode'
-  | 'reValidateMode'
-  | 'resolver'
-  | 'shouldUnregister'
-  | 'criteriaMode'
-  | 'delayError'
->;
-
-export type FormProps<T extends FieldValues = FieldValues> = Omit<
-  FormHTMLAttributes<HTMLFormElement>,
-  'onSubmit' | 'children'
-> &
-  ConfigProps<T> & {
-    onSubmit: SubmitHandler<T>;
-    onInvalid?: SubmitErrorHandler<T>;
-    children: ReactNode | ((methods: UseFormReturn<T>) => ReactNode);
-    formRef?: Ref<UseFormReturn<T>>;
+export type FormProps<T extends FieldValues = FieldValues> = UseFormProps<T> &
+  Omit<FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'children'> & {
+    onSubmit: (values: T) => void;
+    children: ReactNode;
   };
 
-function FormInner<T extends FieldValues>(
-  {
+export function Form<T extends FieldValues = FieldValues>(props: FormProps<T>) {
+  const {
     defaultValues,
     mode,
     reValidateMode,
+    shouldUnregister,
+    criteriaMode,
+    delayError,
+    children,
+    onSubmit,
     resolver,
+    ...formAttrs
+  } = props;
+
+  const { renderForm, submit } = useFormControls<T>({
+    defaultValues,
+    mode,
+    reValidateMode,
     shouldUnregister,
     criteriaMode,
     delayError,
     onSubmit,
-    onInvalid,
-    children,
-    formRef,
-    ...formAttrs
-  }: FormProps<T>,
-  ref: Ref<HTMLFormElement>,
-) {
-  const methods = useForm<T>({
-    defaultValues,
-    mode,
-    reValidateMode,
     resolver,
-    shouldUnregister,
-    criteriaMode,
-    delayError,
   });
 
-  useImperativeHandle(formRef, () => methods, [methods]);
-
-  return (
-    <FormProvider {...methods}>
-      <form
-        ref={ref}
-        {...formAttrs}
-        onSubmit={methods.handleSubmit(onSubmit, onInvalid)}
-      >
-        {typeof children === 'function' ? children(methods) : children}
-      </form>
-    </FormProvider>
+  return renderForm(
+    <form {...formAttrs} onSubmit={submit}>
+      {children}
+    </form>,
   );
 }
-
-export const Form = forwardRef(FormInner) as <
-  T extends FieldValues = FieldValues,
->(
-  props: FormProps<T> & { ref?: Ref<HTMLFormElement> },
-) => ReturnType<typeof FormInner>;
