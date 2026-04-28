@@ -1,12 +1,13 @@
 import { type CSSProperties, type HTMLAttributes } from 'react';
+import { spacingToPx, type Spacing } from '../../tokens';
 
 export type SpacerAxis = 'horizontal' | 'vertical' | 'both';
 
 export type SpacerProps = HTMLAttributes<HTMLDivElement> & {
   /** Direction the spacer expands along. Defaults to `both`. */
   axis?: SpacerAxis;
-  /** Fixed size in px. When omitted the spacer grows (`flex: 1`). */
-  size?: number | string;
+  /** Fixed size expressed as a design-system Spacing token. When omitted the spacer grows (`flex: 1`). */
+  size?: Spacing;
 };
 
 /**
@@ -16,7 +17,7 @@ export type SpacerProps = HTMLAttributes<HTMLDivElement> & {
 export function Spacer({ axis = 'both', size, style, ...props }: SpacerProps) {
   const computed: CSSProperties = (() => {
     if (size !== undefined) {
-      const v = typeof size === 'number' ? `${size}px` : size;
+      const v = spacingToPx(size);
       switch (axis) {
         case 'horizontal': return { width: v, flexShrink: 0 };
         case 'vertical':   return { height: v, flexShrink: 0 };

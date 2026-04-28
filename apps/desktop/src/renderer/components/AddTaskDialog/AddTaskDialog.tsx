@@ -1,17 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import type { PhaseModels, PhaseModel } from '@nightcoder/shared-types/ipc';
+import { useEffect, useRef, useState } from 'react';
+import type { PhaseModels } from '@nightcoder/shared-types/ipc';
 import {
   Button,
+  Card,
+  Container,
   Icon,
   IconButton,
   IconName,
   Stack,
-  Surface,
   Text,
   Textarea,
 } from '@nightcoder/design-system';
-import { Form, FormInput, FormTextarea } from '@nightcoder/form';
-import { Controller } from 'react-hook-form';
+import {
+  Controller,
+  Form,
+  FormInput,
+  FormTextarea,
+  useFormContext,
+  useWatch,
+} from '@nightcoder/form';
 import { TestIds } from '@nightcoder/test-ids';
 import type {
   NewTaskData,
@@ -28,12 +35,10 @@ import {
   setPhase,
   pickFiles,
   removeFile,
-  insertAtCaret,
   handleDescriptionDrop,
 } from './formActions';
 import { useRepoTree } from './hooks/useRepoTree';
 import { useFileTreeUI } from './hooks/useFileTreeUI';
-import type { UseFormReturn } from 'react-hook-form';
 
 const PHASES: readonly { key: PhaseKey; label: string; icon: IconName }[] = [
   { key: 'planning', label: 'Plan', icon: IconName.ScrollText },
@@ -66,8 +71,6 @@ export function AddTaskDialog({
   folderPath,
   blockerOptions,
 }: Props) {
-  const formRef = useRef<UseFormReturn<AddTaskFormValues>>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
 
   const {
@@ -79,7 +82,6 @@ export function AddTaskDialog({
 
   useEffect(() => {
     if (!open) return;
-    formRef.current?.reset(FORM_DEFAULTS);
     setPickError(null);
     treeUI.reset();
     // treeUI is a new object each render; we only want this on open toggle
@@ -119,7 +121,7 @@ export function AddTaskDialog({
   if (!open) return null;
 
   return (
-    <Surface
+    <Container
       onClick={onClose}
       position="fixed"
       top={0}
@@ -127,492 +129,492 @@ export function AddTaskDialog({
       bottom={0}
       left={0}
       zIndex={60}
-      background="backdrop"
-      direction="row"
-      align="center"
-      justify="center"
+      style={{ background: 'rgba(0,0,0,.55)' }}
     >
-      <Surface
-        onClick={(e) => e.stopPropagation()}
-        width="min(820px, 96vw)"
-        maxHeight="92vh"
-        background="bg1"
-        bordered
-        borderTone="strong"
-        radius="md"
-        shadow="2"
-        direction="column"
-        data-testid={TestIds.AddTaskDialog.root}
-      >
-        <Surface
-          as="header"
-          bordered={{ bottom: true }}
-          paddingX={20}
-          paddingTop={16}
-          paddingBottom={14}
-          direction="row"
-          align="center"
-          gap={10}
+      <Stack direction="row" align="center" justify="center" style={{ minHeight: '100%' }}>
+        <Card
+          onClick={(e) => e.stopPropagation()}
+          width="min(820px, 96vw)"
+          maxHeight="92vh"
+          background="bg1"
+          bordered
+          borderTone="strong"
+          radius="md"
+          shadow="2"
+          padding="none"
+          data-testid={TestIds.AddTaskDialog.root}
         >
-          <Surface
-            background="accentSoft"
-            radius="sm"
-            width={32}
-            height={32}
-            direction="row"
-            align="center"
-            justify="center"
-          >
-            <Icon value={IconName.Plus} size="md" />
-          </Surface>
-          <Text as="h2" size="lg" weight="semibold">
-            New task
-          </Text>
-          <Surface grow />
-          <IconButton
-            aria-label="Close"
-            size="sm"
-            variant="ghost"
-            icon={IconName.X}
-            onClick={onClose}
-            data-testid={TestIds.AddTaskDialog.closeBtn}
-          />
-        </Surface>
-
-        <Form<AddTaskFormValues>
-          formRef={formRef}
-          defaultValues={FORM_DEFAULTS}
-          onSubmit={handleFormSubmit}
-          style={{ display: 'contents' }}
-        >
-          {(methods) => {
-            const canAdd = methods.watch('description').trim().length > 0;
-            const phaseModels = methods.watch('phaseModels');
-            const attachedFilePaths = methods.watch('attachedFilePaths');
-
-            return (
-              <>
-                <Surface
-                  grow
-                  minHeight={0}
-                  overflowY="auto"
-                  paddingX={20}
-                  paddingTop={18}
-                  paddingBottom={20}
-                  direction="column"
-                  gap={14}
+          <Stack direction="column" style={{ maxHeight: '92vh' }}>
+            <Card
+              as="header"
+              variant="filled"
+              background="transparent"
+              bordered={{ bottom: true }}
+              radius="none"
+              padding={['200', '250', '150', '250']}
+            >
+              <Stack direction="row" align="center" gap="100">
+                <Card
+                  variant="filled"
+                  background="accentSoft"
+                  bordered={false}
+                  radius="sm"
+                  padding="none"
+                  width={32}
+                  height={32}
                 >
-                  <FormInput<AddTaskFormValues>
-                    name="title"
-                    label="Title"
-                    helperText="optional — inferred from description if empty"
-                    placeholder="What should the agent do?"
-                    data-testid={TestIds.AddTaskDialog.titleInput}
-                  />
+                  <Stack direction="row" align="center" justify="center">
+                    <Icon value={IconName.Plus} size="md" />
+                  </Stack>
+                </Card>
+                <Text as="h2" size="lg" weight="semibold">
+                  New task
+                </Text>
+                <Container grow />
+                <IconButton
+                  aria-label="Close"
+                  size="sm"
+                  variant="ghost"
+                  icon={IconName.X}
+                  onClick={onClose}
+                  data-testid={TestIds.AddTaskDialog.closeBtn}
+                />
+              </Stack>
+            </Card>
 
-                  <Surface direction="column" gap={6}>
-                    <Surface direction="row" align="center" gap={6}>
-                      <Text
-                        size="xs"
-                        weight="medium"
-                        tone="muted"
-                        tracking="wide"
-                      >
-                        Description / brief{' '}
-                        <Text as="span" size="xs" tone="rose">
-                          *
-                        </Text>
-                      </Text>
-                      <Text size="xs" tone="faint" italic>
-                        {treeUI.showTree
-                          ? '· drag files from the tree to insert @path'
-                          : '· click the tree icon to show the file tree'}
-                      </Text>
-                    </Surface>
-                    <Surface direction="row" align="stretch" gap={10}>
-                      <Surface grow minWidth={0} position="relative">
-                        <Controller
-                          name="description"
-                          control={methods.control}
-                          render={({
-                            field: { ref, onChange, ...fieldProps },
-                          }) => (
-                            <Textarea
-                              {...fieldProps}
-                              ref={mergeRefs(ref, descriptionRef)}
-                              required
-                              autoFocus
-                              invalid={treeUI.dropActive}
-                              onChange={onChange}
-                              onDragOver={(e) => {
-                                if (
-                                  e.dataTransfer.types.includes(DRAG_MIME) ||
-                                  e.dataTransfer.types.includes('text/plain')
-                                ) {
-                                  e.preventDefault();
-                                  e.dataTransfer.dropEffect = 'copy';
-                                  treeUI.setDropActive(true);
-                                }
-                              }}
-                              onDragLeave={() => treeUI.setDropActive(false)}
-                              onDrop={(e) =>
-                                handleDescriptionDrop(
-                                  e,
-                                  methods,
-                                  descriptionRef,
-                                  treeUI.setDropActive,
-                                )
-                              }
-                              placeholder="Describe the work. Drag files from the tree to reference them with @path."
-                              rows={6}
-                              data-testid={
-                                TestIds.AddTaskDialog.descriptionInput
-                              }
-                            />
-                          )}
-                        />
-                      </Surface>
+            <Form<AddTaskFormValues>
+              defaultValues={FORM_DEFAULTS}
+              onSubmit={handleFormSubmit}
+              style={{ display: 'contents' }}
+            >
+              <DialogBody
+                folderPath={folderPath}
+                blockerOptions={blockerOptions}
+                tree={tree}
+                treeLoading={treeLoading}
+                treeError={treeError}
+                treeUI={treeUI}
+                pickError={pickError}
+                setPickError={setPickError}
+                onClose={onClose}
+              />
+            </Form>
+          </Stack>
+        </Card>
+      </Stack>
+    </Container>
+  );
+}
 
-                      {treeUI.showTree ? (
-                        <Surface
-                          width={240}
-                          shrink={false}
-                          background="bg0"
-                          bordered
-                          radius="sm"
-                          direction="column"
-                          overflowY="hidden"
-                        >
-                          <Surface
-                            bordered={{ bottom: true }}
-                            paddingX={10}
-                            paddingTop={6}
-                            paddingBottom={6}
-                            direction="row"
-                            align="center"
-                            gap={6}
-                            background="bg1"
-                          >
-                            <Icon value={IconName.Folder} size="xs" />
-                            <Surface grow minWidth={0}>
-                              <Text size="xs" mono tone="muted" truncate>
-                                {folderPath ? basename(folderPath) : 'project'}
-                              </Text>
-                            </Surface>
-                            <IconButton
-                              aria-label="Hide file tree"
-                              size="sm"
-                              variant="ghost"
-                              icon={IconName.X}
-                              onClick={() => treeUI.setShowTree(false)}
-                            />
-                          </Surface>
-                          <Surface
-                            bordered={{ bottom: true }}
-                            paddingX={8}
-                            paddingTop={6}
-                            paddingBottom={6}
-                            background="bg1"
-                            direction="row"
-                            align="center"
-                            gap={6}
-                          >
-                            <Icon value={IconName.Search} size="xs" />
-                            <input
-                              value={treeUI.treeFilter}
-                              onChange={(e) =>
-                                treeUI.setTreeFilter(e.target.value)
-                              }
-                              placeholder="Filter files…"
-                              aria-label="Filter files"
-                              className="ds-bare-input ds-mono"
-                            />
-                            {treeUI.treeFilter && (
-                              <IconButton
-                                aria-label="Clear filter"
-                                size="sm"
-                                variant="ghost"
-                                icon={IconName.X}
-                                onClick={() => treeUI.setTreeFilter('')}
-                              />
-                            )}
-                          </Surface>
-                          <Surface
-                            grow
-                            overflowY="auto"
-                            paddingX={4}
-                            paddingTop={6}
-                            paddingBottom={8}
-                            minHeight={0}
-                          >
-                            {!folderPath && (
-                              <Surface paddingX={10} paddingY={8}>
-                                <Text size="xs" tone="faint">
-                                  Pick a folder to see its file tree.
-                                </Text>
-                              </Surface>
-                            )}
-                            {folderPath && treeLoading && (
-                              <Surface paddingX={10} paddingY={8}>
-                                <Text size="xs" tone="faint">
-                                  Loading…
-                                </Text>
-                              </Surface>
-                            )}
-                            {folderPath && treeError && (
-                              <Surface paddingX={10} paddingY={8}>
-                                <Text size="xs" tone="rose">
-                                  Couldn&apos;t load tree: {treeError}
-                                </Text>
-                              </Surface>
-                            )}
-                            {folderPath &&
-                              !treeLoading &&
-                              !treeError &&
-                              treeUI.filteredTree.length === 0 && (
-                                <Surface paddingX={10} paddingY={8}>
-                                  <Text size="xs" tone="faint">
-                                    {treeUI.treeFilter
-                                      ? 'No files match.'
-                                      : 'No files found.'}
-                                  </Text>
-                                </Surface>
-                              )}
-                            {folderPath && treeUI.filteredTree.length > 0 && (
-                              <TreeList
-                                nodes={treeUI.filteredTree}
-                                depth={0}
-                                expanded={treeUI.effectiveExpanded}
-                                onToggle={treeUI.toggleDir}
-                              />
-                            )}
-                          </Surface>
-                        </Surface>
-                      ) : (
-                        <button
-                          onClick={() => treeUI.setShowTree(true)}
-                          title="Show file tree"
-                          aria-label="Show file tree"
-                          className="ds-tree-toggle-btn"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 32,
-                            flexShrink: 0,
-                            background: 'var(--bg-2)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 8,
-                            color: 'var(--text-3)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <Icon value={IconName.Folder} size="sm" />
-                        </button>
-                      )}
-                    </Surface>
-                  </Surface>
+type DialogBodyProps = {
+  folderPath?: string | null;
+  blockerOptions?: readonly BlockerOption[];
+  tree: ReturnType<typeof useRepoTree>['tree'];
+  treeLoading: boolean;
+  treeError: string | null;
+  treeUI: ReturnType<typeof useFileTreeUI>;
+  pickError: string | null;
+  setPickError: (err: string | null) => void;
+  onClose: () => void;
+};
 
-                  <FormTextarea<AddTaskFormValues>
-                    name="acceptance"
-                    label="Acceptance criteria"
-                    helperText="one per line, optional"
-                    placeholder={'Column drag works\nCounts are correct'}
-                    rows={3}
-                    data-testid={TestIds.AddTaskDialog.acceptanceInput}
-                  />
+function DialogBody({
+  folderPath,
+  blockerOptions,
+  treeLoading,
+  treeError,
+  treeUI,
+  pickError,
+  setPickError,
+  onClose,
+}: DialogBodyProps) {
+  const methods = useFormContext<AddTaskFormValues>();
+  const description = useWatch<AddTaskFormValues, 'description'>({
+    name: 'description',
+  });
+  const phaseModels = useWatch<AddTaskFormValues, 'phaseModels'>({
+    name: 'phaseModels',
+  });
+  const attachedFilePaths = useWatch<AddTaskFormValues, 'attachedFilePaths'>({
+    name: 'attachedFilePaths',
+  });
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
-                  <Surface direction="column" gap={6}>
-                    <Surface direction="column" gap={2}>
-                      <Text
-                        size="xs"
-                        weight="medium"
-                        tone="muted"
-                        tracking="wide"
-                      >
-                        Blocked by
-                      </Text>
-                      <Text size="xs" tone="faint" italic>
-                        task will wait until selected dependencies finish
-                      </Text>
-                    </Surface>
-                    <Controller
-                      name="blockerTaskIds"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <BlockedByPicker
-                          options={blockerOptions ?? []}
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      )}
+  const canAdd = (description ?? '').trim().length > 0;
+
+  return (
+    <>
+      <Container
+        grow
+        minHeight={0}
+        overflowY="auto"
+        padding={['200', '250', '250', '250']}
+      >
+        <Stack direction="column" gap="150">
+          <FormInput<AddTaskFormValues>
+            name="title"
+            label="Title"
+            helperText="optional — inferred from description if empty"
+            placeholder="What should the agent do?"
+            data-testid={TestIds.AddTaskDialog.titleInput}
+          />
+
+          <Stack direction="column" gap="75">
+            <Stack direction="row" align="center" gap="75">
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Description / brief{' '}
+                <Text as="span" size="xs" tone="rose">
+                  *
+                </Text>
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                {treeUI.showTree
+                  ? '· drag files from the tree to insert @path'
+                  : '· click the tree icon to show the file tree'}
+              </Text>
+            </Stack>
+            <Stack direction="row" align="stretch" gap="100">
+              <Container grow minWidth={0} position="relative">
+                <Controller
+                  name="description"
+                  render={({ field: { ref, onChange, ...fieldProps } }) => (
+                    <Textarea
+                      {...fieldProps}
+                      ref={mergeRefs(ref, descriptionRef)}
+                      required
+                      autoFocus
+                      invalid={treeUI.dropActive}
+                      onChange={onChange}
+                      onDragOver={(e) => {
+                        if (
+                          e.dataTransfer.types.includes(DRAG_MIME) ||
+                          e.dataTransfer.types.includes('text/plain')
+                        ) {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'copy';
+                          treeUI.setDropActive(true);
+                        }
+                      }}
+                      onDragLeave={() => treeUI.setDropActive(false)}
+                      onDrop={(e) =>
+                        handleDescriptionDrop(
+                          e,
+                          methods,
+                          descriptionRef,
+                          treeUI.setDropActive,
+                        )
+                      }
+                      placeholder="Describe the work. Drag files from the tree to reference them with @path."
+                      rows={6}
+                      data-testid={TestIds.AddTaskDialog.descriptionInput}
                     />
-                  </Surface>
+                  )}
+                />
+              </Container>
 
-                  <Surface direction="column" gap={6}>
-                    <Text
-                      size="xs"
-                      weight="medium"
-                      tone="muted"
-                      tracking="wide"
+              {treeUI.showTree ? (
+                <Card
+                  variant="outlined"
+                  background="bg0"
+                  radius="sm"
+                  padding="none"
+                  width={240}
+                  shrink={false}
+                  overflowY="hidden"
+                >
+                  <Stack direction="column">
+                    <Card
+                      variant="filled"
+                      background="bg1"
+                      bordered={{ bottom: true }}
+                      radius="none"
+                      padding={['75', '100']}
                     >
-                      Review
-                    </Text>
-                    <Controller
-                      name="requiresHumanReview"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <ReviewCard
-                          checked={field.value as boolean}
-                          onChange={field.onChange}
-                          data-testid={
-                            TestIds.AddTaskDialog.requiresReviewCheckbox
-                          }
-                        />
-                      )}
-                    />
-                  </Surface>
-
-                  <Surface as="section" direction="column" gap={8}>
-                    <Surface direction="column" gap={2}>
-                      <Text
-                        size="xs"
-                        weight="medium"
-                        tone="muted"
-                        tracking="wide"
-                      >
-                        Agents
-                      </Text>
-                      <Text size="xs" tone="faint" italic>
-                        pick the model and thinking depth for each phase
-                      </Text>
-                    </Surface>
-                    <Surface direction="row" gap={8}>
-                      {PHASES.map(({ key, label, icon }) => {
-                        const cur = (phaseModels as PhaseModels)[key] ?? {};
-                        return (
-                          <ModelPick
-                            key={key}
-                            label={label}
-                            icon={icon as unknown as string}
-                            model={cur.model ?? ''}
-                            onModelChange={(m) =>
-                              setPhase(methods, key, { model: m || undefined })
-                            }
-                            thinking={cur.thinking ?? 'off'}
-                            onThinkingChange={(t) =>
-                              setPhase(methods, key, { thinking: t })
-                            }
-                            modelSelectTestId={TestIds.AddTaskDialog.phaseModelSelect(
-                              key,
-                            )}
-                            thinkingSelectTestId={TestIds.AddTaskDialog.phaseThinkingSelect(
-                              key,
-                            )}
-                          />
-                        );
-                      })}
-                    </Surface>
-                  </Surface>
-
-                  <Surface direction="column" gap={6}>
-                    <Surface direction="row" align="center" gap={6}>
-                      <Text
-                        size="xs"
-                        weight="medium"
-                        tone="muted"
-                        tracking="wide"
-                      >
-                        Attached files
-                      </Text>
-                      <Text size="xs" tone="faint" italic>
-                        · copied into .nightcoder/tasks/&lt;id&gt;/files —
-                        shared with the agent
-                      </Text>
-                    </Surface>
-                    <Surface direction="column" gap={8}>
-                      {(attachedFilePaths as string[]).length > 0 && (
-                        <Stack direction="column" gap={4}>
-                          {(attachedFilePaths as string[]).map((p) => (
-                            <Surface
-                              key={p}
-                              bordered
-                              radius="sm"
-                              background="bg2"
-                              paddingX={8}
-                              paddingY={6}
-                              direction="row"
-                              align="center"
-                              gap={8}
-                            >
-                              <Icon value={IconName.File} size="sm" />
-                              <Surface grow minWidth={0} title={p}>
-                                <Text size="sm" mono tone="muted" truncate>
-                                  {basename(p)}
-                                </Text>
-                              </Surface>
-                              <IconButton
-                                aria-label={`Remove ${basename(p)}`}
-                                title="Remove"
-                                size="sm"
-                                variant="ghost"
-                                icon={IconName.X}
-                                onClick={() => removeFile(methods, p)}
-                              />
-                            </Surface>
-                          ))}
-                        </Stack>
-                      )}
-                      <Stack direction="row">
-                        <Button
+                      <Stack direction="row" align="center" gap="75">
+                        <Icon value={IconName.Folder} size="xs" />
+                        <Container grow minWidth={0}>
+                          <Text size="xs" mono tone="muted" truncate>
+                            {folderPath ? basename(folderPath) : 'project'}
+                          </Text>
+                        </Container>
+                        <IconButton
+                          aria-label="Hide file tree"
                           size="sm"
-                          variant="secondary"
-                          label="Attach files"
-                          startIcon={IconName.Paperclip}
-                          onClick={() => void pickFiles(methods, setPickError)}
-                          data-testid={TestIds.AddTaskDialog.attachFilesBtn}
+                          variant="ghost"
+                          icon={IconName.X}
+                          onClick={() => treeUI.setShowTree(false)}
                         />
                       </Stack>
-                      {pickError && (
-                        <Text size="xs" tone="rose">
-                          {pickError}
-                        </Text>
+                    </Card>
+                    <Card
+                      variant="filled"
+                      background="bg1"
+                      bordered={{ bottom: true }}
+                      radius="none"
+                      padding={['75', '100']}
+                    >
+                      <Stack direction="row" align="center" gap="75">
+                        <Icon value={IconName.Search} size="xs" />
+                        <input
+                          value={treeUI.treeFilter}
+                          onChange={(e) => treeUI.setTreeFilter(e.target.value)}
+                          placeholder="Filter files…"
+                          aria-label="Filter files"
+                          className="ds-bare-input ds-mono"
+                        />
+                        {treeUI.treeFilter && (
+                          <IconButton
+                            aria-label="Clear filter"
+                            size="sm"
+                            variant="ghost"
+                            icon={IconName.X}
+                            onClick={() => treeUI.setTreeFilter('')}
+                          />
+                        )}
+                      </Stack>
+                    </Card>
+                    <Container
+                      grow
+                      overflowY="auto"
+                      padding={['75', '50', '100', '50']}
+                      minHeight={0}
+                    >
+                      {!folderPath && (
+                        <Container padding={['100', '100']}>
+                          <Text size="xs" tone="faint">
+                            Pick a folder to see its file tree.
+                          </Text>
+                        </Container>
                       )}
-                    </Surface>
-                  </Surface>
-                </Surface>
-
-                <Surface
-                  as="footer"
-                  bordered={{ top: true }}
-                  paddingX={20}
-                  paddingTop={14}
-                  paddingBottom={16}
-                  direction="row"
-                  align="center"
-                  justify="end"
-                  gap={8}
+                      {folderPath && treeLoading && (
+                        <Container padding={['100', '100']}>
+                          <Text size="xs" tone="faint">
+                            Loading…
+                          </Text>
+                        </Container>
+                      )}
+                      {folderPath && treeError && (
+                        <Container padding={['100', '100']}>
+                          <Text size="xs" tone="rose">
+                            Couldn&apos;t load tree: {treeError}
+                          </Text>
+                        </Container>
+                      )}
+                      {folderPath &&
+                        !treeLoading &&
+                        !treeError &&
+                        treeUI.filteredTree.length === 0 && (
+                          <Container padding={['100', '100']}>
+                            <Text size="xs" tone="faint">
+                              {treeUI.treeFilter
+                                ? 'No files match.'
+                                : 'No files found.'}
+                            </Text>
+                          </Container>
+                        )}
+                      {folderPath && treeUI.filteredTree.length > 0 && (
+                        <TreeList
+                          nodes={treeUI.filteredTree}
+                          depth={0}
+                          expanded={treeUI.effectiveExpanded}
+                          onToggle={treeUI.toggleDir}
+                        />
+                      )}
+                    </Container>
+                  </Stack>
+                </Card>
+              ) : (
+                <button
+                  onClick={() => treeUI.setShowTree(true)}
+                  title="Show file tree"
+                  aria-label="Show file tree"
+                  className="ds-tree-toggle-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    flexShrink: 0,
+                    background: 'var(--bg-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    color: 'var(--text-3)',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Button
-                    variant="ghost"
-                    label="Cancel"
-                    onClick={onClose}
-                    data-testid={TestIds.AddTaskDialog.cancelBtn}
+                  <Icon value={IconName.Folder} size="sm" />
+                </button>
+              )}
+            </Stack>
+          </Stack>
+
+          <FormTextarea<AddTaskFormValues>
+            name="acceptance"
+            label="Acceptance criteria"
+            helperText="one per line, optional"
+            placeholder={'Column drag works\nCounts are correct'}
+            rows={3}
+            data-testid={TestIds.AddTaskDialog.acceptanceInput}
+          />
+
+          <Stack direction="column" gap="75">
+            <Stack direction="column" gap="25">
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Blocked by
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                task will wait until selected dependencies finish
+              </Text>
+            </Stack>
+            <Controller
+              name="blockerTaskIds"
+              render={({ field }) => (
+                <BlockedByPicker
+                  options={blockerOptions ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </Stack>
+
+          <Stack direction="column" gap="75">
+            <Text size="xs" weight="medium" tone="muted" tracking="wide">
+              Review
+            </Text>
+            <Controller
+              name="requiresHumanReview"
+              render={({ field }) => (
+                <ReviewCard
+                  checked={field.value as boolean}
+                  onChange={field.onChange}
+                  data-testid={TestIds.AddTaskDialog.requiresReviewCheckbox}
+                />
+              )}
+            />
+          </Stack>
+
+          <Stack as="section" direction="column" gap="100">
+            <Stack direction="column" gap="25">
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Agents
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                pick the model and thinking depth for each phase
+              </Text>
+            </Stack>
+            <Stack direction="row" gap="100">
+              {PHASES.map(({ key, label, icon }) => {
+                const cur = (phaseModels as PhaseModels)[key] ?? {};
+                return (
+                  <ModelPick
+                    key={key}
+                    label={label}
+                    icon={icon as unknown as string}
+                    model={cur.model ?? ''}
+                    onModelChange={(m) =>
+                      setPhase(methods, key, { model: m || undefined })
+                    }
+                    thinking={cur.thinking ?? 'off'}
+                    onThinkingChange={(t) =>
+                      setPhase(methods, key, { thinking: t })
+                    }
+                    modelSelectTestId={TestIds.AddTaskDialog.phaseModelSelect(key)}
+                    thinkingSelectTestId={TestIds.AddTaskDialog.phaseThinkingSelect(
+                      key,
+                    )}
                   />
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    label="Add task"
-                    startIcon={IconName.Check}
-                    disabled={!canAdd}
-                    data-testid={TestIds.AddTaskDialog.submitBtn}
-                  />
-                </Surface>
-              </>
-            );
-          }}
-        </Form>
-      </Surface>
-    </Surface>
+                );
+              })}
+            </Stack>
+          </Stack>
+
+          <Stack direction="column" gap="75">
+            <Stack direction="row" align="center" gap="75">
+              <Text size="xs" weight="medium" tone="muted" tracking="wide">
+                Attached files
+              </Text>
+              <Text size="xs" tone="faint" italic>
+                · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with
+                the agent
+              </Text>
+            </Stack>
+            <Stack direction="column" gap="100">
+              {(attachedFilePaths as string[]).length > 0 && (
+                <Stack direction="column" gap="50">
+                  {(attachedFilePaths as string[]).map((p) => (
+                    <Card
+                      key={p}
+                      variant="outlined"
+                      background="bg2"
+                      radius="sm"
+                      padding={['75', '100']}
+                    >
+                      <Stack direction="row" align="center" gap="100">
+                        <Icon value={IconName.File} size="sm" />
+                        <Container grow minWidth={0} title={p}>
+                          <Text size="sm" mono tone="muted" truncate>
+                            {basename(p)}
+                          </Text>
+                        </Container>
+                        <IconButton
+                          aria-label={`Remove ${basename(p)}`}
+                          title="Remove"
+                          size="sm"
+                          variant="ghost"
+                          icon={IconName.X}
+                          onClick={() => removeFile(methods, p)}
+                        />
+                      </Stack>
+                    </Card>
+                  ))}
+                </Stack>
+              )}
+              <Stack direction="row">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  label="Attach files"
+                  startIcon={IconName.Paperclip}
+                  onClick={() => void pickFiles(methods, setPickError)}
+                  data-testid={TestIds.AddTaskDialog.attachFilesBtn}
+                />
+              </Stack>
+              {pickError && (
+                <Text size="xs" tone="rose">
+                  {pickError}
+                </Text>
+              )}
+            </Stack>
+          </Stack>
+        </Stack>
+      </Container>
+
+      <Card
+        as="footer"
+        variant="filled"
+        background="transparent"
+        bordered={{ top: true }}
+        radius="none"
+        padding={['150', '250', '200', '250']}
+      >
+        <Stack direction="row" align="center" justify="end" gap="100">
+          <Button
+            variant="ghost"
+            label="Cancel"
+            onClick={onClose}
+            data-testid={TestIds.AddTaskDialog.cancelBtn}
+          />
+          <Button
+            type="submit"
+            variant="primary"
+            label="Add task"
+            startIcon={IconName.Check}
+            disabled={!canAdd}
+            data-testid={TestIds.AddTaskDialog.submitBtn}
+          />
+        </Stack>
+      </Card>
+    </>
   );
 }

@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   Button,
+  Card,
   Divider,
   FilterChip,
   IconName,
   Spacer,
   Stack,
-  Surface,
   Text,
 } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
@@ -45,14 +45,15 @@ export function SubBar({
   hasRunnableTasks,
 }: SubBarProps) {
   return (
-    <Surface
+    <Card
+      variant="filled"
       background="bg0"
       bordered={{ bottom: true }}
-      paddingX={20}
-      paddingY={12}
+      radius="none"
+      padding={['150', '250']}
       data-testid={TestIds.SubBar.root}
     >
-      <Stack direction="row" align="center" gap={10}>
+      <Stack direction="row" align="center" gap="100">
         <Text size="xs" tone="faint" mono data-testid={TestIds.SubBar.taskCount}>
           {taskCount} tasks · {runningCount} running
         </Text>
@@ -98,6 +99,6 @@ export function SubBar({
           data-testid={TestIds.SubBar.runAllBtn}
         />
       </Stack>
-    </Surface>
+    </Card>
   );
 }

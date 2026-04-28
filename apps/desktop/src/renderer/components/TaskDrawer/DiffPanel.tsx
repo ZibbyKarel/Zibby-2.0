@@ -3,11 +3,11 @@ import type { TaskDiffResult } from '@nightcoder/shared-types/ipc';
 import {
   Alert,
   Button,
+  Container,
   Icon,
   IconName,
   Spacer,
   Stack,
-  Surface,
   Text,
 } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
@@ -54,31 +54,35 @@ export function DiffPanel({ task }: { task: TaskVM }) {
 
   if (loading && !result) {
     return (
-      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
-        <span className="ds-spinner" />
-        <Text size="sm" tone="faint">
-          Loading diff…
-        </Text>
-      </Surface>
+      <Container padding={['500', '250']}>
+        <Stack direction="column" align="center" gap="100">
+          <span className="ds-spinner" />
+          <Text size="sm" tone="faint">
+            Loading diff…
+          </Text>
+        </Stack>
+      </Container>
     );
   }
 
   if (result?.kind === 'error') {
     return (
-      <Surface padding={18} direction="column" gap={10}>
-        <Alert severity="error" title="Failed to load diff">
-          {result.message}
-        </Alert>
-        <Stack direction="row">
-          <Button
-            size="sm"
-            variant="secondary"
-            label="Retry"
-            startIcon={IconName.Refresh}
-            onClick={() => void refresh()}
-          />
+      <Container padding={['200', '200']}>
+        <Stack direction="column" gap="100">
+          <Alert severity="error" title="Failed to load diff">
+            {result.message}
+          </Alert>
+          <Stack direction="row">
+            <Button
+              size="sm"
+              variant="secondary"
+              label="Retry"
+              startIcon={IconName.Refresh}
+              onClick={() => void refresh()}
+            />
+          </Stack>
         </Stack>
-      </Surface>
+      </Container>
     );
   }
 
@@ -88,19 +92,21 @@ export function DiffPanel({ task }: { task: TaskVM }) {
         ? "No diff available. The task hasn't produced a branch yet."
         : "No changes on the task's branch compared to the base branch.";
     return (
-      <Surface paddingX={20} paddingY={40} direction="column" align="center" gap={10}>
-        <Icon value={IconName.Diff} size="xl" />
-        <Text size="sm" tone="faint">
-          {msg}
-        </Text>
-        <Button
-          size="sm"
-          variant="ghost"
-          label="Refresh"
-          startIcon={IconName.Refresh}
-          onClick={() => void refresh()}
-        />
-      </Surface>
+      <Container padding={['500', '250']}>
+        <Stack direction="column" align="center" gap="100">
+          <Icon value={IconName.Diff} size="xl" />
+          <Text size="sm" tone="faint">
+            {msg}
+          </Text>
+          <Button
+            size="sm"
+            variant="ghost"
+            label="Refresh"
+            startIcon={IconName.Refresh}
+            onClick={() => void refresh()}
+          />
+        </Stack>
+      </Container>
     );
   }
 
@@ -115,60 +121,62 @@ export function DiffPanel({ task }: { task: TaskVM }) {
   );
 
   return (
-    <Surface padding={14} direction="column" gap={10}>
-      <Stack direction="row" align="center" gap={10}>
-        <Text size="xs" mono tone="muted">
-          {result.files.length} file{result.files.length === 1 ? '' : 's'}
-        </Text>
-        <Text size="xs" mono tone="emerald">
-          +{totals.adds}
-        </Text>
-        <Text size="xs" mono tone="rose">
-          −{totals.dels}
-        </Text>
-        <Text size="xs" mono tone="faint">
-          {result.branch ? `${result.baseBranch}…${result.branch}` : result.baseBranch}
-        </Text>
-        <Spacer />
-        <Button
-          size="sm"
-          variant="primary"
-          label={merging ? 'Merging…' : 'Squash and Merge'}
-          startIcon={IconName.Git}
-          onClick={() => void squashAndMerge()}
-          disabled={merging || loading || !task.prUrl}
-          title={
-            task.prUrl
-              ? 'Squash all commits on this branch into one and merge the PR'
-              : 'Task has no PR yet'
-          }
-          data-testid={TestIds.Drawer.diffMergeBtn}
-        />
-        <Button
-          size="sm"
-          variant="ghost"
-          label={loading ? 'Refreshing…' : 'Refresh'}
-          startIcon={IconName.Refresh}
-          onClick={() => void refresh()}
-          disabled={loading || merging}
-          data-testid={TestIds.Drawer.diffRefreshBtn}
-        />
-      </Stack>
-      {mergeError && (
-        <Alert severity="error" title="Squash-merge failed">
-          <Text size="sm" tone="rose" whitespace="pre-wrap">
-            {mergeError}
+    <Container padding={['150', '150']}>
+      <Stack direction="column" gap="100">
+        <Stack direction="row" align="center" gap="100">
+          <Text size="xs" mono tone="muted">
+            {result.files.length} file{result.files.length === 1 ? '' : 's'}
           </Text>
-        </Alert>
-      )}
-      <Surface direction="column" gap={10}>
-        {result.files.map((f, i) => (
-          <DiffFileBlock
-            key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
-            file={f}
+          <Text size="xs" mono tone="emerald">
+            +{totals.adds}
+          </Text>
+          <Text size="xs" mono tone="rose">
+            −{totals.dels}
+          </Text>
+          <Text size="xs" mono tone="faint">
+            {result.branch ? `${result.baseBranch}…${result.branch}` : result.baseBranch}
+          </Text>
+          <Spacer />
+          <Button
+            size="sm"
+            variant="primary"
+            label={merging ? 'Merging…' : 'Squash and Merge'}
+            startIcon={IconName.Git}
+            onClick={() => void squashAndMerge()}
+            disabled={merging || loading || !task.prUrl}
+            title={
+              task.prUrl
+                ? 'Squash all commits on this branch into one and merge the PR'
+                : 'Task has no PR yet'
+            }
+            data-testid={TestIds.Drawer.diffMergeBtn}
           />
-        ))}
-      </Surface>
-    </Surface>
+          <Button
+            size="sm"
+            variant="ghost"
+            label={loading ? 'Refreshing…' : 'Refresh'}
+            startIcon={IconName.Refresh}
+            onClick={() => void refresh()}
+            disabled={loading || merging}
+            data-testid={TestIds.Drawer.diffRefreshBtn}
+          />
+        </Stack>
+        {mergeError && (
+          <Alert severity="error" title="Squash-merge failed">
+            <Text size="sm" tone="rose" whitespace="pre-wrap">
+              {mergeError}
+            </Text>
+          </Alert>
+        )}
+        <Stack direction="column" gap="100">
+          {result.files.map((f, i) => (
+            <DiffFileBlock
+              key={`${f.oldPath ?? ''}→${f.newPath ?? ''}-${i}`}
+              file={f}
+            />
+          ))}
+        </Stack>
+      </Stack>
+    </Container>
   );
 }

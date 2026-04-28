@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton, IconName, Select, Surface, Text } from '@nightcoder/design-system';
+import { Card, IconButton, IconName, Select, Stack, Text } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
 import type { BlockerOption } from './types';
 
@@ -24,63 +24,58 @@ export function BlockedByPicker({ options, value, onChange }: BlockedByPickerPro
 
   if (options.length === 0) {
     return (
-      <Surface
-        bordered
-        radius="sm"
+      <Card
+        variant="outlined"
         background="bg2"
-        paddingX={12}
-        paddingY={10}
+        radius="sm"
+        padding={['100', '150']}
       >
         <Text size="xs" tone="faint" italic>
           No other tasks to depend on yet.
         </Text>
-      </Surface>
+      </Card>
     );
   }
 
   return (
-    <Surface
+    <Stack
       direction="column"
-      gap={8}
+      gap="100"
       data-testid={TestIds.AddTaskDialog.blockerSelect}
     >
       {selected.length > 0 && (
-        <Surface direction="row" gap={6} style={{ flexWrap: 'wrap' }}>
+        <Stack direction="row" gap="75" wrap>
           {selected.map((opt) => (
-            <Surface
+            <Card
               key={opt.taskId}
-              bordered
-              radius="pill"
+              variant="outlined"
               background="bg2"
-              paddingLeft={8}
-              paddingRight={4}
-              paddingTop={3}
-              paddingBottom={3}
-              direction="row"
-              align="center"
-              gap={6}
+              radius="pill"
+              padding={['25', '50', '25', '100']}
             >
-              {opt.hint && (
-                <Text size="xs" mono tone="faint">
-                  {opt.hint}
+              <Stack direction="row" align="center" gap="75">
+                {opt.hint && (
+                  <Text size="xs" mono tone="faint">
+                    {opt.hint}
+                  </Text>
+                )}
+                <Text size="xs" tone="muted" truncate style={{ maxWidth: 200 }}>
+                  {opt.title}
                 </Text>
-              )}
-              <Text size="xs" tone="muted" truncate style={{ maxWidth: 200 }}>
-                {opt.title}
-              </Text>
-              <IconButton
-                aria-label={`Remove ${opt.title}`}
-                size="sm"
-                variant="ghost"
-                icon={IconName.X}
-                onClick={() => remove(opt.taskId)}
-              />
-            </Surface>
+                <IconButton
+                  aria-label={`Remove ${opt.title}`}
+                  size="sm"
+                  variant="ghost"
+                  icon={IconName.X}
+                  onClick={() => remove(opt.taskId)}
+                />
+              </Stack>
+            </Card>
           ))}
-        </Surface>
+        </Stack>
       )}
       {candidates.length > 0 && (
-        <Surface grow>
+        <Stack grow>
           <Select
             aria-label="Add a dependency"
             value=""
@@ -99,8 +94,8 @@ export function BlockedByPicker({ options, value, onChange }: BlockedByPickerPro
               })),
             ]}
           />
-        </Surface>
+        </Stack>
       )}
-    </Surface>
+    </Stack>
   );
 }

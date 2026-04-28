@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Spacer } from './Spacer';
 import { Stack } from '../Stack';
-import { Surface } from '../Surface';
+import { Card } from '../Card';
 
 const meta = {
   title: 'Design System/Spacer',
@@ -30,49 +30,49 @@ export const Overview: Story = {
     <div style={wrap}>
       <div>
         <div style={label}>flex: 1 spacer pushes the right group</div>
-        <Surface bordered padding={12} radius="sm">
-          <Stack direction="row" align="center" gap={8}>
-            <Surface bordered padding={6} radius="sm">left</Surface>
+        <Card variant="outlined" radius="sm" padding={['150', '150']}>
+          <Stack direction="row" align="center" gap="100">
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>left</Card>
             <Spacer />
-            <Surface bordered padding={6} radius="sm">right</Surface>
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>right</Card>
           </Stack>
-        </Surface>
+        </Card>
       </div>
       <div>
-        <div style={label}>Fixed horizontal spacers (8 / 24 / 48 px)</div>
-        <Surface bordered padding={12} radius="sm">
+        <div style={label}>Fixed horizontal spacers (100=8px / 300=24px / 500=40px)</div>
+        <Card variant="outlined" radius="sm" padding={['150', '150']}>
           <Stack direction="row" align="center">
-            <Surface bordered padding={6} radius="sm">a</Surface>
-            <Spacer axis="horizontal" size={8} />
-            <Surface bordered padding={6} radius="sm">b</Surface>
-            <Spacer axis="horizontal" size={24} />
-            <Surface bordered padding={6} radius="sm">c</Surface>
-            <Spacer axis="horizontal" size={48} />
-            <Surface bordered padding={6} radius="sm">d</Surface>
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>a</Card>
+            <Spacer axis="horizontal" size="100" />
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>b</Card>
+            <Spacer axis="horizontal" size="300" />
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>c</Card>
+            <Spacer axis="horizontal" size="500" />
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>d</Card>
           </Stack>
-        </Surface>
+        </Card>
       </div>
       <div>
         <div style={label}>Fixed vertical spacers</div>
-        <Surface bordered padding={12} radius="sm">
+        <Card variant="outlined" radius="sm" padding={['150', '150']}>
           <Stack direction="column">
-            <Surface bordered padding={6} radius="sm">top</Surface>
-            <Spacer axis="vertical" size={20} />
-            <Surface bordered padding={6} radius="sm">middle</Surface>
-            <Spacer axis="vertical" size={40} />
-            <Surface bordered padding={6} radius="sm">bottom</Surface>
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>top</Card>
+            <Spacer axis="vertical" size="250" />
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>middle</Card>
+            <Spacer axis="vertical" size="500" />
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>bottom</Card>
           </Stack>
-        </Surface>
+        </Card>
       </div>
       <div>
         <div style={label}>Custom class</div>
-        <Surface bordered padding={12} radius="sm">
-          <Stack direction="row" align="center" gap={8}>
-            <Surface bordered padding={6} radius="sm">a</Surface>
+        <Card variant="outlined" radius="sm" padding={['150', '150']}>
+          <Stack direction="row" align="center" gap="100">
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>a</Card>
             <Spacer className="opacity-50" />
-            <Surface bordered padding={6} radius="sm">b</Surface>
+            <Card variant="outlined" radius="sm" padding={['75', '75']}>b</Card>
           </Stack>
-        </Surface>
+        </Card>
       </div>
     </div>
   ),
@@ -82,16 +82,16 @@ export const Playground: Story = {
   args: { axis: 'both', size: undefined },
   argTypes: {
     axis: { control: 'select', options: ['horizontal', 'vertical', 'both'] },
-    size: { control: 'text' },
+    size: { control: 'select', options: [undefined, '0', '25', '50', '75', '100', '150', '200', '250', '300', '350', '400', '450', '500'] },
     className: { control: 'text' },
   },
   render: (args) => (
-    <Surface bordered padding={12} radius="sm">
-      <Stack direction={args.axis === 'vertical' ? 'column' : 'row'} align="center" gap={8}>
-        <Surface bordered padding={6} radius="sm">left/top</Surface>
+    <Card variant="outlined" radius="sm" padding={['150', '150']}>
+      <Stack direction={args.axis === 'vertical' ? 'column' : 'row'} align="center" gap="100">
+        <Card variant="outlined" radius="sm" padding={['75', '75']}>left/top</Card>
         <Spacer {...args} />
-        <Surface bordered padding={6} radius="sm">right/bottom</Surface>
+        <Card variant="outlined" radius="sm" padding={['75', '75']}>right/bottom</Card>
       </Stack>
-    </Surface>
+    </Card>
   ),
 };

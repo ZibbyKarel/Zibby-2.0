@@ -13,29 +13,24 @@ describe('Spacer', () => {
   });
 
   it('uses size as a horizontal width', () => {
-    const { container } = render(<Spacer axis="horizontal" size={12} />);
+    const { container } = render(<Spacer axis="horizontal" size="150" />);
     const el = container.firstChild as HTMLElement;
     expect(el.style.width).toBe('12px');
     expect(el.style.flexShrink).toBe('0');
   });
 
   it('uses size as a vertical height', () => {
-    const { container } = render(<Spacer axis="vertical" size={20} />);
+    const { container } = render(<Spacer axis="vertical" size="250" />);
     const el = container.firstChild as HTMLElement;
     expect(el.style.height).toBe('20px');
     expect(el.style.flexShrink).toBe('0');
   });
 
   it('uses size for both axes when axis="both"', () => {
-    const { container } = render(<Spacer size={8} />);
+    const { container } = render(<Spacer size="100" />);
     const el = container.firstChild as HTMLElement;
     expect(el.style.width).toBe('8px');
     expect(el.style.height).toBe('8px');
-  });
-
-  it('accepts string sizes (e.g. percentages)', () => {
-    const { container } = render(<Spacer axis="horizontal" size="50%" />);
-    expect((container.firstChild as HTMLElement).style.width).toBe('50%');
   });
 
   it('forwards arbitrary props (className, role)', () => {

@@ -116,9 +116,15 @@ input, textarea, select { font-family: inherit; }
   background: var(--accent-soft) !important;
 }
 
-/* Reset user-agent button border so `<Surface as="button">` reads
-   identically to `<Surface as="div">` unless explicitly bordered. */
-button.ds-surface { border-width: 0; padding: 0; font: inherit; color: inherit; appearance: none; background: transparent; }
+/* Container is a layout-only block; no chrome until you wrap it in a Card.
+   Box-sizing is enforced globally above, but the explicit display rule keeps
+   semantic-default elements (e.g. `<aside>`, `<header>`) rendering as block
+   so consumers don't have to reason about UA stylesheet variance. */
+.ds-container { display: block; }
+
+/* Reset for Button's `surface` variant — the rendered <button> needs to be
+   visually transparent until consumers explicitly opt into chrome. */
+button.ds-button-surface { border-width: 0; padding: 0; font: inherit; color: inherit; appearance: none; background: transparent; cursor: pointer; }
 
 /* Bare <input>/<textarea> — inherits typography from its container, no chrome. */
 .ds-bare-input,
@@ -134,9 +140,3 @@ button.ds-surface { border-width: 0; padding: 0; font: inherit; color: inherit; 
 .ds-bare-input::placeholder,
 .ds-bare-textarea::placeholder { color: var(--text-3); }
 
-.ds-surface-interactive {
-  transition: border-color .12s, background-color .12s, box-shadow .12s;
-}
-.ds-surface-interactive:hover {
-  border-color: var(--border-2) !important;
-}

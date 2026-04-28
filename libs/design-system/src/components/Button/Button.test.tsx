@@ -5,6 +5,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, ButtonDataTestIds } from './Button';
 import { IconName } from '../Icon';
+import { defaultDarkTokens } from '../../tokens';
+
+function rgb(hex: string): string {
+  const span = document.createElement('span');
+  span.style.color = hex;
+  return span.style.color;
+}
 
 describe('Button', () => {
   it('renders the label inside a native button', () => {
@@ -65,5 +72,86 @@ describe('Button', () => {
     render(<Button label="Go" onClick={onClick} />);
     await user.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  describe('surface variant', () => {
+    it('renders children verbatim and drops fixed-size classes', () => {
+      render(
+        <Button variant="surface" data-testid="b">
+          <span>row content</span>
+        </Button>,
+      );
+      const btn = screen.getByTestId('b');
+      expect(btn).toBeInstanceOf(HTMLButtonElement);
+      expect(btn.className).toContain('ds-button-surface');
+      expect(btn.className).not.toContain('h-7');
+      expect(btn.className).not.toContain('h-8');
+      expect(btn.className).not.toContain('h-10');
+      expect(btn.querySelector('span')!.textContent).toBe('row content');
+    });
+
+    it('label still works without children in surface mode', () => {
+      render(<Button variant="surface" label="Just text" />);
+      expect(screen.getByText('Just text')).toBeInTheDocument();
+    });
+
+    it('applies visual treatment via inline styles', () => {
+      render(
+        <Button
+          variant="surface"
+          background="bg2"
+          bordered={{ bottom: true }}
+          borderTone="default"
+          radius="sm"
+          data-testid="b"
+        >
+          x
+        </Button>,
+      );
+      const btn = screen.getByTestId('b');
+      expect(btn.style.background).toBe(rgb(defaultDarkTokens.color.bg[2]));
+      expect(btn.style.borderBottomWidth).toBe('1px');
+      expect(btn.style.borderTopWidth).toBe('');
+      expect(btn.style.borderRadius).toBe(defaultDarkTokens.size.radiusSm);
+    });
+
+    it('accepts Container layout/sizing/padding props', () => {
+      render(
+        <Button
+          variant="surface"
+          padding={['100', '100']}
+          minWidth={120}
+          textAlign="left"
+          data-testid="b"
+        >
+          x
+        </Button>,
+      );
+      const btn = screen.getByTestId('b');
+      expect(btn.style.paddingLeft).toBe('8px');
+      expect(btn.style.paddingTop).toBe('8px');
+      expect(btn.style.minWidth).toBe('120px');
+      expect(btn.style.textAlign).toBe('left');
+    });
+
+    it('does NOT leak Container/visual props as DOM attributes', () => {
+      render(
+        <Button
+          variant="surface"
+          padding={['100', '100']}
+          minWidth={120}
+          background="bg2"
+          bordered
+          radius="sm"
+          data-testid="b"
+        >
+          x
+        </Button>,
+      );
+      const btn = screen.getByTestId('b');
+      for (const attr of ['padding', 'minwidth', 'background', 'bordered', 'radius']) {
+        expect(btn.hasAttribute(attr)).toBe(false);
+      }
+    });
   });
 });

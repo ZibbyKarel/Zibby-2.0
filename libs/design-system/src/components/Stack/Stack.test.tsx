@@ -54,14 +54,14 @@ describe('Stack', () => {
     expect((screen.getByTestId('s') as HTMLElement).style.justifyContent).toBe(css);
   });
 
-  it('applies numeric gap as px', () => {
-    render(<Stack gap={12} data-testid="s">x</Stack>);
+  it('resolves a spacing token to its px value', () => {
+    render(<Stack gap="150" data-testid="s">x</Stack>);
     expect((screen.getByTestId('s') as HTMLElement).style.gap).toBe('12px');
   });
 
-  it('applies string gap verbatim', () => {
-    render(<Stack gap="1.5rem" data-testid="s">x</Stack>);
-    expect((screen.getByTestId('s') as HTMLElement).style.gap).toBe('1.5rem');
+  it('leaves gap unset when not provided', () => {
+    render(<Stack data-testid="s">x</Stack>);
+    expect((screen.getByTestId('s') as HTMLElement).style.gap).toBe('');
   });
 
   it('toggles wrap', () => {
@@ -72,6 +72,26 @@ describe('Stack', () => {
   it('uses inline-flex when inline', () => {
     render(<Stack inline data-testid="s">x</Stack>);
     expect((screen.getByTestId('s') as HTMLElement).style.display).toBe('inline-flex');
+  });
+
+  it('toggles grow', () => {
+    render(<Stack grow data-testid="s">x</Stack>);
+    expect((screen.getByTestId('s') as HTMLElement).style.flexGrow).toBe('1');
+  });
+
+  it('shrink={false} pins flex-shrink at 0', () => {
+    render(<Stack shrink={false} data-testid="s">x</Stack>);
+    expect((screen.getByTestId('s') as HTMLElement).style.flexShrink).toBe('0');
+  });
+
+  it('shrink={true} opts into flex-shrink:1', () => {
+    render(<Stack shrink data-testid="s">x</Stack>);
+    expect((screen.getByTestId('s') as HTMLElement).style.flexShrink).toBe('1');
+  });
+
+  it('omitting shrink leaves flex-shrink unset', () => {
+    render(<Stack data-testid="s">x</Stack>);
+    expect((screen.getByTestId('s') as HTMLElement).style.flexShrink).toBe('');
   });
 
   it('renders the requested element via the `as` prop', () => {

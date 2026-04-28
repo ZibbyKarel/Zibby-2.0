@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { Usage } from '@nightcoder/shared-types/ipc';
-import { CircularProgress, Divider, Stack, Surface, Text } from '@nightcoder/design-system';
+import { Card, CircularProgress, Divider, Stack, Text } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
 import { fmtCountdown } from './primitives';
 
@@ -40,35 +40,33 @@ export function UsagePanel({ tick: _tick }: Props) {
   const now = Date.now();
 
   return (
-    <Surface
+    <Card
+      variant="outlined"
       background="bg1"
-      bordered
       radius="md"
-      paddingX={12}
-      paddingY={8}
-      direction="row"
-      align="center"
-      gap={14}
+      padding={['100', '150']}
       data-testid={TestIds.UsagePanel.root}
     >
-      {fiveHour && (
-        <UsageMini
-          label="5H"
-          pct={fiveHour.usedPct}
-          resetsInMs={Math.max(0, fiveHour.resetsAt - now)}
-          testId={TestIds.UsagePanel.fiveHour}
-        />
-      )}
-      {fiveHour && weekly && <Divider orientation="vertical" />}
-      {weekly && (
-        <UsageMini
-          label="WEEK"
-          pct={weekly.usedPct}
-          resetsInMs={Math.max(0, weekly.resetsAt - now)}
-          testId={TestIds.UsagePanel.weekly}
-        />
-      )}
-    </Surface>
+      <Stack direction="row" align="center" gap="150">
+        {fiveHour && (
+          <UsageMini
+            label="5H"
+            pct={fiveHour.usedPct}
+            resetsInMs={Math.max(0, fiveHour.resetsAt - now)}
+            testId={TestIds.UsagePanel.fiveHour}
+          />
+        )}
+        {fiveHour && weekly && <Divider orientation="vertical" />}
+        {weekly && (
+          <UsageMini
+            label="WEEK"
+            pct={weekly.usedPct}
+            resetsInMs={Math.max(0, weekly.resetsAt - now)}
+            testId={TestIds.UsagePanel.weekly}
+          />
+        )}
+      </Stack>
+    </Card>
   );
 }
 
@@ -84,9 +82,9 @@ function UsageMini({
   testId: string;
 }) {
   return (
-    <Stack direction="row" align="center" gap={8} data-testid={testId}>
+    <Stack direction="row" align="center" gap="100" data-testid={testId}>
       <CircularProgress value={pct} size={34} thickness={3} />
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap="25">
         <Text size="xs" weight="semibold" tone="faint" tracking="wider">{label}</Text>
         <Text size="xs" mono tone="muted">-{fmtCountdown(resetsInMs)}</Text>
       </Stack>

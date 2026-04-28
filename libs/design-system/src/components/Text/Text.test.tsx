@@ -101,7 +101,7 @@ describe('Text', () => {
   it('whitespace="pre" preserves whitespace literally', () => {
     render(<Text whitespace="pre">a b</Text>);
     expect(
-      screen.getByText('a  b', { normalizer: (s) => s }).style.whiteSpace,
+      screen.getByText('a b', { normalizer: (s) => s }).style.whiteSpace,
     ).toBe('pre');
   });
 

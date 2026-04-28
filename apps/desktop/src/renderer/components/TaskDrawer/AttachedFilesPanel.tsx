@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { TaskFile } from '@nightcoder/shared-types/ipc';
 import {
   Button,
+  Card,
+  Container,
   Icon,
   IconButton,
   IconName,
   Stack,
-  Surface,
   Text,
 } from '@nightcoder/design-system';
 
@@ -76,7 +77,7 @@ export function AttachedFilesPanel({ taskId }: { taskId: string }) {
   };
 
   return (
-    <Surface direction="column" gap={8}>
+    <Stack direction="column" gap="100">
       {loading ? (
         <Text size="sm" tone="faint">
           Loading…
@@ -86,38 +87,36 @@ export function AttachedFilesPanel({ taskId }: { taskId: string }) {
           No files attached yet.
         </Text>
       ) : (
-        <Stack direction="column" gap={4}>
+        <Stack direction="column" gap="50">
           {files.map((f) => (
-            <Surface
+            <Card
               key={f.name}
-              bordered
-              radius="sm"
+              variant="outlined"
               background="bg2"
-              paddingX={8}
-              paddingY={6}
-              direction="row"
-              align="center"
-              gap={8}
+              radius="sm"
+              padding={['75', '100']}
             >
-              <Icon value={IconName.File} size="sm" />
-              <Surface grow minWidth={0} title={f.name}>
-                <Text size="sm" mono tone="muted" truncate>
-                  {f.name}
+              <Stack direction="row" align="center" gap="100">
+                <Icon value={IconName.File} size="sm" />
+                <Container grow minWidth={0} title={f.name}>
+                  <Text size="sm" mono tone="muted" truncate>
+                    {f.name}
+                  </Text>
+                </Container>
+                <Text size="xs" mono tone="faint">
+                  {formatBytes(f.size)}
                 </Text>
-              </Surface>
-              <Text size="xs" mono tone="faint">
-                {formatBytes(f.size)}
-              </Text>
-              <IconButton
-                aria-label={`Remove ${f.name}`}
-                title="Remove"
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                icon={IconName.Trash}
-                onClick={() => void onRemove(f.name)}
-              />
-            </Surface>
+                <IconButton
+                  aria-label={`Remove ${f.name}`}
+                  title="Remove"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  icon={IconName.Trash}
+                  onClick={() => void onRemove(f.name)}
+                />
+              </Stack>
+            </Card>
           ))}
         </Stack>
       )}
@@ -136,6 +135,6 @@ export function AttachedFilesPanel({ taskId }: { taskId: string }) {
           {error}
         </Text>
       )}
-    </Surface>
+    </Stack>
   );
 }

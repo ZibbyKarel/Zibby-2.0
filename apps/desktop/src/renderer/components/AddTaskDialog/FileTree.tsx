@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RepoTreeEntry } from '@nightcoder/shared-types/ipc';
-import { Icon, IconName, Surface, Text } from '@nightcoder/design-system';
+import { Container, Icon, IconName, Stack, Text } from '@nightcoder/design-system';
+import { TreeRow } from './FileTree/TreeRow';
 
 export const DRAG_MIME = 'application/x-nightcoder-path';
 
@@ -58,7 +59,7 @@ export function TreeList({
   onToggle: (path: string) => void;
 }) {
   return (
-    <Surface as="ul">
+    <Container as="ul">
       {nodes.map((node) => (
         <TreeNode
           key={node.path}
@@ -68,7 +69,7 @@ export function TreeList({
           onToggle={onToggle}
         />
       ))}
-    </Surface>
+    </Container>
   );
 }
 
@@ -93,39 +94,30 @@ function TreeNode({
   };
 
   return (
-    <Surface as="li">
-      <Surface
+    <Container as="li">
+      <TreeRow
+        depth={depth}
+        cursor={isDir ? 'pointer' : 'grab'}
         draggable
         onDragStart={onDragStart}
         onClick={() => isDir && onToggle(node.path)}
         title={node.path}
-        direction="row"
-        align="center"
-        gap={4}
-        paddingLeft={8 + depth * 12}
-        paddingRight={8}
-        paddingTop={3}
-        paddingBottom={3}
-        cursor={isDir ? 'pointer' : 'grab'}
-        userSelect="none"
-        radius="sm"
-        interactive
       >
-        <Surface width={12} direction="row" align="center">
+        <Container width={12}>
           {isDir ? (
             <Icon
               value={isOpen ? IconName.ChevronDown : IconName.ChevronRight}
               size="xs"
             />
           ) : null}
-        </Surface>
-        <Surface direction="row" align="center">
+        </Container>
+        <Stack direction="row" align="center">
           <Icon value={isDir ? IconName.Folder : IconName.File} size="xs" />
-        </Surface>
+        </Stack>
         <Text size="sm" mono tone={isDir ? 'subtle' : 'muted'} truncate>
           {node.name}
         </Text>
-      </Surface>
+      </TreeRow>
       {isDir && isOpen && node.children && node.children.length > 0 && (
         <TreeList
           nodes={node.children}
@@ -134,6 +126,6 @@ function TreeNode({
           onToggle={onToggle}
         />
       )}
-    </Surface>
+    </Container>
   );
 }

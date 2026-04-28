@@ -1,12 +1,12 @@
 import React from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import type { FormControls } from '@nightcoder/form';
 import type { PhaseModel } from '@nightcoder/shared-types/ipc';
 import { DRAG_MIME } from './FileTree';
 import type { AddTaskFormValues, PhaseKey } from './types';
 import { computeCaretInsert } from './utils';
 
 export function setPhase(
-  methods: UseFormReturn<AddTaskFormValues>,
+  methods: FormControls<AddTaskFormValues>,
   key: PhaseKey,
   patch: Partial<PhaseModel>,
 ): void {
@@ -23,7 +23,7 @@ export function setPhase(
 }
 
 export async function pickFiles(
-  methods: UseFormReturn<AddTaskFormValues>,
+  methods: FormControls<AddTaskFormValues>,
   setPickError: (err: string | null) => void,
 ): Promise<void> {
   setPickError(null);
@@ -46,7 +46,7 @@ export async function pickFiles(
 }
 
 export function removeFile(
-  methods: UseFormReturn<AddTaskFormValues>,
+  methods: FormControls<AddTaskFormValues>,
   path: string,
 ): void {
   const prev = methods.getValues('attachedFilePaths');
@@ -56,7 +56,7 @@ export function removeFile(
 }
 
 export function insertAtCaret(
-  methods: UseFormReturn<AddTaskFormValues>,
+  methods: FormControls<AddTaskFormValues>,
   descriptionRef: React.RefObject<HTMLTextAreaElement | null>,
   text: string,
 ): void {
@@ -78,7 +78,7 @@ export function insertAtCaret(
 
 export function handleDescriptionDrop(
   e: React.DragEvent<HTMLTextAreaElement>,
-  methods: UseFormReturn<AddTaskFormValues>,
+  methods: FormControls<AddTaskFormValues>,
   descriptionRef: React.RefObject<HTMLTextAreaElement | null>,
   setDropActive: (active: boolean) => void,
 ): void {

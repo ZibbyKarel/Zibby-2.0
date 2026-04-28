@@ -1,5 +1,5 @@
 import React from 'react';
-import { Surface, Text } from '@nightcoder/design-system';
+import { Card, Stack, Text } from '@nightcoder/design-system';
 
 export function Section({
   label,
@@ -9,7 +9,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Surface direction="column" gap={8}>
+    <Stack direction="column" gap="100">
       <Text
         as="h3"
         size="xs"
@@ -21,27 +21,26 @@ export function Section({
         {label}
       </Text>
       {children}
-    </Surface>
+    </Stack>
   );
 }
 
 export function KV({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
-    <Surface
-      bordered
-      radius="sm"
+    <Card
+      variant="outlined"
       background="bg2"
-      paddingX={10}
-      paddingY={8}
-      direction="column"
-      gap={2}
+      radius="sm"
+      padding={['100', '100']}
     >
-      <Text size="xs" tone="faint" tracking="wider" transform="uppercase">
-        {k}
-      </Text>
-      <Text size="sm" mono={mono}>
-        {v}
-      </Text>
-    </Surface>
+      <Stack direction="column" gap="25">
+        <Text size="xs" tone="faint" tracking="wider" transform="uppercase">
+          {k}
+        </Text>
+        <Text size="sm" mono={mono}>
+          {v}
+        </Text>
+      </Stack>
+    </Card>
   );
 }

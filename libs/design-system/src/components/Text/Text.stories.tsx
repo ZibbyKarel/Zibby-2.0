@@ -29,7 +29,7 @@ export const Overview: Story = {
     <div style={wrap}>
       <div>
         <div style={label}>Sizes</div>
-        <Stack direction="column" gap={4}>
+        <Stack direction="column" gap="50">
           <Text size="xs">xs · the quick brown fox</Text>
           <Text size="sm">sm · the quick brown fox</Text>
           <Text size="md">md · the quick brown fox</Text>
@@ -39,7 +39,7 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Weights</div>
-        <Stack direction="row" gap={12}>
+        <Stack direction="row" gap="150">
           <Text weight="normal">normal</Text>
           <Text weight="medium">medium</Text>
           <Text weight="semibold">semibold</Text>
@@ -48,7 +48,7 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Tones</div>
-        <Stack direction="row" gap={12} wrap>
+        <Stack direction="row" gap="150" wrap>
           <Text tone="default">default</Text>
           <Text tone="muted">muted</Text>
           <Text tone="subtle">subtle</Text>
@@ -62,7 +62,7 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Mono / tracking / transform / tabular</div>
-        <Stack direction="column" gap={4}>
+        <Stack direction="column" gap="50">
           <Text mono size="sm">git@nightcoder:claude/refactor-design-system</Text>
           <Text tracking="wide" transform="uppercase" tone="subtle" size="xs">section heading</Text>
           <Text tabular size="sm">123,456,789</Text>
@@ -76,7 +76,7 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Whitespace</div>
-        <Stack direction="column" gap={6}>
+        <Stack direction="column" gap="75">
           <Text whitespace="pre" mono size="sm" as="div">{'  preserves   spaces'}</Text>
           <Text whitespace="pre-wrap" mono size="sm" as="div">{'a long line\nthat\npreserves newlines'}</Text>
           <Text whitespace="nowrap" as="div">no wrap forces a single line of text content</Text>
@@ -84,7 +84,7 @@ export const Overview: Story = {
       </div>
       <div>
         <div style={label}>Element override</div>
-        <Stack direction="column" gap={4}>
+        <Stack direction="column" gap="50">
           <Text as="h1" size="xl" weight="bold">h1 heading</Text>
           <Text as="h2" size="lg" weight="semibold">h2 heading</Text>
           <Text as="p" size="md" tone="muted">paragraph copy</Text>

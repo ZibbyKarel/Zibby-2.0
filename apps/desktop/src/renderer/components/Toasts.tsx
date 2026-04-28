@@ -1,5 +1,5 @@
 import React from 'react';
-import { Snackbar, Surface, type SnackbarSeverity } from '@nightcoder/design-system';
+import { Container, Snackbar, Stack, type SnackbarSeverity } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
 
 export type Toast = {
@@ -22,27 +22,27 @@ const severityFor: Record<Toast['kind'], SnackbarSeverity> = {
 
 export function Toasts({ toasts, onDismiss }: Props) {
   return (
-    <Surface
+    <Container
       position="fixed"
       top={16}
       right={16}
       zIndex={80}
       pointerEvents="none"
-      direction="column"
-      gap={8}
       data-testid={TestIds.Toast.region}
     >
-      {toasts.map((t) => (
-        <Surface key={t.id} data-testid={TestIds.Toast.toast(t.id)}>
-          <Snackbar
-            open
-            severity={severityFor[t.kind]}
-            title={t.title}
-            message={t.desc}
-            onClose={() => onDismiss(t.id)}
-          />
-        </Surface>
-      ))}
-    </Surface>
+      <Stack direction="column" gap="100">
+        {toasts.map((t) => (
+          <div key={t.id} data-testid={TestIds.Toast.toast(t.id)}>
+            <Snackbar
+              open
+              severity={severityFor[t.kind]}
+              title={t.title}
+              message={t.desc}
+              onClose={() => onDismiss(t.id)}
+            />
+          </div>
+        ))}
+      </Stack>
+    </Container>
   );
 }

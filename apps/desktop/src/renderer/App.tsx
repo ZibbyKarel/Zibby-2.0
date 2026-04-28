@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PickFolderResult, RefinedPlan, PersistedStoryRuntime } from '@nightcoder/shared-types/ipc';
 import { taskIdForNewStory, collectTaskIds } from '@nightcoder/shared-types/task-id';
-import { Alert, DesignSystemProvider, IconName, Surface } from '@nightcoder/design-system';
+import { Alert, Container, DesignSystemProvider, IconName } from '@nightcoder/design-system';
 import { TaskDrawer } from './components/TaskDrawer';
 import type { DrawerTab } from './components/TaskDrawer';
 import { AddTaskDialog, type BlockerOption, type NewTaskData } from './components/AddTaskDialog';
@@ -106,7 +106,10 @@ export default function App() {
   }, []);
 
   // ── ⌘K / ⌘N ───────────────────────────────────────────────
-  useEffect(() => {
+  // useLayoutEffect rather than useEffect: the listener must be attached during
+  // the first commit (synchronously, before paint) so a Cmd+K pressed
+  // immediately after page load can't race the registration.
+  useLayoutEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -518,9 +521,9 @@ export default function App() {
       />
 
       {error && (
-        <Surface paddingX={20} paddingY={10}>
+        <Container padding={['100', '250']}>
           <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
-        </Surface>
+        </Container>
       )}
 
       <BoardArea

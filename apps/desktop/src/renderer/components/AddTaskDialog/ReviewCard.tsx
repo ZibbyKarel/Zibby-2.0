@@ -1,5 +1,5 @@
 import React from 'react';
-import { Surface, Text } from '@nightcoder/design-system';
+import { Stack, Text } from '@nightcoder/design-system';
 
 type ReviewCardProps = {
   checked: boolean;
@@ -40,8 +40,8 @@ export function ReviewCard({
           flexShrink: 0,
         }}
       />
-      <Surface direction="column" gap={2} grow>
-        <Surface direction="row" align="center" gap={6}>
+      <Stack direction="column" gap="25" grow>
+        <Stack direction="row" align="center" gap="75">
           <Text size="sm" weight="medium">
             Human review required
           </Text>
@@ -62,11 +62,11 @@ export function ReviewCard({
               default
             </span>
           )}
-        </Surface>
+        </Stack>
         <Text size="xs" tone="faint">
           Pause before merging so you can sign off on the agent&apos;s work.
         </Text>
-      </Surface>
+      </Stack>
     </label>
   );
 }

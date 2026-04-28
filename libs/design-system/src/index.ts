@@ -79,14 +79,19 @@ export {
   type StackJustify,
 } from './components/Stack';
 export {
-  Surface,
-  type SurfaceProps,
-  type SurfaceBackground,
-  type SurfaceBorderEdges,
-  type SurfaceBorderTone,
-  type SurfaceRadius,
-  type SurfaceShadow,
-} from './components/Surface';
+  Container,
+  computeContainerStyle,
+  CONTAINER_STYLE_KEYS,
+  type ContainerProps,
+  type ContainerAs,
+  type ContainerOverflow,
+  type ContainerCursor,
+  type ContainerTextAlign,
+  type ContainerUserSelect,
+  type ContainerResize,
+  type ContainerPosition,
+  type Padding,
+} from './components/Container';
 export { Spacer, type SpacerProps, type SpacerAxis } from './components/Spacer';
 export {
   Text,
@@ -125,6 +130,8 @@ export {
   tokensToCssVars,
   type Theme,
   type Size,
+  type Spacing,
+  spacingToPx,
   type DesignTokens,
   type PartialDesignTokens,
   type ColorTokens,

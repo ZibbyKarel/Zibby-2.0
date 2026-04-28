@@ -2,12 +2,13 @@ import React from 'react';
 import {
   Badge,
   Button,
+  Card,
   Chip,
+  Container,
   Icon,
   IconButton,
   IconName,
   Stack,
-  Surface,
   Text,
 } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
@@ -43,12 +44,12 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
   const tokens = task.tokens as { in: number; out: number } | null | undefined;
 
   return (
-    <Surface
+    <Card
       as="article"
+      variant="outlined"
       background="bg2"
-      bordered
       radius="md"
-      padding={12}
+      padding={['150', '150']}
       interactive
       cursor="pointer"
       opacity={isDragging ? 0.4 : 1}
@@ -58,7 +59,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       {...dragHandlers}
     >
       {task.status === 'running' && (
-        <Surface
+        <Container
           position="absolute"
           top={0}
           left={0}
@@ -69,9 +70,9 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
         />
       )}
 
-      <Stack as="header" direction="row" align="start" gap={8}>
+      <Stack as="header" direction="row" align="start" gap="100">
         <Text size="xs" mono tone="faint">#{task.numericId ?? task.index + 1}</Text>
-        <Surface grow>
+        <Container grow>
           <Text
             as="h3"
             size="md"
@@ -81,7 +82,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           >
             {task.title}
           </Text>
-        </Surface>
+        </Container>
         <IconButton
           aria-label="Edit task"
           title="Details"
@@ -94,7 +95,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       </Stack>
 
       {task.description && (
-        <Surface paddingTop={2} paddingBottom={10}>
+        <Container padding={['25', '0', '100', '0']}>
           <Text
             size="sm"
             tone="muted"
@@ -103,10 +104,10 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
           >
             {task.description}
           </Text>
-        </Surface>
+        </Container>
       )}
 
-      <Stack direction="row" wrap gap={5}>
+      <Stack direction="row" wrap gap="50">
         {task.branch && (
           <Chip icon={<Icon value={IconName.Git} size="xs" />}>
             {task.branch.replace('nightcoder/', '')}
@@ -145,8 +146,8 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
       </Stack>
 
       {task.status === 'conflict' && task.conflictedFiles.length > 0 && (
-        <Surface
-          paddingTop={6}
+        <Container
+          padding={['75', '0', '0', '0']}
           data-testid={TestIds.TaskCard.conflictedFiles(task.index)}
         >
           <Text size="xs" tone="rose" weight="medium">
@@ -159,25 +160,26 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
               </li>
             ))}
           </ul>
-        </Surface>
+        </Container>
       )}
 
-      <Surface paddingTop={10} direction="row" align="center" justify="between" gap={8}>
-        <Stack direction="row" align="center" gap={10}>
+      <Container padding={['100', '0', '0', '0']}>
+       <Stack direction="row" align="center" justify="between" gap="100">
+        <Stack direction="row" align="center" gap="100">
           {task.status === 'running' && runtimeMs != null && (
-            <Stack direction="row" align="center" gap={4}>
+            <Stack direction="row" align="center" gap="50">
               <span className="ds-dot-running" />
               <Text size="xs" mono tone="emerald">{fmtDuration(runtimeMs)}</Text>
             </Stack>
           )}
           {task.status === 'done' && task.endedAt && task.startedAt && (
-            <Stack direction="row" align="center" gap={4}>
+            <Stack direction="row" align="center" gap="50">
               <Icon value={IconName.Check} size="xs" />
               <Text size="xs" mono tone="faint">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
           )}
           {task.status === 'failed' && task.endedAt && task.startedAt && (
-            <Stack direction="row" align="center" gap={4}>
+            <Stack direction="row" align="center" gap="50">
               <Icon value={IconName.Warn} size="xs" />
               <Text size="xs" mono tone="rose">{fmtDuration(task.endedAt - task.startedAt)}</Text>
             </Stack>
@@ -188,7 +190,7 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             </Text>
           )}
         </Stack>
-        <Stack direction="row" align="center" gap={6}>
+        <Stack direction="row" align="center" gap="75">
           {canResume && (
             <Button
               size="sm"
@@ -223,7 +225,8 @@ export function TaskCard({ task, runtimeMs, isDragging, dragHandlers, onOpen, on
             <Badge status={task.status} data-testid={TestIds.TaskCard.statusBadge(task.index)} />
           )}
         </Stack>
-      </Surface>
-    </Surface>
+       </Stack>
+      </Container>
+    </Card>
   );
 }

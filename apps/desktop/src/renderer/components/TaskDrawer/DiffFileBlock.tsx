@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { TaskDiffFile } from '@nightcoder/shared-types/ipc';
-import { Icon, IconName, Surface, Text, type TextTone } from '@nightcoder/design-system';
+import { Button, Card, Container, Icon, IconName, Stack, Text, type TextTone } from '@nightcoder/design-system';
 import type { HunkLine } from './types';
 import { diffSummary, filePathLabel, changeKindTone, parseHunkLines, rowBackground } from './diffUtils';
 
@@ -14,42 +14,44 @@ function HunkRow({ row }: { row: HunkLine }) {
   const isHeader = row.kind === 'header';
 
   return (
-    <Surface
-      direction="row"
-      paddingX={10}
-      paddingY={isHeader ? 2 : undefined}
+    <Card
+      variant="filled"
       background={rowBackground(row.kind)}
-      bordered={isHeader ? { top: true, bottom: true } : undefined}
+      bordered={isHeader ? { top: true, bottom: true } : false}
+      radius="none"
+      padding={isHeader ? ['25', '100'] : ['0', '100']}
     >
-      {isHeader ? (
-        <Surface grow>
-          <Text size="sm" mono tone="faint" whitespace="pre">
-            {row.text}
-          </Text>
-        </Surface>
-      ) : (
-        <>
-          <Surface width={40} paddingRight={8} userSelect="none">
-            <Text size="sm" mono tone="faint" align="end">
-              {oldN}
+      <Stack direction="row">
+        {isHeader ? (
+          <Stack grow>
+            <Text size="sm" mono tone="faint" whitespace="pre">
+              {row.text}
             </Text>
-          </Surface>
-          <Surface width={40} paddingRight={8} userSelect="none">
-            <Text size="sm" mono tone="faint" align="end">
-              {newN}
+          </Stack>
+        ) : (
+          <>
+            <Container width={40} padding={['0', '100', '0', '0']} userSelect="none">
+              <Text size="sm" mono tone="faint" align="end">
+                {oldN}
+              </Text>
+            </Container>
+            <Container width={40} padding={['0', '100', '0', '0']} userSelect="none">
+              <Text size="sm" mono tone="faint" align="end">
+                {newN}
+              </Text>
+            </Container>
+            <Container width={14} shrink={false}>
+              <Text size="sm" mono tone={signTone}>
+                {sign}
+              </Text>
+            </Container>
+            <Text size="sm" mono whitespace="pre">
+              {row.text}
             </Text>
-          </Surface>
-          <Surface width={14} shrink={false}>
-            <Text size="sm" mono tone={signTone}>
-              {sign}
-            </Text>
-          </Surface>
-          <Text size="sm" mono whitespace="pre">
-            {row.text}
-          </Text>
-        </>
-      )}
-    </Surface>
+          </>
+        )}
+      </Stack>
+    </Card>
   );
 }
 
@@ -58,11 +60,11 @@ function DiffHunks({ hunks }: { hunks: string[] }) {
   for (const h of hunks) rows.push(...parseHunkLines(h));
 
   return (
-    <Surface overflowX="auto" background="bg0">
+    <Card variant="filled" background="bg0" bordered={false} radius="none" padding="none" overflowX="auto">
       {rows.map((r, i) => (
         <HunkRow key={i} row={r} />
       ))}
-    </Surface>
+    </Card>
   );
 }
 
@@ -72,58 +74,63 @@ export function DiffFileBlock({ file }: { file: TaskDiffFile }) {
   const label = filePathLabel(file);
 
   return (
-    <Surface bordered radius="sm" background="bg1" overflowX="hidden" overflowY="hidden">
-      <Surface
-        as="button"
+    <Card
+      variant="outlined"
+      background="bg1"
+      radius="sm"
+      padding="none"
+      overflowX="hidden"
+      overflowY="hidden"
+    >
+      <Button
+        variant="surface"
         type="button"
-        width="100%"
-        direction="row"
-        align="center"
-        gap={8}
-        paddingX={10}
-        paddingY={8}
         background="bg2"
-        bordered={!collapsed ? { bottom: true } : undefined}
-        cursor="pointer"
+        bordered={!collapsed ? { bottom: true } : false}
+        radius="none"
         textAlign="left"
+        padding={['100', '100']}
+        width="100%"
         onClick={() => setCollapsed((c) => !c)}
       >
-        <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size="xs" />
-        <Surface background="bg3" radius="pill" paddingX={6} paddingY={1}>
-          <Text
-            size="xs"
-            mono
-            tone={changeKindTone(file.changeKind)}
-            tracking="wide"
-            transform="uppercase"
-          >
-            {file.changeKind}
+        <Stack direction="row" align="center" gap="100" grow>
+          <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size="xs" />
+          <Card variant="filled" background="bg3" bordered={false} radius="pill" padding={['25', '75']}>
+            <Text
+              size="xs"
+              mono
+              tone={changeKindTone(file.changeKind)}
+              tracking="wide"
+              transform="uppercase"
+            >
+              {file.changeKind}
+            </Text>
+          </Card>
+          <Container grow minWidth={0} title={label}>
+            <Text as="code" size="sm" mono tone="muted" truncate>
+              {label}
+            </Text>
+          </Container>
+          <Text size="xs" mono tone="emerald">
+            +{adds}
           </Text>
-        </Surface>
-        <Surface grow minWidth={0} title={label}>
-          <Text as="code" size="sm" mono tone="muted" truncate>
-            {label}
+          <Text size="xs" mono tone="rose">
+            −{dels}
           </Text>
-        </Surface>
-        <Text size="xs" mono tone="emerald">
-          +{adds}
-        </Text>
-        <Text size="xs" mono tone="rose">
-          −{dels}
-        </Text>
-      </Surface>
+        </Stack>
+      </Button>
       {!collapsed &&
         (file.changeKind === 'binary' || file.hunks.length === 0 ? (
-          <Surface paddingX={12} paddingY={14}>
+          <Container padding={['150', '150']}>
             <Text size="sm" tone="faint">
               {file.changeKind === 'binary'
                 ? 'Binary file — diff not shown.'
                 : 'No textual changes in this file.'}
             </Text>
-          </Surface>
+          </Container>
         ) : (
           <DiffHunks hunks={file.hunks} />
         ))}
-    </Surface>
+    </Card>
   );
 }

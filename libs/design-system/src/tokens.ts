@@ -14,6 +14,38 @@
 export type Theme = 'dark' | 'light';
 
 /**
+ * Abstract spacing scale. Each token maps to a fixed px value:
+ * token / 12.5 = px  (e.g. '25' → 2px, '100' → 8px, '500' → 40px).
+ * Fine-grained quarter-steps exist up to 100; above that only half-steps (50
+ * apart) to keep the scale from exploding.
+ */
+export type Spacing =
+  | '0'
+  | '25' | '50' | '75' | '100'
+  | '150' | '200' | '250' | '300' | '350' | '400' | '450' | '500';
+
+const SPACING_PX: Record<Spacing, string> = {
+  '0':   '0px',
+  '25':  '2px',
+  '50':  '4px',
+  '75':  '6px',
+  '100': '8px',
+  '150': '12px',
+  '200': '16px',
+  '250': '20px',
+  '300': '24px',
+  '350': '28px',
+  '400': '32px',
+  '450': '36px',
+  '500': '40px',
+};
+
+/** Converts a Spacing token to its pixel string (e.g. '150' → '12px'). */
+export function spacingToPx(token: Spacing): string {
+  return SPACING_PX[token];
+}
+
+/**
  * Shared t-shirt size scale for sizeable components (Button, IconButton, Chip, …).
  * Components narrow this with `Extract<Size, …>` to advertise the subset they support.
  */

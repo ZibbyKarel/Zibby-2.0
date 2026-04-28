@@ -1,57 +1,144 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import { Container, type ContainerProps, type Padding } from '../Container';
+import { useTokens } from '../../DesignSystemContext';
+import type { Spacing } from '../../tokens';
+import {
+  computeVisualStyle,
+  type SurfaceBackground,
+  type SurfaceBorderEdges,
+  type SurfaceBorderStyle,
+  type SurfaceBorderTone,
+  type SurfaceRadius,
+  type SurfaceShadow,
+} from '../../visualStyles';
 
 export type CardVariant = 'outlined' | 'elevated' | 'filled';
-export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
-export type CardProps = HTMLAttributes<HTMLDivElement> & {
+/**
+ * Token-driven padding presets, kept as a stable enum for Card-shaped consumers
+ * that want a "card-internal spacing" semantic. A `Padding` tuple is also
+ * accepted for one-off values — see {@link Padding}.
+ */
+export type CardPaddingPreset = 'none' | 'sm' | 'md' | 'lg';
+export type CardPadding = CardPaddingPreset | Padding;
+
+const PADDING_PRESET: Record<CardPaddingPreset, Spacing> = {
+  none: '0',
+  sm:   '150',
+  md:   '200',
+  lg:   '300',
+};
+
+function resolveCardPadding(padding: CardPadding): Padding {
+  if (typeof padding === 'string') {
+    const sp = PADDING_PRESET[padding];
+    return [sp, sp];
+  }
+  return padding;
+}
+
+type CardVisualDefaults = {
+  background: SurfaceBackground;
+  bordered: boolean;
+  shadow: SurfaceShadow;
+};
+
+const VARIANT_DEFAULTS: Record<CardVariant, CardVisualDefaults> = {
+  outlined: { background: 'bg1', bordered: true,  shadow: 'none' },
+  elevated: { background: 'bg1', bordered: true,  shadow: '2'    },
+  filled:   { background: 'bg2', bordered: false, shadow: 'none' },
+};
+
+export type CardProps = Omit<ContainerProps, 'padding'> & {
+  /** Visual variant. Sets sensible defaults for `background`, `bordered`, and `shadow`; explicit props always win. */
   variant?: CardVariant;
-  padding?: CardPadding;
-  /** When true, the card responds to hover (border + cursor). */
+  /** Token-driven background fill. Overrides the variant default. */
+  background?: SurfaceBackground;
+  /** True for borders on every edge, an object for per-edge borders, or false to drop the variant border. */
+  bordered?: boolean | SurfaceBorderEdges;
+  /** Border tone. Defaults to `default`. */
+  borderTone?: SurfaceBorderTone;
+  /** Border line style. Defaults to `solid`. */
+  borderStyle?: SurfaceBorderStyle;
+  /** Token-driven corner radius. Defaults to `md`. */
+  radius?: SurfaceRadius;
+  /** Token-driven elevation shadow. Overrides the variant default. */
+  shadow?: SurfaceShadow;
+  /** When true, applies a hover-driven border bump and a pointer cursor. */
   interactive?: boolean;
-  as?: 'div' | 'article' | 'section' | 'li';
-  children?: ReactNode;
+  /** Internal spacing — preset (`none`/`sm`/`md`/`lg`) or a Padding tuple. */
+  padding?: CardPadding;
 };
 
-const variantClasses: Record<CardVariant, string> = {
-  outlined: 'border border-[var(--border)] bg-[var(--bg-1)]',
-  elevated: 'border border-[var(--border)] bg-[var(--bg-1)] shadow-[var(--shadow-2)]',
-  filled:   'border border-transparent bg-[var(--bg-2)]',
-};
-
-const paddingClasses: Record<CardPadding, string> = {
-  none: 'p-0',
-  sm:   'p-3',
-  md:   'p-4',
-  lg:   'p-6',
-};
-
-export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+/**
+ * Visual surface (background, border, radius, shadow). Composes a `Container`
+ * internally so consumers get padding, dimensions, positioning, overflow, and
+ * cursor concerns "for free" without Card having to re-implement any of them.
+ *
+ * ```tsx
+ * <Card variant="outlined" background="bg1" bordered borderTone="accent" radius="md" minWidth={280} padding={['150', '150']}>
+ *   <Stack direction="column" gap="100">…</Stack>
+ * </Card>
+ * ```
+ */
+export const Card = forwardRef<HTMLElement, CardProps>(function Card(
   {
     variant = 'outlined',
-    padding = 'md',
+    background,
+    bordered,
+    borderTone = 'default',
+    borderStyle = 'solid',
+    radius = 'md',
+    shadow,
     interactive,
-    as = 'div',
+    padding = 'md',
     className = '',
+    style,
     children,
-    ...props
+    ...containerProps
   },
   ref,
 ) {
-  const Tag = as as 'div';
-  const interactiveClasses = interactive
+  const tokens = useTokens();
+  const defaults = VARIANT_DEFAULTS[variant];
+
+  const resolvedVisual = {
+    background: background ?? defaults.background,
+    bordered: bordered ?? defaults.bordered,
+    borderTone,
+    borderStyle,
+    radius,
+    shadow: shadow ?? defaults.shadow,
+  };
+  const visualStyle = computeVisualStyle(resolvedVisual, tokens);
+
+  const interactiveClass = interactive
     ? 'cursor-pointer transition-colors hover:border-[var(--border-2)]'
     : '';
+  const cls = ['ds-card', interactiveClass, className].filter(Boolean).join(' ');
+
+  const containerPadding = resolveCardPadding(padding);
 
   return (
-    <Tag
+    <Container
       ref={ref}
-      className={`rounded-[var(--radius)] ${variantClasses[variant]} ${paddingClasses[padding]} ${interactiveClasses} ${className}`.trim()}
-      {...props}
+      {...containerProps}
+      padding={containerPadding}
+      className={cls}
+      style={mergeStyles(visualStyle, style)}
     >
       {children}
-    </Tag>
+    </Container>
   );
 });
+
+function mergeStyles(
+  base: CSSProperties,
+  override: CSSProperties | undefined,
+): CSSProperties {
+  if (!override) return base;
+  return { ...base, ...override };
+}
 
 export type CardHeaderProps = HTMLAttributes<HTMLDivElement> & {
   title?: ReactNode;

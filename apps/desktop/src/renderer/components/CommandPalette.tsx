@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Button,
+  Card,
+  Container,
   Icon,
   IconName,
   Kbd,
   Stack,
-  Surface,
   Text,
 } from '@nightcoder/design-system';
 import { TestIds } from '@nightcoder/test-ids';
@@ -53,87 +55,91 @@ export function CommandPalette({ open, onClose, commands }: Props) {
   if (!open) return null;
 
   return (
-    <Surface
+    <Container
       position="fixed"
       top={0}
       right={0}
       bottom={0}
       left={0}
       zIndex={70}
-      background="backdrop"
-      direction="row"
-      align="start"
-      justify="center"
-      paddingTop="12vh"
+      style={{ background: 'rgba(0,0,0,.55)', paddingTop: '12vh' }}
       onClick={onClose}
     >
-      <Surface
-        background="bg1"
-        bordered
-        borderTone="strong"
-        radius="md"
-        shadow="2"
-        overflowY="hidden"
-        width="min(560px, 94vw)"
-        direction="column"
-        onClick={(e) => e.stopPropagation()}
-        data-testid={TestIds.CommandPalette.root}
-      >
-        <Surface bordered={{ bottom: true }} paddingX={14} paddingY={12} direction="row" align="center" gap={10}>
-          <Icon value={IconName.Search} size="md" />
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={(e) => { setQ(e.target.value); setSelected(0); }}
-            placeholder="Type a command or search tasks…"
-            className="ds-bare-input"
-            data-testid={TestIds.CommandPalette.input}
-          />
-          <Kbd>esc</Kbd>
-        </Surface>
-        <Surface maxHeight={360} overflowY="auto" padding={6} direction="column" gap={2}>
-          {matches.length === 0 && (
-            <Surface
-              paddingX={20}
-              paddingY={24}
-              direction="row"
-              justify="center"
-              data-testid={TestIds.CommandPalette.empty}
-            >
-              <Text size="sm" tone="faint">No commands match &quot;{q}&quot;</Text>
-            </Surface>
-          )}
-          {matches.map((c, idx) => (
-            <Surface
-              key={c.id}
-              as="button"
-              type="button"
-              width="100%"
-              direction="row"
-              align="center"
-              gap={10}
-              paddingX={10}
-              paddingY={8}
-              radius="sm"
-              cursor="pointer"
-              textAlign="left"
-              background={idx === selected ? 'bg3' : 'transparent'}
-              onMouseEnter={() => setSelected(idx)}
-              onClick={() => { c.run(); onClose(); }}
-              data-testid={TestIds.CommandPalette.item(c.id)}
-            >
-              <Surface width={20} direction="row" align="center" justify="center">
-                <Icon value={c.icon ?? IconName.ArrowRight} size="sm" />
-              </Surface>
-              <Stack direction="row" align="center" grow>
-                <Text size="md">{c.label}</Text>
+      <Stack direction="row" align="start" justify="center" style={{ minHeight: '100%' }}>
+        <Card
+          variant="elevated"
+          background="bg1"
+          bordered
+          borderTone="strong"
+          radius="md"
+          shadow="2"
+          padding="none"
+          overflowY="hidden"
+          width="min(560px, 94vw)"
+          onClick={(e) => e.stopPropagation()}
+          data-testid={TestIds.CommandPalette.root}
+        >
+          <Stack direction="column">
+            <Card variant="filled" background="transparent" bordered={{ bottom: true }} radius="none" padding={['150', '150']}>
+              <Stack direction="row" align="center" gap="100">
+                <Icon value={IconName.Search} size="md" />
+                <input
+                  ref={inputRef}
+                  value={q}
+                  onChange={(e) => { setQ(e.target.value); setSelected(0); }}
+                  placeholder="Type a command or search tasks…"
+                  className="ds-bare-input"
+                  data-testid={TestIds.CommandPalette.input}
+                />
+                <Kbd>esc</Kbd>
               </Stack>
-              {c.hint && <Text size="xs" tone="faint">{c.hint}</Text>}
-              {c.kbd && <Kbd>{c.kbd}</Kbd>}
-            </Surface>
-          ))}
-        </Surface>
-      </Surface>
-    </Surface>
+            </Card>
+            <Container maxHeight={360} overflowY="auto" padding={['75', '75']}>
+              <Stack direction="column" gap="25">
+                {matches.length === 0 && (
+                  <Container
+                    padding={['300', '250']}
+                    data-testid={TestIds.CommandPalette.empty}
+                  >
+                    <Stack direction="row" justify="center">
+                      <Text size="sm" tone="faint">No commands match &quot;{q}&quot;</Text>
+                    </Stack>
+                  </Container>
+                )}
+                {matches.map((c, idx) => (
+                  <Button
+                    key={c.id}
+                    variant="surface"
+                    type="button"
+                    background={idx === selected ? 'bg3' : 'transparent'}
+                    radius="sm"
+                    padding={['100', '100']}
+                    width="100%"
+                    textAlign="left"
+                    cursor="pointer"
+                    onMouseEnter={() => setSelected(idx)}
+                    onClick={() => { c.run(); onClose(); }}
+                    data-testid={TestIds.CommandPalette.item(c.id)}
+                  >
+                    <Stack direction="row" align="center" gap="100" grow>
+                      <Container width={20}>
+                        <Stack direction="row" align="center" justify="center">
+                          <Icon value={c.icon ?? IconName.ArrowRight} size="sm" />
+                        </Stack>
+                      </Container>
+                      <Stack direction="row" align="center" grow>
+                        <Text size="md">{c.label}</Text>
+                      </Stack>
+                      {c.hint && <Text size="xs" tone="faint">{c.hint}</Text>}
+                      {c.kbd && <Kbd>{c.kbd}</Kbd>}
+                    </Stack>
+                  </Button>
+                ))}
+              </Stack>
+            </Container>
+          </Stack>
+        </Card>
+      </Stack>
+    </Container>
   );
 }

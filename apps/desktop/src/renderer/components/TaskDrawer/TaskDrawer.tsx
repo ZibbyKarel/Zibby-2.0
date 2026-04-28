@@ -2,14 +2,15 @@ import React, { useEffect } from 'react';
 import {
   Badge,
   Button,
+  Card,
   Chip,
+  Container,
   Drawer,
   Icon,
   IconButton,
   IconName,
   Spacer,
   Stack,
-  Surface,
   Tabs,
   Text,
 } from '@nightcoder/design-system';
@@ -65,115 +66,124 @@ export function TaskDrawer({
 
   return (
     <Drawer open={open} onClose={onClose} anchor="right" width="min(720px, 92vw)">
-      <Surface direction="column" grow minHeight={0} height="100%" data-testid={TestIds.Drawer.root}>
-        <Surface
-          as="header"
-          bordered={{ bottom: true }}
-          paddingX={18}
-          paddingTop={14}
-          paddingBottom={12}
-          direction="column"
-          gap={8}
-        >
-          <Stack direction="row" align="center" gap={8}>
-            <Text size="xs" mono tone="faint">
-              #{task.numericId ?? task.index + 1}
-            </Text>
-            {(task.status !== 'pending' || task.startedAt !== null) && (
-              <Badge status={task.status} />
-            )}
-            {task.status === 'running' && runtimeMs != null && (
-              <Text size="xs" mono tone="emerald">{fmtDuration(runtimeMs)}</Text>
-            )}
-            <Spacer />
-            <Button
-              size="sm"
-              variant="primary"
-              startIcon={IconName.Play}
-              label={canResume ? 'Resume' : 'Run'}
-              disabled={!runnable}
-              title={runnable ? undefined : 'Task is not in a runnable state'}
-              onClick={onRun}
-              data-testid={TestIds.Drawer.runBtn}
-            />
-            <IconButton
-              aria-label="Close drawer"
-              size="sm"
-              variant="ghost"
-              icon={IconName.X}
-              onClick={onClose}
-              data-testid={TestIds.Drawer.closeBtn}
-            />
-          </Stack>
-          <Text as="h2" size="xl" weight="semibold" tracking="tight" data-testid={TestIds.Drawer.title}>
-            {task.title}
-          </Text>
-          <Stack direction="row" wrap gap={6}>
-            {task.branch && <Chip icon={<Icon value={IconName.Git} size="xs" />}>{task.branch}</Chip>}
-            {task.prUrl && (
-              <Chip tone="accent" icon={<Icon value={IconName.Github} size="xs" />}>
-                PR #{task.prUrl.split('/').pop()}
-              </Chip>
-            )}
-            {task.model && (
-              <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size="xs" />}>{task.model}</Chip>
-            )}
-            {tokens != null && (
-              <Chip icon={<Icon value={IconName.Zap} size="xs" />}>
-                ↑{fmtNum(tokens.in)} ↓{fmtNum(tokens.out)}
-              </Chip>
-            )}
-          </Stack>
-        </Surface>
+      <Container grow minHeight={0} height="100%" data-testid={TestIds.Drawer.root}>
+        <Stack direction="column" grow>
+          <Card
+            as="header"
+            variant="filled"
+            background="transparent"
+            bordered={{ bottom: true }}
+            radius="none"
+            padding={['150', '200', '150', '200']}
+          >
+            <Stack direction="column" gap="100">
+              <Stack direction="row" align="center" gap="100">
+                <Text size="xs" mono tone="faint">
+                  #{task.numericId ?? task.index + 1}
+                </Text>
+                {(task.status !== 'pending' || task.startedAt !== null) && (
+                  <Badge status={task.status} />
+                )}
+                {task.status === 'running' && runtimeMs != null && (
+                  <Text size="xs" mono tone="emerald">{fmtDuration(runtimeMs)}</Text>
+                )}
+                <Spacer />
+                <Button
+                  size="sm"
+                  variant="primary"
+                  startIcon={IconName.Play}
+                  label={canResume ? 'Resume' : 'Run'}
+                  disabled={!runnable}
+                  title={runnable ? undefined : 'Task is not in a runnable state'}
+                  onClick={onRun}
+                  data-testid={TestIds.Drawer.runBtn}
+                />
+                <IconButton
+                  aria-label="Close drawer"
+                  size="sm"
+                  variant="ghost"
+                  icon={IconName.X}
+                  onClick={onClose}
+                  data-testid={TestIds.Drawer.closeBtn}
+                />
+              </Stack>
+              <Text as="h2" size="xl" weight="semibold" tracking="tight" data-testid={TestIds.Drawer.title}>
+                {task.title}
+              </Text>
+              <Stack direction="row" wrap gap="75">
+                {task.branch && <Chip icon={<Icon value={IconName.Git} size="xs" />}>{task.branch}</Chip>}
+                {task.prUrl && (
+                  <Chip tone="accent" icon={<Icon value={IconName.Github} size="xs" />}>
+                    PR #{task.prUrl.split('/').pop()}
+                  </Chip>
+                )}
+                {task.model && (
+                  <Chip tone="violet" icon={<Icon value={IconName.Sparkle} size="xs" />}>{task.model}</Chip>
+                )}
+                {tokens != null && (
+                  <Chip icon={<Icon value={IconName.Zap} size="xs" />}>
+                    ↑{fmtNum(tokens.in)} ↓{fmtNum(tokens.out)}
+                  </Chip>
+                )}
+              </Stack>
+            </Stack>
+          </Card>
 
-        <Surface paddingX={12} bordered={{ bottom: true }}>
-          <Tabs<DrawerTab>
-            tabs={[
-              {
-                key: 'logs',
-                label: 'Logs',
-                icon: <Icon value={IconName.Terminal} size="sm" />,
-                badge: task.logs.length || undefined,
-                testId: TestIds.Drawer.tab('logs'),
-              },
-              {
-                key: 'diff',
-                label: 'Diff',
-                icon: <Icon value={IconName.Diff} size="sm" />,
-                testId: TestIds.Drawer.tab('diff'),
-              },
-              {
-                key: 'details',
-                label: 'Details',
-                icon: <Icon value={IconName.Edit} size="sm" />,
-                testId: TestIds.Drawer.tab('details'),
-              },
-            ]}
-            activeKey={tab}
-            onChange={setTab}
-            variant="underline"
-            size="sm"
-          />
-        </Surface>
+          <Card variant="filled" background="transparent" bordered={{ bottom: true }} radius="none" padding={['0', '150']}>
+            <Tabs<DrawerTab>
+              tabs={[
+                {
+                  key: 'logs',
+                  label: 'Logs',
+                  icon: <Icon value={IconName.Terminal} size="sm" />,
+                  badge: task.logs.length || undefined,
+                  testId: TestIds.Drawer.tab('logs'),
+                },
+                {
+                  key: 'diff',
+                  label: 'Diff',
+                  icon: <Icon value={IconName.Diff} size="sm" />,
+                  testId: TestIds.Drawer.tab('diff'),
+                },
+                {
+                  key: 'details',
+                  label: 'Details',
+                  icon: <Icon value={IconName.Edit} size="sm" />,
+                  testId: TestIds.Drawer.tab('details'),
+                },
+              ]}
+              activeKey={tab}
+              onChange={setTab}
+              variant="underline"
+              size="sm"
+            />
+          </Card>
 
-        <Surface grow overflowY="auto" minHeight={0}>
-          {tab === 'logs' && (
-            <Surface data-testid={TestIds.Drawer.panel('logs')} direction="column" grow>
-              <LogsView task={task} />
-            </Surface>
-          )}
-          {tab === 'diff' && (
-            <Surface data-testid={TestIds.Drawer.panel('diff')} direction="column" grow>
-              <DiffPanel task={task} />
-            </Surface>
-          )}
-          {tab === 'details' && (
-            <Surface data-testid={TestIds.Drawer.panel('details')} direction="column" grow>
-              <DetailsView task={task} onSave={onSave} />
-            </Surface>
-          )}
-        </Surface>
-      </Surface>
+          <Container grow overflowY="auto" minHeight={0}>
+            {tab === 'logs' && (
+              <Container data-testid={TestIds.Drawer.panel('logs')} grow>
+                <Stack direction="column" grow>
+                  <LogsView task={task} />
+                </Stack>
+              </Container>
+            )}
+            {tab === 'diff' && (
+              <Container data-testid={TestIds.Drawer.panel('diff')} grow>
+                <Stack direction="column" grow>
+                  <DiffPanel task={task} />
+                </Stack>
+              </Container>
+            )}
+            {tab === 'details' && (
+              <Container data-testid={TestIds.Drawer.panel('details')} grow>
+                <Stack direction="column" grow>
+                  <DetailsView task={task} onSave={onSave} />
+                </Stack>
+              </Container>
+            )}
+          </Container>
+        </Stack>
+      </Container>
     </Drawer>
   );
 }
