@@ -20,7 +20,7 @@ import {
 } from '@nightcoder/form';
 import { TestIds } from '@nightcoder/test-ids';
 import type { AddTaskFormValues, BlockerOption } from './types';
-import { DRAG_MIME, basename, TreeList } from './FileTree';
+import { DRAG_MIME, basename, TreeList } from './FileTree/FileTree';
 import { ModelPick } from './ModelPick';
 import { BlockedByPicker } from './BlockedByPicker';
 import { ReviewCard } from './ReviewCard';
@@ -350,8 +350,8 @@ export function DialogContent({
             Attached files
           </Text>
           <Text size="xs" tone="faint" italic>
-            · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with
-            the agent
+            · copied into .nightcoder/tasks/&lt;id&gt;/files — shared with the
+            agent
           </Text>
         </Stack>
         <Stack direction="column" gap="100">

@@ -1,7 +1,13 @@
 import React from 'react';
 import type { RepoTreeEntry } from '@nightcoder/shared-types/ipc';
-import { Container, Icon, IconName, Stack, Text } from '@nightcoder/design-system';
-import { TreeRow } from './FileTree/TreeRow';
+import {
+  Container,
+  Icon,
+  IconName,
+  Stack,
+  Text,
+} from '@nightcoder/design-system';
+import { TreeRow } from './TreeRow';
 
 export const DRAG_MIME = 'application/x-nightcoder-path';
 

@@ -1,14 +1,45 @@
 import React from 'react';
 import type { TaskDiffFile } from '@nightcoder/shared-types/ipc';
-import { Accordion, AccordionSummary, AccordionDetails, Card, Container, Icon, IconName, Stack, Text, type TextTone } from '@nightcoder/design-system';
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Card,
+  Container,
+  Stack,
+  Text,
+  type TextTone,
+} from '@nightcoder/design-system';
 import type { HunkLine } from './types';
-import { diffSummary, filePathLabel, changeKindTone, parseHunkLines, rowBackground } from './diffUtils';
+import {
+  diffSummary,
+  filePathLabel,
+  changeKindTone,
+  parseHunkLines,
+  rowBackground,
+} from './diffUtils';
 
 function HunkRow({ row }: { row: HunkLine }) {
   const sign =
-    row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : row.kind === 'header' ? '' : ' ';
-  const oldN = row.kind === 'del' ? row.oldLine : row.kind === 'context' ? row.oldLine : '';
-  const newN = row.kind === 'add' ? row.newLine : row.kind === 'context' ? row.newLine : '';
+    row.kind === 'add'
+      ? '+'
+      : row.kind === 'del'
+        ? '−'
+        : row.kind === 'header'
+          ? ''
+          : ' ';
+  const oldN =
+    row.kind === 'del'
+      ? row.oldLine
+      : row.kind === 'context'
+        ? row.oldLine
+        : '';
+  const newN =
+    row.kind === 'add'
+      ? row.newLine
+      : row.kind === 'context'
+        ? row.newLine
+        : '';
   const signTone: TextTone =
     row.kind === 'add' ? 'emerald' : row.kind === 'del' ? 'rose' : 'faint';
   const isHeader = row.kind === 'header';
@@ -30,12 +61,20 @@ function HunkRow({ row }: { row: HunkLine }) {
           </Stack>
         ) : (
           <>
-            <Container width={40} padding={['0', '100', '0', '0']} userSelect="none">
+            <Container
+              width={40}
+              padding={['0', '100', '0', '0']}
+              userSelect="none"
+            >
               <Text size="sm" mono tone="faint" align="end">
                 {oldN}
               </Text>
             </Container>
-            <Container width={40} padding={['0', '100', '0', '0']} userSelect="none">
+            <Container
+              width={40}
+              padding={['0', '100', '0', '0']}
+              userSelect="none"
+            >
               <Text size="sm" mono tone="faint" align="end">
                 {newN}
               </Text>
@@ -60,7 +99,14 @@ function DiffHunks({ hunks }: { hunks: string[] }) {
   for (const h of hunks) rows.push(...parseHunkLines(h));
 
   return (
-    <Card variant="filled" background="bg0" bordered={false} radius="none" padding="0" overflowX="auto">
+    <Card
+      variant="filled"
+      background="bg0"
+      bordered={false}
+      radius="none"
+      padding="0"
+      overflowX="auto"
+    >
       {rows.map((r, i) => (
         <HunkRow key={i} row={r} />
       ))}
@@ -76,7 +122,13 @@ export function DiffFileBlock({ file }: { file: TaskDiffFile }) {
     <Accordion defaultExpanded variant="outlined" background="bg1" radius="sm">
       <AccordionSummary expandIconPosition="start">
         <Stack direction="row" align="center" gap="100">
-          <Card variant="filled" background="bg3" bordered={false} radius="pill" padding={['25', '75']}>
+          <Card
+            variant="filled"
+            background="bg3"
+            bordered={false}
+            radius="pill"
+            padding={['25', '75']}
+          >
             <Text
               size="xs"
               mono

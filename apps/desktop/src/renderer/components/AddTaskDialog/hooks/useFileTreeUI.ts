@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RepoTreeEntry } from '@nightcoder/shared-types/ipc';
-import { filterTree, collectDirPaths } from '../FileTree';
+import { filterTree, collectDirPaths } from '../FileTree/FileTree';
 import { TREE_STORAGE_KEY, readTreeStoragePref } from '../types';
 
 export function useFileTreeUI(tree: RepoTreeEntry[]) {
@@ -17,7 +17,10 @@ export function useFileTreeUI(tree: RepoTreeEntry[]) {
     }
   }, [showTree]);
 
-  const filteredTree = useMemo(() => filterTree(tree, treeFilter), [tree, treeFilter]);
+  const filteredTree = useMemo(
+    () => filterTree(tree, treeFilter),
+    [tree, treeFilter],
+  );
 
   const effectiveExpanded = useMemo(() => {
     if (!treeFilter) return expanded;

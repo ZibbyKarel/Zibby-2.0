@@ -1,7 +1,7 @@
 import React from 'react';
 import type { FormControls } from '@nightcoder/form';
 import type { PhaseModel } from '@nightcoder/shared-types/ipc';
-import { DRAG_MIME } from './FileTree';
+import { DRAG_MIME } from './FileTree/FileTree';
 import type { AddTaskFormValues, PhaseKey } from './types';
 import { computeCaretInsert } from './utils';
 
@@ -18,7 +18,11 @@ export function setPhase(
     void _omit;
     methods.setValue('phaseModels', rest, { shouldDirty: true });
   } else {
-    methods.setValue('phaseModels', { ...prev, [key]: next }, { shouldDirty: true });
+    methods.setValue(
+      'phaseModels',
+      { ...prev, [key]: next },
+      { shouldDirty: true },
+    );
   }
 }
 
@@ -50,9 +54,13 @@ export function removeFile(
   path: string,
 ): void {
   const prev = methods.getValues('attachedFilePaths');
-  methods.setValue('attachedFilePaths', prev.filter((p) => p !== path), {
-    shouldDirty: true,
-  });
+  methods.setValue(
+    'attachedFilePaths',
+    prev.filter((p) => p !== path),
+    {
+      shouldDirty: true,
+    },
+  );
 }
 
 export function insertAtCaret(
@@ -64,7 +72,12 @@ export function insertAtCaret(
   const currentDesc = methods.getValues('description');
   const start = ta?.selectionStart ?? currentDesc.length;
   const end = ta?.selectionEnd ?? currentDesc.length;
-  const { value: next, caretPos } = computeCaretInsert(currentDesc, start, end, text);
+  const { value: next, caretPos } = computeCaretInsert(
+    currentDesc,
+    start,
+    end,
+    text,
+  );
   methods.setValue('description', next, { shouldDirty: true });
   if (ta) {
     requestAnimationFrame(() => {
@@ -82,7 +95,8 @@ export function handleDescriptionDrop(
   descriptionRef: React.RefObject<HTMLTextAreaElement | null>,
   setDropActive: (active: boolean) => void,
 ): void {
-  const path = e.dataTransfer.getData(DRAG_MIME) || e.dataTransfer.getData('text/plain');
+  const path =
+    e.dataTransfer.getData(DRAG_MIME) || e.dataTransfer.getData('text/plain');
   if (!path) return;
   e.preventDefault();
   setDropActive(false);
