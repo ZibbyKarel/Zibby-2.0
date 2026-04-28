@@ -121,7 +121,7 @@ export function ModelPick({
                     flex: 1,
                     height: 20,
                     padding: 0,
-                    background: active ? 'var(--bg-1)' : 'transparent',
+                    background: active ? 'var(--bg-surface)' : 'transparent',
                     border: `1px solid ${active ? color : 'var(--border)'}`,
                     boxShadow: active ? `0 0 0 1px ${color}22 inset` : 'none',
                     borderRadius: 5,
@@ -137,7 +137,7 @@ export function ModelPick({
                     <span
                       style={{
                         fontSize: 9,
-                        color: active ? color : 'var(--text-3)',
+                        color: active ? color : 'var(--text-muted)',
                         fontWeight: 600,
                       }}
                     >
@@ -151,7 +151,7 @@ export function ModelPick({
                           width: 3,
                           height: 3,
                           borderRadius: 3,
-                          background: active ? color : 'var(--text-3)',
+                          background: active ? color : 'var(--text-muted)',
                           opacity: active ? 1 : 0.5,
                         }}
                       />
@@ -176,6 +176,6 @@ function thinkingLevelColor(level: ThinkingLevel): string {
     case 'high':
       return 'var(--emerald)';
     default:
-      return 'var(--text-3)';
+      return 'var(--text-muted)';
   }
 }

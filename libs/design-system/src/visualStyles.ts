@@ -67,13 +67,13 @@ export function bgValue(
     case 'transparent':
       return undefined;
     case 'bg0':
-      return tokens.color.bg[0];
+      return tokens.color.bg.canvas;
     case 'bg1':
-      return tokens.color.bg[1];
+      return tokens.color.bg.surface;
     case 'bg2':
-      return tokens.color.bg[2];
+      return tokens.color.bg.elevated;
     case 'bg3':
-      return tokens.color.bg[3];
+      return tokens.color.bg.raised;
     case 'hover':
       return tokens.color.bg.hover;
     case 'emerald':
@@ -150,9 +150,9 @@ export function shadowValue(
     case 'none':
       return undefined;
     case '1':
-      return tokens.size.shadow1;
+      return tokens.size.shadowSm;
     case '2':
-      return tokens.size.shadow2;
+      return tokens.size.shadowLg;
   }
 }
 

@@ -40,8 +40,8 @@ export function Badge({
   const statusTokens = useStatusTokens(status ?? 'pending');
   const cfg = status ? statusTokens : undefined;
 
-  const fg = color ?? cfg?.color ?? 'var(--text-1)';
-  const bg = background ?? cfg?.bg ?? 'var(--bg-3)';
+  const fg = color ?? cfg?.color ?? 'var(--text-secondary)';
+  const bg = background ?? cfg?.bg ?? 'var(--bg-raised)';
   const dotColor = cfg?.dot ?? fg;
   const shouldPulse = pulse ?? cfg?.pulse ?? false;
   const text = label ?? cfg?.label ?? '';

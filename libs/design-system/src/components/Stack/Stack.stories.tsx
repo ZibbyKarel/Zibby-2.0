@@ -15,19 +15,19 @@ type Story = StoryObj<typeof meta>;
 
 const sectionLabel: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,
 };
 
 const tile = (n: number): CSSProperties => ({
-  background: 'var(--bg-3)',
+  background: 'var(--bg-raised)',
   border: '1px solid var(--border)',
   borderRadius: 6,
   padding: '8px 12px',
   fontSize: 12,
-  color: 'var(--text-0)',
+  color: 'var(--text-primary)',
   minWidth: n,
 });
 

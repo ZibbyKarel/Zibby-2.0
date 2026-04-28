@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { pxValue } from '../../visualStyles';
-import { spacingToPx, type Spacing } from '../../tokens';
+import { resolvePadding, spacingToPx, type Padding } from '../../tokens';
 
 /**
  * Concrete subset of HTML elements `Container` can render. Intentionally narrow
@@ -52,16 +52,7 @@ export type ContainerPosition =
   | 'fixed'
   | 'sticky';
 
-/**
- * Tuple-based padding using Spacing tokens, mirroring CSS shorthand:
- * - `[v, h]` → top/bottom = v, left/right = h
- * - `[t, r, b, l]` → top, right, bottom, left
- *
- * For dynamic or non-token values, use the inline `style` prop.
- */
-export type Padding =
-  | [Spacing, Spacing]
-  | [Spacing, Spacing, Spacing, Spacing];
+export type { Padding } from '../../tokens';
 
 export type ContainerProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   /** CSS-shorthand-style padding tuple. See {@link Padding}. */
@@ -107,10 +98,6 @@ export type ContainerProps = Omit<HTMLAttributes<HTMLElement>, 'color'> & {
   children?: ReactNode;
 };
 
-function paddingEdges(p: Padding): [Spacing, Spacing, Spacing, Spacing] {
-  return p.length === 2 ? [p[0], p[1], p[0], p[1]] : p;
-}
-
 /**
  * Container picks every prop from `props` whose value is defined and produces
  * the inline-style mapping. Exported so `Button`'s `surface` variant can reuse
@@ -147,7 +134,7 @@ export function computeContainerStyle(props: ContainerProps): CSSProperties {
   const out: CSSProperties = {};
 
   if (padding !== undefined) {
-    const [t, r, b, l] = paddingEdges(padding);
+    const [t, r, b, l] = resolvePadding(padding);
     out.paddingTop = spacingToPx(t);
     out.paddingRight = spacingToPx(r);
     out.paddingBottom = spacingToPx(b);

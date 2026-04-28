@@ -66,8 +66,8 @@ export const Playground: Story = {
             padding: '6px 10px',
             border: '1px solid var(--border)',
             borderRadius: 6,
-            background: 'var(--bg-3)',
-            color: 'var(--text-0)',
+            background: 'var(--bg-raised)',
+            color: 'var(--text-primary)',
             cursor: 'pointer',
             fontSize: 12,
           }}

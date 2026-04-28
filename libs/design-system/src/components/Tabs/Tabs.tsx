@@ -44,7 +44,7 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex items-center ${variant === 'underline' ? 'border-b border-[var(--border)]' : 'gap-1 p-1 rounded-[var(--radius-sm)] bg-[var(--bg-2)] border border-[var(--border)]'} ${fullWidth ? 'w-full' : ''} ${className}`.trim()}
+      className={`flex items-center ${variant === 'underline' ? 'border-b border-[var(--border)]' : 'gap-1 p-1 rounded-[var(--radius-sm)] bg-[var(--bg-elevated)] border border-[var(--border)]'} ${fullWidth ? 'w-full' : ''} ${className}`.trim()}
     >
       {tabs.map((t) => {
         const active = t.key === activeKey;
@@ -52,12 +52,12 @@ export function Tabs<T extends string>({
         const panelId = `${baseId}-panel-${t.key}`;
 
         const underlineActive = active
-          ? 'text-[var(--text-0)] border-b-2 border-[var(--emerald)]'
-          : 'text-[var(--text-2)] border-b-2 border-transparent hover:text-[var(--text-0)]';
+          ? 'text-[var(--text-primary)] border-b-2 border-[var(--emerald)]'
+          : 'text-[var(--text-tertiary)] border-b-2 border-transparent hover:text-[var(--text-primary)]';
 
         const pillsActive = active
-          ? 'bg-[var(--bg-1)] text-[var(--text-0)] shadow-[var(--shadow-1)]'
-          : 'text-[var(--text-2)] hover:text-[var(--text-0)]';
+          ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-sm)]'
+          : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]';
 
         const variantClasses = variant === 'underline' ? underlineActive : `${pillsActive} rounded-[var(--radius-sm)]`;
 
@@ -77,7 +77,7 @@ export function Tabs<T extends string>({
             {t.icon && <span className="flex items-center">{t.icon}</span>}
             <span>{t.label}</span>
             {t.badge !== undefined && t.badge !== null && (
-              <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--bg-3)] px-1 text-[10px] font-semibold text-[var(--text-1)]">
+              <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--bg-raised)] px-1 text-[10px] font-semibold text-[var(--text-secondary)]">
                 {t.badge}
               </span>
             )}

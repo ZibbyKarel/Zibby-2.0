@@ -34,14 +34,14 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
     <div
       className={
         'inline-flex items-center gap-2 rounded-[var(--radius-sm)] ' +
-        'border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1.5 ' +
-        'focus-within:border-[var(--border-2)] ' +
+        'border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1.5 ' +
+        'focus-within:border-[var(--border-strong)] ' +
         wrapperClassName
       }
       style={{ minWidth }}
     >
       {startAdornment && (
-        <span className="flex shrink-0 items-center text-[var(--text-2)]" aria-hidden>
+        <span className="flex shrink-0 items-center text-[var(--text-tertiary)]" aria-hidden>
           {startAdornment}
         </span>
       )}
@@ -50,8 +50,8 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
         type={type}
         placeholder={placeholder}
         className={
-          'min-w-0 flex-1 border-none bg-transparent text-xs text-[var(--text-0)] ' +
-          'outline-none placeholder:text-[var(--text-3)] ' +
+          'min-w-0 flex-1 border-none bg-transparent text-xs text-[var(--text-primary)] ' +
+          'outline-none placeholder:text-[var(--text-muted)] ' +
           className
         }
         {...inputProps}

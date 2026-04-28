@@ -22,7 +22,7 @@ export function Kbd({ children, size = 'md', className = '' }: KbdProps) {
     <kbd
       className={
         'inline-flex items-center rounded border border-[var(--border)] ' +
-        'bg-[var(--bg-3)] font-mono font-medium text-[var(--text-3)] ' +
+        'bg-[var(--bg-raised)] font-mono font-medium text-[var(--text-muted)] ' +
         sizeClasses[size] + ' ' + className
       }
     >

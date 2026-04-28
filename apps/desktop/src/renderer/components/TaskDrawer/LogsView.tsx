@@ -45,7 +45,7 @@ export function LogsView({ task }: { task: TaskVM }) {
       background="bg0"
       bordered={false}
       radius="none"
-      padding="none"
+      padding="0"
       height="100%"
       overflowY="auto"
       position="relative"
@@ -87,7 +87,7 @@ export function LogsView({ task }: { task: TaskVM }) {
               background="bg2"
               radius="pill"
               shadow="2"
-              padding="none"
+              padding="0"
               pointerEvents="auto"
             >
               <IconButton

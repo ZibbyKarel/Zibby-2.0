@@ -99,7 +99,6 @@ export const DrawerTestIds = {
 
 export const AddTaskDialogTestIds = {
   root:           'nc-add-task-dialog',
-  closeBtn:       'nc-add-task-close',
   titleInput:     'nc-add-task-title',
   descriptionInput:'nc-add-task-description',
   acceptanceInput:'nc-add-task-acceptance',

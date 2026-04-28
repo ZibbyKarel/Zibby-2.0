@@ -28,7 +28,7 @@ const sizeClasses = {
 } as const;
 
 const Caret = () => (
-  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-3)]">
+  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
     <Icon value={IconName.ChevronDown} size="sm" />
   </span>
 );
@@ -54,7 +54,7 @@ function SelectInner<T extends string>(
   const selectId = id ?? reactId;
   const helperId = helperText ? `${selectId}-helper` : undefined;
 
-  const stateBorder = invalid ? 'border-[var(--rose)]' : 'border-[var(--border)] hover:border-[var(--border-2)]';
+  const stateBorder = invalid ? 'border-[var(--rose)]' : 'border-[var(--border)] hover:border-[var(--border-strong)]';
   const wrapperWidth = fullWidth ? 'w-full' : '';
 
   return (
@@ -62,7 +62,7 @@ function SelectInner<T extends string>(
       {label && (
         <label
           htmlFor={selectId}
-          className="text-xs font-medium text-[var(--text-2)] tracking-wide flex items-center gap-1"
+          className="text-xs font-medium text-[var(--text-tertiary)] tracking-wide flex items-center gap-1"
         >
           {label}
           {required && <span className="text-[var(--emerald)]">*</span>}
@@ -77,7 +77,7 @@ function SelectInner<T extends string>(
           aria-invalid={invalid || undefined}
           aria-describedby={helperId}
           className={[
-            'appearance-none rounded-[var(--radius-sm)] border bg-[var(--bg-2)] text-[var(--text-0)]',
+            'appearance-none rounded-[var(--radius-sm)] border bg-[var(--bg-elevated)] text-[var(--text-primary)]',
             'transition-colors focus:border-[var(--emerald)] focus:outline-none',
             'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
             stateBorder,
@@ -105,7 +105,7 @@ function SelectInner<T extends string>(
       {helperText && (
         <span
           id={helperId}
-          className={`text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-3)]'}`}
+          className={`text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-muted)]'}`}
         >
           {helperText}
         </span>

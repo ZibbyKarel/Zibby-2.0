@@ -47,20 +47,20 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   const wrapperWidth = fullWidth ? 'w-full' : '';
 
   const fieldBase =
-    'rounded-[var(--radius-sm)] border bg-[var(--bg-2)] px-3 py-2 text-sm ' +
-    'text-[var(--text-0)] placeholder:text-[var(--text-3)] outline-none ' +
+    'rounded-[var(--radius-sm)] border bg-[var(--bg-elevated)] px-3 py-2 text-sm ' +
+    'text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none ' +
     'transition-colors focus:border-[var(--emerald)] ' +
     'disabled:opacity-50 disabled:cursor-not-allowed';
   const fieldState = invalid
     ? 'border-[var(--rose)]'
-    : 'border-[var(--border)] hover:border-[var(--border-2)]';
+    : 'border-[var(--border)] hover:border-[var(--border-strong)]';
 
   return (
     <div className={`flex flex-col gap-1.5 ${wrapperWidth}`.trim()}>
       {label && (
         <label
           htmlFor={fieldId}
-          className="text-xs font-medium text-[var(--text-2)] tracking-wide flex items-center gap-1"
+          className="text-xs font-medium text-[var(--text-tertiary)] tracking-wide flex items-center gap-1"
         >
           {label}
           {required && <span className="text-[var(--emerald)]">*</span>}
@@ -82,7 +82,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
       {helperText && (
         <span
           id={helperId}
-          className={`text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-3)]'}`}
+          className={`text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-muted)]'}`}
         >
           {helperText}
         </span>

@@ -114,31 +114,31 @@ describe('DesignSystemContext', () => {
   it('omitted overrides leave defaults intact', () => {
     function P() {
       const t = useTokens();
-      return <span data-testid="p">{t.color.bg[1]}</span>;
+      return <span data-testid="p">{t.color.bg.surface}</span>;
     }
     render(
       <DesignSystemProvider tokens={{}}>
         <P />
       </DesignSystemProvider>,
     );
-    expect(screen.getByTestId('p').textContent).toBe(defaultTokens.color.bg[1]);
+    expect(screen.getByTestId('p').textContent).toBe(defaultTokens.color.bg.surface);
   });
 
   it('switches token palette via the theme prop', () => {
     function P() {
       const t = useTokens();
-      return <span data-testid="p">{`${t.color.bg[0]}|${t.color.accent.emerald}`}</span>;
+      return <span data-testid="p">{`${t.color.bg.canvas}|${t.color.accent.emerald}`}</span>;
     }
     const { rerender } = render(
       <DesignSystemProvider theme="dark"><P /></DesignSystemProvider>,
     );
     expect(screen.getByTestId('p').textContent).toBe(
-      `${defaultDarkTokens.color.bg[0]}|${defaultDarkTokens.color.accent.emerald}`,
+      `${defaultDarkTokens.color.bg.canvas}|${defaultDarkTokens.color.accent.emerald}`,
     );
 
     rerender(<DesignSystemProvider theme="light"><P /></DesignSystemProvider>);
     expect(screen.getByTestId('p').textContent).toBe(
-      `${defaultLightTokens.color.bg[0]}|${defaultLightTokens.color.accent.emerald}`,
+      `${defaultLightTokens.color.bg.canvas}|${defaultLightTokens.color.accent.emerald}`,
     );
   });
 

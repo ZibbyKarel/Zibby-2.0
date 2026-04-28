@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 
 const row: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' };
 const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12 };
-const label: CSSProperties = { fontSize: 11, color: 'var(--text-2)', letterSpacing: '.08em', textTransform: 'uppercase' };
+const label: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: '.08em', textTransform: 'uppercase' };
 
 const statuses: readonly BadgeStatus[] = [
   'pending', 'blocked', 'running', 'pushing', 'review', 'done', 'failed', 'cancelled', 'interrupted',

@@ -1,7 +1,7 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
-import { Container, type ContainerProps, type Padding } from '../Container';
+import { Container, type ContainerProps } from '../Container';
 import { useTokens } from '../../DesignSystemContext';
-import type { Spacing } from '../../tokens';
+import type { Padding } from '../../tokens';
 import {
   computeVisualStyle,
   type SurfaceBackground,
@@ -13,29 +13,6 @@ import {
 } from '../../visualStyles';
 
 export type CardVariant = 'outlined' | 'elevated' | 'filled';
-
-/**
- * Token-driven padding presets, kept as a stable enum for Card-shaped consumers
- * that want a "card-internal spacing" semantic. A `Padding` tuple is also
- * accepted for one-off values — see {@link Padding}.
- */
-export type CardPaddingPreset = 'none' | 'sm' | 'md' | 'lg';
-export type CardPadding = CardPaddingPreset | Padding;
-
-const PADDING_PRESET: Record<CardPaddingPreset, Spacing> = {
-  none: '0',
-  sm:   '150',
-  md:   '200',
-  lg:   '300',
-};
-
-function resolveCardPadding(padding: CardPadding): Padding {
-  if (typeof padding === 'string') {
-    const sp = PADDING_PRESET[padding];
-    return [sp, sp];
-  }
-  return padding;
-}
 
 type CardVisualDefaults = {
   background: SurfaceBackground;
@@ -66,8 +43,8 @@ export type CardProps = Omit<ContainerProps, 'padding'> & {
   shadow?: SurfaceShadow;
   /** When true, applies a hover-driven border bump and a pointer cursor. */
   interactive?: boolean;
-  /** Internal spacing — preset (`none`/`sm`/`md`/`lg`) or a Padding tuple. */
-  padding?: CardPadding;
+  /** Internal spacing — a Spacing token or a Padding tuple. */
+  padding?: Padding;
 };
 
 /**
@@ -91,7 +68,7 @@ export const Card = forwardRef<HTMLElement, CardProps>(function Card(
     radius = 'md',
     shadow,
     interactive,
-    padding = 'md',
+    padding = '200',
     className = '',
     style,
     children,
@@ -113,17 +90,15 @@ export const Card = forwardRef<HTMLElement, CardProps>(function Card(
   const visualStyle = computeVisualStyle(resolvedVisual, tokens);
 
   const interactiveClass = interactive
-    ? 'cursor-pointer transition-colors hover:border-[var(--border-2)]'
+    ? 'cursor-pointer transition-colors hover:border-[var(--border-strong)]'
     : '';
   const cls = ['ds-card', interactiveClass, className].filter(Boolean).join(' ');
-
-  const containerPadding = resolveCardPadding(padding);
 
   return (
     <Container
       ref={ref}
       {...containerProps}
-      padding={containerPadding}
+      padding={padding}
       className={cls}
       style={mergeStyles(visualStyle, style)}
     >
@@ -153,8 +128,8 @@ export function CardHeader({ title, subtitle, action, className = '', children, 
       {...props}
     >
       <div className="min-w-0 flex-1">
-        {title && <div className="text-sm font-semibold text-[var(--text-0)]">{title}</div>}
-        {subtitle && <div className="text-xs text-[var(--text-2)] mt-0.5">{subtitle}</div>}
+        {title && <div className="text-sm font-semibold text-[var(--text-primary)]">{title}</div>}
+        {subtitle && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{subtitle}</div>}
         {children}
       </div>
       {action && <div className="shrink-0">{action}</div>}
@@ -164,7 +139,7 @@ export function CardHeader({ title, subtitle, action, className = '', children, 
 
 export function CardContent({ className = '', children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`text-sm text-[var(--text-1)] ${className}`.trim()} {...props}>
+    <div className={`text-sm text-[var(--text-secondary)] ${className}`.trim()} {...props}>
       {children}
     </div>
   );

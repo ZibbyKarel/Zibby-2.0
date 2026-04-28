@@ -165,7 +165,7 @@ export function DetailsView({
                     bordered
                     borderTone="strong"
                     radius="sm"
-                    padding="none"
+                    padding="0"
                     width={16}
                     height={16}
                     shrink={false}

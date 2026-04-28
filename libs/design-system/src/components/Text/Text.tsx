@@ -117,15 +117,15 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
   const color = (() => {
     switch (tone) {
       case 'default':
-        return tokens.color.text[0];
+        return tokens.color.text.primary;
       case 'muted':
-        return tokens.color.text[1];
+        return tokens.color.text.secondary;
       case 'subtle':
-        return tokens.color.text[2];
+        return tokens.color.text.tertiary;
       case 'faint':
-        return tokens.color.text[3];
+        return tokens.color.text.muted;
       case 'inverse':
-        return tokens.color.bg[0];
+        return tokens.color.bg.canvas;
       case 'emerald':
         return tokens.color.accent.emerald;
       case 'rose':

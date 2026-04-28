@@ -19,7 +19,7 @@ export function ReviewCard({
         alignItems: 'flex-start',
         gap: 10,
         padding: '10px 12px',
-        background: 'var(--bg-2)',
+        background: 'var(--bg-elevated)',
         border: `1px solid ${checked ? 'var(--emerald)' : 'var(--border)'}`,
         borderRadius: 8,
         cursor: 'pointer',

@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 const wrap: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 18, width: 540 };
 const label: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,

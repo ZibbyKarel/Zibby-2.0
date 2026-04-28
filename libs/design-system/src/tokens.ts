@@ -9,6 +9,9 @@
  * components that still read `var(--xyz)` continue to resolve. Override
  * any path with `<DesignSystemProvider tokens={...}>`; read merged values
  * via `useTokens()` / `useStatusTokens(...)` / `useChipTokens(...)`.
+ *
+ * Concrete theme values live in {@link ./themes/darkTheme} and
+ * {@link ./themes/lightTheme}.
  */
 
 export type Theme = 'dark' | 'light';
@@ -46,14 +49,34 @@ export function spacingToPx(token: Spacing): string {
 }
 
 /**
+ * Padding value accepted by surface components (Card, Accordion, Container).
+ * Either a single spacing token (applied to all sides) or a CSS-shorthand-style
+ * spacing tuple:
+ * - `[v, h]` → top/bottom = v, left/right = h
+ * - `[t, r, b, l]` → top, right, bottom, left
+ */
+export type Padding =
+  | Spacing
+  | [Spacing, Spacing]
+  | [Spacing, Spacing, Spacing, Spacing];
+
+/** Normalises any {@link Padding} value to a `[top, right, bottom, left]` tuple. */
+export function resolvePadding(padding: Padding): [Spacing, Spacing, Spacing, Spacing] {
+  if (typeof padding === 'string') {
+    return [padding, padding, padding, padding];
+  }
+  return padding.length === 2 ? [padding[0], padding[1], padding[0], padding[1]] : padding;
+}
+
+/**
  * Shared t-shirt size scale for sizeable components (Button, IconButton, Chip, …).
  * Components narrow this with `Extract<Size, …>` to advertise the subset they support.
  */
 export type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type ColorTokens = {
-  text: { 0: string; 1: string; 2: string; 3: string };
-  bg:   { 0: string; 1: string; 2: string; 3: string; hover: string };
+  text: { primary: string; secondary: string; tertiary: string; muted: string };
+  bg:   { canvas: string; surface: string; elevated: string; raised: string; hover: string };
   border: { default: string; strong: string };
   accent: { emerald: string; rose: string; amber: string; sky: string; violet: string };
   surface: { accentSoft: string; accentRing: string };
@@ -62,8 +85,8 @@ export type ColorTokens = {
 export type SizeTokens = {
   radius:   string;
   radiusSm: string;
-  shadow1:  string;
-  shadow2:  string;
+  shadowSm: string;
+  shadowLg: string;
 };
 
 export type FontTokens = {
@@ -118,93 +141,20 @@ export type DesignTokens = {
   chip:   ChipToneTokens;
 };
 
-const FONT_SANS = "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
-const FONT_MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
+import { darkTheme }  from './themes/darkTheme';
+import { lightTheme } from './themes/lightTheme';
 
-const SHARED_SIZE: SizeTokens = {
-  radius:   '10px',
-  radiusSm: '6px',
-  shadow1:  '0 1px 2px rgba(0,0,0,.35)',
-  shadow2:  '0 8px 24px rgba(0,0,0,.45)',
-};
-
-const SHARED_SIZE_LIGHT: SizeTokens = {
-  ...SHARED_SIZE,
-  shadow1: '0 1px 2px rgba(0,0,0,.06)',
-  shadow2: '0 12px 28px rgba(0,0,0,.10)',
-};
-
-const SHARED_FONT: FontTokens = { sans: FONT_SANS, mono: FONT_MONO };
-
-const DARK_COLOR: ColorTokens = {
-  text: { 0: '#e6e8ec', 1: '#b4b8c2', 2: '#7a8090', 3: '#555a66' },
-  bg:   { 0: '#0a0b0d', 1: '#0f1114', 2: '#151820', 3: '#1b1f28', hover: '#1e222c' },
-  border: { default: '#22262f', strong: '#2d323d' },
-  accent: { emerald: '#10b981', rose: '#f43f5e', amber: '#f59e0b', sky: '#38bdf8', violet: '#a78bfa' },
-  surface: { accentSoft: 'rgba(16, 185, 129, 0.12)', accentRing: 'rgba(16, 185, 129, 0.35)' },
-};
-
-// In light mode the brand accent shifts from emerald to amber ("DayCoder").
-const LIGHT_COLOR: ColorTokens = {
-  text: { 0: '#0e0f12', 1: '#3a3e48', 2: '#6b7280', 3: '#9aa0ac' },
-  bg:   { 0: '#f6f6f4', 1: '#ffffff', 2: '#fafaf8', 3: '#f0f0ec', hover: '#ececea' },
-  border: { default: '#e6e6e2', strong: '#d4d4d0' },
-  accent: { emerald: '#f59e0b', rose: '#f43f5e', amber: '#f59e0b', sky: '#38bdf8', violet: '#a78bfa' },
-  surface: { accentSoft: 'rgba(245, 158, 11, 0.14)', accentRing: 'rgba(245, 158, 11, 0.4)' },
-};
-
-function statusFor(c: ColorTokens): StatusTokens {
-  return {
-    pending:     { label: 'pending',     color: c.text[2],    bg: c.bg[3],                 dot: c.text[3] },
-    blocked:     { label: 'blocked',     color: c.text[2],    bg: c.bg[3],                 dot: c.text[3] },
-    running:     { label: 'running',     color: c.accent.emerald, bg: 'rgba(16,185,129,.12)',  dot: c.accent.emerald, pulse: true },
-    pushing:     { label: 'pushing',     color: c.accent.sky,     bg: 'rgba(56,189,248,.12)',  dot: c.accent.sky,     pulse: true },
-    review:      { label: 'review',      color: c.accent.violet,  bg: 'rgba(167,139,250,.12)', dot: c.accent.violet },
-    done:        { label: 'done',        color: c.accent.emerald, bg: 'rgba(16,185,129,.10)',  dot: c.accent.emerald },
-    failed:      { label: 'failed',      color: c.accent.rose,    bg: 'rgba(244,63,94,.10)',   dot: c.accent.rose },
-    cancelled:   { label: 'cancelled',   color: c.accent.amber,   bg: 'rgba(245,158,11,.10)',  dot: c.accent.amber },
-    interrupted: { label: 'interrupted', color: c.accent.amber,   bg: 'rgba(245,158,11,.12)',  dot: c.accent.amber,   pulse: true },
-    conflict:    { label: 'conflict',    color: c.accent.rose,    bg: 'rgba(244,63,94,.12)',   dot: c.accent.rose,    pulse: true },
-    merging:     { label: 'merging',     color: c.accent.sky,     bg: 'rgba(56,189,248,.12)',  dot: c.accent.sky,     pulse: true },
-    merged:      { label: 'merged',      color: c.accent.emerald, bg: 'rgba(16,185,129,.10)',  dot: c.accent.emerald },
-  };
-}
-
-function chipFor(c: ColorTokens): ChipToneTokens {
-  return {
-    neutral: { color: c.text[1],        bg: c.bg[3],                  border: c.border.default        },
-    accent:  { color: c.accent.emerald, bg: 'rgba(16,185,129,.08)',   border: 'rgba(16,185,129,.25)'  },
-    violet:  { color: c.accent.violet,  bg: 'rgba(167,139,250,.10)',  border: 'rgba(167,139,250,.25)' },
-    warn:    { color: c.accent.amber,   bg: 'rgba(245,158,11,.10)',   border: 'rgba(245,158,11,.25)'  },
-    sky:     { color: c.accent.sky,     bg: 'rgba(56,189,248,.10)',   border: 'rgba(56,189,248,.25)'  },
-    rose:    { color: c.accent.rose,    bg: 'rgba(244,63,94,.10)',    border: 'rgba(244,63,94,.25)'   },
-  };
-}
-
-export const defaultDarkTokens: DesignTokens = {
-  color:  DARK_COLOR,
-  size:   SHARED_SIZE,
-  font:   SHARED_FONT,
-  status: statusFor(DARK_COLOR),
-  chip:   chipFor(DARK_COLOR),
-};
-
-export const defaultLightTokens: DesignTokens = {
-  color:  LIGHT_COLOR,
-  size:   SHARED_SIZE_LIGHT,
-  font:   SHARED_FONT,
-  status: statusFor(LIGHT_COLOR),
-  chip:   chipFor(LIGHT_COLOR),
-};
+export const defaultDarkTokens:  DesignTokens = darkTheme;
+export const defaultLightTokens: DesignTokens = lightTheme;
 
 /** Default tokens for the dark theme. Kept for backwards compatibility. */
 export const defaultTokens: DesignTokens = defaultDarkTokens;
 
-export const defaultColorTokens: ColorTokens = defaultDarkTokens.color;
-export const defaultSizeTokens:  SizeTokens   = defaultDarkTokens.size;
-export const defaultFontTokens:  FontTokens   = defaultDarkTokens.font;
-export const defaultStatusTokens: StatusTokens = defaultDarkTokens.status;
-export const defaultChipToneTokens: ChipToneTokens = defaultDarkTokens.chip;
+export const defaultColorTokens:     ColorTokens     = defaultDarkTokens.color;
+export const defaultSizeTokens:      SizeTokens      = defaultDarkTokens.size;
+export const defaultFontTokens:      FontTokens      = defaultDarkTokens.font;
+export const defaultStatusTokens:    StatusTokens    = defaultDarkTokens.status;
+export const defaultChipToneTokens:  ChipToneTokens  = defaultDarkTokens.chip;
 
 export function tokensForTheme(theme: Theme): DesignTokens {
   return theme === 'light' ? defaultLightTokens : defaultDarkTokens;
@@ -212,37 +162,37 @@ export function tokensForTheme(theme: Theme): DesignTokens {
 
 /**
  * Maps token paths to CSS-variable names emitted by `DesignSystemProvider`.
- * Components that already use `var(--bg-0)`/`var(--emerald)`/etc resolve
+ * Components that already use `var(--bg-canvas)`/`var(--emerald)`/etc resolve
  * against these provider-scoped variables — no globally-defined `:root`
  * declaration required.
  */
 export function tokensToCssVars(t: DesignTokens): Record<string, string> {
   return {
-    '--text-0': t.color.text[0],
-    '--text-1': t.color.text[1],
-    '--text-2': t.color.text[2],
-    '--text-3': t.color.text[3],
-    '--bg-0':   t.color.bg[0],
-    '--bg-1':   t.color.bg[1],
-    '--bg-2':   t.color.bg[2],
-    '--bg-3':   t.color.bg[3],
-    '--bg-hover': t.color.bg.hover,
-    '--border':   t.color.border.default,
-    '--border-2': t.color.border.strong,
-    '--emerald':  t.color.accent.emerald,
-    '--rose':     t.color.accent.rose,
-    '--amber':    t.color.accent.amber,
-    '--sky':      t.color.accent.sky,
-    '--violet':   t.color.accent.violet,
-    '--accent':       t.color.accent.emerald,
-    '--accent-soft':  t.color.surface.accentSoft,
-    '--accent-ring':  t.color.surface.accentRing,
-    '--radius':    t.size.radius,
-    '--radius-sm': t.size.radiusSm,
-    '--shadow-1':  t.size.shadow1,
-    '--shadow-2':  t.size.shadow2,
-    '--sans': t.font.sans,
-    '--mono': t.font.mono,
+    '--text-primary':   t.color.text.primary,
+    '--text-secondary': t.color.text.secondary,
+    '--text-tertiary':  t.color.text.tertiary,
+    '--text-muted':     t.color.text.muted,
+    '--bg-canvas':      t.color.bg.canvas,
+    '--bg-surface':     t.color.bg.surface,
+    '--bg-elevated':    t.color.bg.elevated,
+    '--bg-raised':      t.color.bg.raised,
+    '--bg-hover':       t.color.bg.hover,
+    '--border':         t.color.border.default,
+    '--border-strong':  t.color.border.strong,
+    '--emerald':        t.color.accent.emerald,
+    '--rose':           t.color.accent.rose,
+    '--amber':          t.color.accent.amber,
+    '--sky':            t.color.accent.sky,
+    '--violet':         t.color.accent.violet,
+    '--accent':         t.color.accent.emerald,
+    '--accent-soft':    t.color.surface.accentSoft,
+    '--accent-ring':    t.color.surface.accentRing,
+    '--radius':         t.size.radius,
+    '--radius-sm':      t.size.radiusSm,
+    '--shadow-sm':      t.size.shadowSm,
+    '--shadow-lg':      t.size.shadowLg,
+    '--sans':           t.font.sans,
+    '--mono':           t.font.mono,
   };
 }
 
@@ -257,8 +207,8 @@ export function mergeTokens(base: DesignTokens, override?: PartialDesignTokens):
       accent:  { ...base.color.accent,  ...override.color?.accent },
       surface: { ...base.color.surface, ...override.color?.surface },
     },
-    size: { ...base.size, ...override.size },
-    font: { ...base.font, ...override.font },
+    size:   { ...base.size,   ...override.size },
+    font:   { ...base.font,   ...override.font },
     status: mergeRecord(base.status, override.status),
     chip:   mergeRecord(base.chip,   override.chip),
   };

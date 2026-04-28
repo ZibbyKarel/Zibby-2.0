@@ -39,10 +39,10 @@ export function Alert({
       <span className="mt-0.5 flex shrink-0">
         {icon ?? <Icon value={p.icon} size="md" />}
       </span>
-      <div className="flex-1 min-w-0 text-[var(--text-0)]">
+      <div className="flex-1 min-w-0 text-[var(--text-primary)]">
         {title && <div className="text-xs font-semibold" style={{ color: p.color }}>{title}</div>}
         {children && (
-          <div className={`text-xs text-[var(--text-1)] ${title ? 'mt-0.5' : ''}`}>{children}</div>
+          <div className={`text-xs text-[var(--text-secondary)] ${title ? 'mt-0.5' : ''}`}>{children}</div>
         )}
       </div>
       {onClose && (
@@ -50,7 +50,7 @@ export function Alert({
           type="button"
           aria-label="Close alert"
           onClick={onClose}
-          className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
+          className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Icon value={IconName.X} size="xs" />
         </button>

@@ -14,7 +14,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 24, width: 'min(620px, 90vw)' };
-const label: CSSProperties = { fontSize: 11, color: 'var(--text-2)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 };
+const label: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 };
 
 const baseTabs: readonly TabItem[] = [
   { key: 'overview', label: 'Overview' },
@@ -28,7 +28,7 @@ function Demo({ variant, size }: { variant: 'underline' | 'pills'; size: 'sm' | 
   return (
     <div>
       <Tabs tabs={baseTabs} activeKey={k} onChange={setK} variant={variant} size={size} aria-label={`${variant} ${size}`} />
-      <div style={{ paddingTop: 12, fontSize: 13, color: 'var(--text-1)' }}>
+      <div style={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
         <TabPanel tabKey="overview" active={k === 'overview'}>Overview content</TabPanel>
         <TabPanel tabKey="logs" active={k === 'logs'}>Logs content</TabPanel>
         <TabPanel tabKey="pr" active={k === 'pr'}>PR content</TabPanel>

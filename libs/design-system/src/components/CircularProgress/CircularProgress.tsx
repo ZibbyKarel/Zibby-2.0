@@ -77,7 +77,7 @@ export function CircularProgress({
         </svg>
         {determinateValueShown && isDeterminate && (
           <div
-            className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-[var(--text-0)]"
+            className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-[var(--text-primary)]"
             style={{ fontSize: Math.max(9, Math.round(size * 0.22)) }}
           >
             {Math.round(pct)}%
@@ -85,7 +85,7 @@ export function CircularProgress({
         )}
       </div>
       {label && (
-        <div className="mt-0.5 text-center text-[9px] uppercase tracking-widest text-[var(--text-2)]">
+        <div className="mt-0.5 text-center text-[9px] uppercase tracking-widest text-[var(--text-tertiary)]">
           {label}
         </div>
       )}

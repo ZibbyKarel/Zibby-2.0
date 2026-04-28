@@ -31,19 +31,19 @@ const cell: CSSProperties = {
   padding: '12px 8px',
   border: '1px solid var(--border)',
   borderRadius: 8,
-  background: 'var(--bg-2)',
+  background: 'var(--bg-elevated)',
 };
 
 const label: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   fontFamily: 'var(--mono)',
   letterSpacing: '.04em',
 };
 
 const sectionLabel: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,

@@ -21,7 +21,7 @@ const grid: CSSProperties = {
 };
 const label: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,
@@ -34,8 +34,8 @@ const Btn = (props: { children: string }) => (
       padding: '4px 8px',
       borderRadius: 6,
       border: '1px solid var(--border)',
-      background: 'var(--bg-3)',
-      color: 'var(--text-0)',
+      background: 'var(--bg-raised)',
+      color: 'var(--text-primary)',
       fontSize: 12,
       cursor: 'pointer',
     }}
@@ -57,12 +57,12 @@ export const Overview: Story = {
         <Card variant="filled">Filled</Card>
       </div>
 
-      <div style={{ ...label, marginTop: 24 }}>Padding (preset and tuple)</div>
+      <div style={{ ...label, marginTop: 24 }}>Padding (spacing token and tuple)</div>
       <div style={grid}>
-        <Card padding="none">no padding</Card>
-        <Card padding="sm">sm padding</Card>
-        <Card padding="md">md padding</Card>
-        <Card padding="lg">lg padding</Card>
+        <Card padding="0">no padding ('0')</Card>
+        <Card padding="150">150 (12px)</Card>
+        <Card padding="200">200 (16px)</Card>
+        <Card padding="300">300 (24px)</Card>
         <Card padding={['100', '100']}>tuple ['100','100'] (8px)</Card>
         <Card padding={['75', '350']}>tuple ['75','350'] (6px/28px)</Card>
         <Card padding={['50', '150', '250', '150']}>tuple ['50','150','250','150']</Card>
@@ -100,7 +100,7 @@ export const Overview: Story = {
         <Card radius="none">radius none</Card>
         <Card radius="sm">radius sm</Card>
         <Card radius="md">radius md</Card>
-        <Card radius="pill" padding="sm">radius pill</Card>
+        <Card radius="pill" padding="150">radius pill</Card>
         <Card shadow="1">shadow 1</Card>
         <Card shadow="2">shadow 2</Card>
       </div>
@@ -151,7 +151,7 @@ export const Overview: Story = {
 export const Playground: Story = {
   args: {
     variant: 'outlined',
-    padding: 'md',
+    padding: '200',
     radius: 'md',
     interactive: false,
     as: 'div',
@@ -160,7 +160,7 @@ export const Playground: Story = {
   },
   argTypes: {
     variant:     { control: 'select', options: ['outlined', 'elevated', 'filled'] },
-    padding:     { control: 'select', options: ['none', 'sm', 'md', 'lg'] },
+    padding:     { control: 'select', options: ['0', '25', '50', '75', '100', '150', '200', '250', '300', '350', '400', '450', '500'] },
     background:  { control: 'select', options: ['bg0', 'bg1', 'bg2', 'bg3', 'hover', 'emerald', 'rose', 'amber', 'sky', 'violet', 'emeraldTint', 'roseTint', 'amberTint', 'skyTint', 'violetTint', 'accentSoft', 'backdrop', 'transparent'] },
     bordered:    { control: 'boolean' },
     borderTone:  { control: 'select', options: ['default', 'strong', 'accent', 'emerald', 'rose', 'amber', 'sky', 'violet'] },

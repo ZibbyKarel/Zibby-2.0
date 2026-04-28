@@ -54,7 +54,7 @@ export function FilterChip({
     sizeClasses[size];
 
   const inactiveClasses =
-    'bg-transparent border-[var(--border)] text-[var(--text-2)] hover:bg-[var(--bg-hover)]';
+    'bg-transparent border-[var(--border)] text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)]';
 
   const fire = (e: MouseEvent | KeyboardEvent) => {
     if (disabled) return;

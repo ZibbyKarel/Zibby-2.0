@@ -42,7 +42,7 @@ export function Column({ id, title, accent, count, children, isEmpty, onDropTask
       <Stack direction="column" gap="100" grow>
         <Container as="header" padding={['25', '50']}>
           <Stack direction="row" align="center" gap="100">
-            <Card variant="filled" background={accent} bordered={false} radius="pill" padding="none" width={7} height={7} />
+            <Card variant="filled" background={accent} bordered={false} radius="pill" padding="0" width={7} height={7} />
             <Text as="h2" size="sm" weight="semibold" tone="muted" tracking="wide" transform="uppercase">
               {title}
             </Text>

@@ -57,9 +57,9 @@ export function Snackbar({
     <div
       role={severity === 'error' ? 'alert' : 'status'}
       aria-live={severity === 'error' ? 'assertive' : 'polite'}
-      className={`pointer-events-auto inline-flex items-start gap-2.5 min-w-[280px] rounded-[var(--radius)] border bg-[var(--bg-1)] p-3 shadow-[var(--shadow-2)] ${className}`.trim()}
+      className={`pointer-events-auto inline-flex items-start gap-2.5 min-w-[280px] rounded-[var(--radius)] border bg-[var(--bg-surface)] p-3 shadow-[var(--shadow-lg)] ${className}`.trim()}
       style={{
-        borderColor: 'var(--border-2)',
+        borderColor: 'var(--border-strong)',
         borderLeft: `3px solid ${color}`,
       }}
     >
@@ -67,9 +67,9 @@ export function Snackbar({
         {icon ?? <Icon value={defaultIconFor[severity]} size="sm" />}
       </span>
       <div className="flex-1 min-w-0">
-        {title && <div className="text-xs font-semibold text-[var(--text-0)]">{title}</div>}
+        {title && <div className="text-xs font-semibold text-[var(--text-primary)]">{title}</div>}
         {message && (
-          <div className={`text-[11px] text-[var(--text-2)] ${title ? 'mt-0.5' : ''}`}>{message}</div>
+          <div className={`text-[11px] text-[var(--text-tertiary)] ${title ? 'mt-0.5' : ''}`}>{message}</div>
         )}
       </div>
       {onClose && (
@@ -77,7 +77,7 @@ export function Snackbar({
           type="button"
           aria-label="Close notification"
           onClick={onClose}
-          className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
+          className="flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Icon value={IconName.X} size="xs" />
         </button>

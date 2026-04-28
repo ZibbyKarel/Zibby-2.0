@@ -17,8 +17,8 @@ const trigger: CSSProperties = {
   padding: '6px 10px',
   border: '1px solid var(--border)',
   borderRadius: 6,
-  background: 'var(--bg-3)',
-  color: 'var(--text-0)',
+  background: 'var(--bg-raised)',
+  color: 'var(--text-primary)',
   cursor: 'pointer',
   fontSize: 12,
 };
@@ -32,7 +32,7 @@ function Demo({ anchor, label }: { anchor: DrawerAnchor; label: string }) {
       </button>
       <Drawer open={open} onClose={() => setOpen(false)} anchor={anchor} title={`${label} drawer`}>
         <div style={{ padding: 16 }}>
-          <p style={{ margin: 0, color: 'var(--text-1)', fontSize: 13 }}>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
             Drawer content for the {anchor} anchor.
           </p>
         </div>
@@ -98,7 +98,7 @@ export const Playground: Story = {
             setOpen(false);
           }}
         >
-          <div style={{ padding: 16, color: 'var(--text-1)', fontSize: 13 }}>
+          <div style={{ padding: 16, color: 'var(--text-secondary)', fontSize: 13 }}>
             Drawer body
           </div>
         </Drawer>

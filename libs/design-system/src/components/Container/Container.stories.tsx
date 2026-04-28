@@ -24,18 +24,18 @@ const wrap: CSSProperties = {
 
 const sectionLabel: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,
 };
 
 const tile: CSSProperties = {
-  background: 'var(--bg-3)',
+  background: 'var(--bg-raised)',
   border: '1px solid var(--border)',
   borderRadius: 6,
   fontSize: 12,
-  color: 'var(--text-0)',
+  color: 'var(--text-primary)',
 };
 
 /**
@@ -68,11 +68,11 @@ export const Overview: Story = {
 
       <div>
         <div style={sectionLabel}>Position (parent: relative; child: absolute)</div>
-        <Container position="relative" width={300} height={80} style={{ ...tile, background: 'var(--bg-1)' }}>
-          <Container position="absolute" top={8} right={8} padding={['75', '75']} style={{ ...tile, background: 'var(--bg-2)' }}>
+        <Container position="relative" width={300} height={80} style={{ ...tile, background: 'var(--bg-surface)' }}>
+          <Container position="absolute" top={8} right={8} padding={['75', '75']} style={{ ...tile, background: 'var(--bg-elevated)' }}>
             top-right
           </Container>
-          <Container position="absolute" bottom={8} left={8} padding={['75', '75']} style={{ ...tile, background: 'var(--bg-2)' }}>
+          <Container position="absolute" bottom={8} left={8} padding={['75', '75']} style={{ ...tile, background: 'var(--bg-elevated)' }}>
             bottom-left
           </Container>
         </Container>
@@ -80,7 +80,7 @@ export const Overview: Story = {
 
       <div>
         <div style={sectionLabel}>Overflow (scroll)</div>
-        <Container width={240} height={60} overflowY="auto" padding={['100', '100']} style={{ ...tile, background: 'var(--bg-1)' }}>
+        <Container width={240} height={60} overflowY="auto" padding={['100', '100']} style={{ ...tile, background: 'var(--bg-surface)' }}>
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} style={{ padding: '4px 0' }}>scrollable line {i + 1}</div>
           ))}
@@ -174,7 +174,7 @@ export const Playground: Story = {
   },
   render: (args) => (
     <div style={{ padding: 16 }}>
-      <Container {...args} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)' }} />
+      <Container {...args} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }} />
     </div>
   ),
 };

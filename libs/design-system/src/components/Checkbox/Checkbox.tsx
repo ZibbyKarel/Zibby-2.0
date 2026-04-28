@@ -36,7 +36,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   const inputId = id ?? reactId;
   const helperId = helperText ? `${inputId}-helper` : undefined;
 
-  const borderColor = invalid ? 'border-[var(--rose)]' : 'border-[var(--border-2)]';
+  const borderColor = invalid ? 'border-[var(--rose)]' : 'border-[var(--border-strong)]';
 
   return (
     <span className="inline-flex flex-col gap-0.5">
@@ -52,19 +52,19 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             disabled={disabled}
             aria-invalid={invalid || undefined}
             aria-describedby={helperId}
-            className={`peer ${boxSize[size]} appearance-none rounded-[var(--radius-sm)] border ${borderColor} bg-[var(--bg-2)] transition-colors checked:bg-[var(--emerald)] checked:border-[var(--emerald)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald)]/40 ${className}`.trim()}
+            className={`peer ${boxSize[size]} appearance-none rounded-[var(--radius-sm)] border ${borderColor} bg-[var(--bg-elevated)] transition-colors checked:bg-[var(--emerald)] checked:border-[var(--emerald)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald)]/40 ${className}`.trim()}
             {...props}
           />
           <span className="pointer-events-none absolute inset-0 m-auto flex items-center justify-center text-[#04140d] opacity-0 peer-checked:opacity-100 transition-opacity">
             <Icon value={IconName.Check} size={checkSize[size]} strokeWidth={3} />
           </span>
         </span>
-        {label && <span className={`${labelSize[size]} text-[var(--text-0)]`}>{label}</span>}
+        {label && <span className={`${labelSize[size]} text-[var(--text-primary)]`}>{label}</span>}
       </label>
       {helperText && (
         <span
           id={helperId}
-          className={`pl-6 text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-3)]'}`}
+          className={`pl-6 text-xs ${invalid ? 'text-[var(--rose)]' : 'text-[var(--text-muted)]'}`}
         >
           {helperText}
         </span>

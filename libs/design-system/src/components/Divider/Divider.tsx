@@ -41,7 +41,7 @@ export function Divider({
       <div
         role="separator"
         aria-orientation="horizontal"
-        className={`flex items-center gap-3 text-[11px] uppercase tracking-widest text-[var(--text-3)] ${className}`.trim()}
+        className={`flex items-center gap-3 text-[11px] uppercase tracking-widest text-[var(--text-muted)] ${className}`.trim()}
         style={{ marginBlock: spacing }}
       >
         <span className="h-px flex-1 bg-[var(--border)]" />

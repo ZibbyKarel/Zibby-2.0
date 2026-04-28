@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button,
   Card,
   Container,
   Icon,
@@ -73,7 +72,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
           borderTone="strong"
           radius="md"
           shadow="2"
-          padding="none"
+          padding="0"
           overflowY="hidden"
           width="min(560px, 94vw)"
           onClick={(e) => e.stopPropagation()}
@@ -107,19 +106,26 @@ export function CommandPalette({ open, onClose, commands }: Props) {
                   </Container>
                 )}
                 {matches.map((c, idx) => (
-                  <Button
+                  <button
                     key={c.id}
-                    variant="surface"
                     type="button"
-                    background={idx === selected ? 'bg3' : 'transparent'}
-                    radius="sm"
-                    padding={['100', '100']}
-                    width="100%"
-                    textAlign="left"
-                    cursor="pointer"
                     onMouseEnter={() => setSelected(idx)}
                     onClick={() => { c.run(); onClose(); }}
                     data-testid={TestIds.CommandPalette.item(c.id)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'left',
+                      padding: '8px',
+                      cursor: 'pointer',
+                      background: idx === selected ? 'var(--bg-raised)' : 'transparent',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      color: 'inherit',
+                      font: 'inherit',
+                      transition: 'background 0.15s',
+                    }}
                   >
                     <Stack direction="row" align="center" gap="100" grow>
                       <Container width={20}>
@@ -133,7 +139,7 @@ export function CommandPalette({ open, onClose, commands }: Props) {
                       {c.hint && <Text size="xs" tone="faint">{c.hint}</Text>}
                       {c.kbd && <Kbd>{c.kbd}</Kbd>}
                     </Stack>
-                  </Button>
+                  </button>
                 ))}
               </Stack>
             </Container>

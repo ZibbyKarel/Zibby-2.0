@@ -33,21 +33,21 @@ input, textarea, select { font-family: inherit; }
 
 /* Scoped under .ds-root so we don't restyle host pages outside the provider. */
 .ds-root {
-  background: var(--bg-0);
-  color: var(--text-0);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 
 .ds-root *::-webkit-scrollbar { width: 10px; height: 10px; }
 .ds-root *::-webkit-scrollbar-thumb {
-  background: var(--border-2);
+  background: var(--border-strong);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .ds-root *::-webkit-scrollbar-thumb:hover {
-  background: var(--text-3);
+  background: var(--text-muted);
   background-clip: padding-box;
   border: 2px solid transparent;
 }
@@ -94,7 +94,7 @@ input, textarea, select { font-family: inherit; }
 
 .ds-spinner {
   width: 14px; height: 14px; border-radius: 50%;
-  border: 1.5px solid var(--border-2); border-top-color: var(--emerald);
+  border: 1.5px solid var(--border-strong); border-top-color: var(--emerald);
   animation: ds-spin .8s linear infinite;
 }
 
@@ -138,5 +138,5 @@ button.ds-button-surface { border-width: 0; padding: 0; font: inherit; color: in
   font: inherit;
 }
 .ds-bare-input::placeholder,
-.ds-bare-textarea::placeholder { color: var(--text-3); }
+.ds-bare-textarea::placeholder { color: var(--text-muted); }
 

@@ -36,30 +36,30 @@ describe('Card', () => {
   it('outlined variant applies bg1 + default border', () => {
     render(<Card variant="outlined" data-testid="c">x</Card>);
     const el = screen.getByTestId('c');
-    expect(el.style.background).toBe(rgb(defaultDarkTokens.color.bg[1]));
+    expect(el.style.background).toBe(rgb(defaultDarkTokens.color.bg.surface));
     expect(el.style.borderTopWidth).toBe('1px');
     expect(el.style.borderColor).toBe(rgb(defaultDarkTokens.color.border.default));
     expect(el.style.boxShadow).toBe('');
   });
 
-  it('elevated variant applies the shadow-2 token', () => {
+  it('elevated variant applies the shadow-lg token', () => {
     render(<Card variant="elevated" data-testid="c">x</Card>);
     const el = screen.getByTestId('c');
-    expect(el.style.boxShadow).toBe(defaultDarkTokens.size.shadow2);
+    expect(el.style.boxShadow).toBe(defaultDarkTokens.size.shadowLg);
     expect(el.style.borderTopWidth).toBe('1px');
   });
 
   it('filled variant applies bg2 with no border', () => {
     render(<Card variant="filled" data-testid="c">x</Card>);
     const el = screen.getByTestId('c');
-    expect(el.style.background).toBe(rgb(defaultDarkTokens.color.bg[2]));
+    expect(el.style.background).toBe(rgb(defaultDarkTokens.color.bg.elevated));
     expect(el.style.borderTopWidth).toBe('');
     expect(el.style.borderBottomWidth).toBe('');
   });
 
   it('explicit `background` overrides the variant default', () => {
     render(<Card variant="outlined" background="bg3" data-testid="c">x</Card>);
-    expect(screen.getByTestId('c').style.background).toBe(rgb(defaultDarkTokens.color.bg[3]));
+    expect(screen.getByTestId('c').style.background).toBe(rgb(defaultDarkTokens.color.bg.raised));
   });
 
   it('explicit `bordered={false}` drops the variant border', () => {
@@ -90,14 +90,14 @@ describe('Card', () => {
 
   it('explicit shadow="2" applies the shadow even on outlined', () => {
     render(<Card variant="outlined" shadow="2" data-testid="c">x</Card>);
-    expect(screen.getByTestId('c').style.boxShadow).toBe(defaultDarkTokens.size.shadow2);
+    expect(screen.getByTestId('c').style.boxShadow).toBe(defaultDarkTokens.size.shadowLg);
   });
 
   it.each([
-    ['none', '0px'],
-    ['sm',   '12px'],
-    ['md',   '16px'],
-    ['lg',   '24px'],
+    ['0',   '0px'],
+    ['150', '12px'],
+    ['200', '16px'],
+    ['300', '24px'],
   ] as const)('padding=%s sets every edge to %s', (pad, expected) => {
     render(<Card padding={pad} data-testid="c">x</Card>);
     const el = screen.getByTestId('c');

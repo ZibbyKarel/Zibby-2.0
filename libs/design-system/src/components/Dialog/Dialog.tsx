@@ -17,6 +17,8 @@ export type DialogProps = {
   /** Esc closes by default. Set false to disable. */
   closeOnEsc?: boolean;
   className?: string;
+  /** Forwarded onto the dialog surface for tests. */
+  'data-testid'?: string;
 };
 
 export function Dialog({
@@ -30,6 +32,7 @@ export function Dialog({
   closeOnBackdropClick = true,
   closeOnEsc = true,
   className = '',
+  'data-testid': dataTestId,
 }: DialogProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
 
@@ -43,9 +46,12 @@ export function Dialog({
   }, [open, closeOnEsc, onClose]);
 
   useEffect(() => {
-    if (open) {
-      surfaceRef.current?.focus();
-    }
+    if (!open) return;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    // Don't steal focus if a descendant (e.g. an autoFocus input) already has it.
+    if (surface.contains(document.activeElement)) return;
+    surface.focus();
   }, [open]);
 
   if (!open) return null;
@@ -63,13 +69,14 @@ export function Dialog({
         aria-label={typeof title === 'string' ? title : undefined}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`flex max-h-[92vh] flex-col rounded-[14px] border border-[var(--border-2)] bg-[var(--bg-1)] shadow-[var(--shadow-2)] outline-none ${className}`.trim()}
+        className={`flex max-h-[92vh] flex-col rounded-[14px] border border-[var(--border-strong)] bg-[var(--bg-surface)] shadow-[var(--shadow-lg)] outline-none ${className}`.trim()}
         style={{ width }}
+        data-testid={dataTestId}
       >
         {(title || description) && (
           <header className="flex flex-col gap-1 border-b border-[var(--border)] px-5 py-4">
-            {title && <div className="text-[15px] font-semibold text-[var(--text-0)]">{title}</div>}
-            {description && <div className="text-xs text-[var(--text-2)]">{description}</div>}
+            {title && <div className="text-[15px] font-semibold text-[var(--text-primary)]">{title}</div>}
+            {description && <div className="text-xs text-[var(--text-tertiary)]">{description}</div>}
           </header>
         )}
         <div className="min-h-0 flex-1 overflow-auto px-5 py-4">{children}</div>
@@ -85,7 +92,7 @@ export function Dialog({
 
 export function DialogBody({ className = '', children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`text-sm text-[var(--text-1)] ${className}`.trim()} {...props}>
+    <div className={`text-sm text-[var(--text-secondary)] ${className}`.trim()} {...props}>
       {children}
     </div>
   );

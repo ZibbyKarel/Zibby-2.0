@@ -73,18 +73,18 @@ export function Drawer({
         role="dialog"
         aria-modal={modal}
         aria-label={typeof title === 'string' ? title : undefined}
-        className={`absolute flex flex-col bg-[var(--bg-1)] border-[var(--border)] shadow-[var(--shadow-2)] pointer-events-auto ${anchorStyles[anchor]} ${className}`.trim()}
+        className={`absolute flex flex-col bg-[var(--bg-surface)] border-[var(--border)] shadow-[var(--shadow-lg)] pointer-events-auto ${anchorStyles[anchor]} ${className}`.trim()}
         style={dimensions}
       >
         {title && (
           <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-            <div className="text-sm font-semibold text-[var(--text-0)]">{title}</div>
+            <div className="text-sm font-semibold text-[var(--text-primary)]">{title}</div>
             {onClose && (
               <button
                 type="button"
                 aria-label="Close drawer"
                 onClick={onClose}
-                className="flex cursor-pointer items-center border-none bg-transparent p-1 text-[var(--text-3)] hover:text-[var(--text-1)]"
+                className="flex cursor-pointer items-center border-none bg-transparent p-1 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               >
                 <Icon value={IconName.X} size="sm" strokeWidth={2} />
               </button>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { TaskDiffFile } from '@nightcoder/shared-types/ipc';
-import { Button, Card, Container, Icon, IconName, Stack, Text, type TextTone } from '@nightcoder/design-system';
+import { Accordion, AccordionSummary, AccordionDetails, Card, Container, Icon, IconName, Stack, Text, type TextTone } from '@nightcoder/design-system';
 import type { HunkLine } from './types';
 import { diffSummary, filePathLabel, changeKindTone, parseHunkLines, rowBackground } from './diffUtils';
 
@@ -60,7 +60,7 @@ function DiffHunks({ hunks }: { hunks: string[] }) {
   for (const h of hunks) rows.push(...parseHunkLines(h));
 
   return (
-    <Card variant="filled" background="bg0" bordered={false} radius="none" padding="none" overflowX="auto">
+    <Card variant="filled" background="bg0" bordered={false} radius="none" padding="0" overflowX="auto">
       {rows.map((r, i) => (
         <HunkRow key={i} row={r} />
       ))}
@@ -69,32 +69,13 @@ function DiffHunks({ hunks }: { hunks: string[] }) {
 }
 
 export function DiffFileBlock({ file }: { file: TaskDiffFile }) {
-  const [collapsed, setCollapsed] = useState(false);
   const { adds, dels } = diffSummary(file);
   const label = filePathLabel(file);
 
   return (
-    <Card
-      variant="outlined"
-      background="bg1"
-      radius="sm"
-      padding="none"
-      overflowX="hidden"
-      overflowY="hidden"
-    >
-      <Button
-        variant="surface"
-        type="button"
-        background="bg2"
-        bordered={!collapsed ? { bottom: true } : false}
-        radius="none"
-        textAlign="left"
-        padding={['100', '100']}
-        width="100%"
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <Stack direction="row" align="center" gap="100" grow>
-          <Icon value={collapsed ? IconName.ChevronRight : IconName.ChevronDown} size="xs" />
+    <Accordion defaultExpanded variant="outlined" background="bg1" radius="sm">
+      <AccordionSummary expandIconPosition="start">
+        <Stack direction="row" align="center" gap="100">
           <Card variant="filled" background="bg3" bordered={false} radius="pill" padding={['25', '75']}>
             <Text
               size="xs"
@@ -118,9 +99,9 @@ export function DiffFileBlock({ file }: { file: TaskDiffFile }) {
             −{dels}
           </Text>
         </Stack>
-      </Button>
-      {!collapsed &&
-        (file.changeKind === 'binary' || file.hunks.length === 0 ? (
+      </AccordionSummary>
+      <AccordionDetails padding="0">
+        {file.changeKind === 'binary' || file.hunks.length === 0 ? (
           <Container padding={['150', '150']}>
             <Text size="sm" tone="faint">
               {file.changeKind === 'binary'
@@ -130,7 +111,8 @@ export function DiffFileBlock({ file }: { file: TaskDiffFile }) {
           </Container>
         ) : (
           <DiffHunks hunks={file.hunks} />
-        ))}
-    </Card>
+        )}
+      </AccordionDetails>
+    </Accordion>
   );
 }

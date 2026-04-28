@@ -24,11 +24,11 @@ export type IconButtonProps = Omit<
 
 const variantClasses: Record<IconButtonVariant, string> = {
   ghost:
-    'bg-transparent text-[var(--text-1)] border-transparent hover:bg-[var(--bg-hover)]',
+    'bg-transparent text-[var(--text-secondary)] border-transparent hover:bg-[var(--bg-hover)]',
   secondary:
-    'bg-[var(--bg-2)] text-[var(--text-1)] border-[var(--border)] hover:bg-[var(--bg-hover)]',
+    'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border)] hover:bg-[var(--bg-hover)]',
   outline:
-    'bg-transparent text-[var(--text-0)] border-[var(--border-2)] hover:bg-[var(--bg-hover)]',
+    'bg-transparent text-[var(--text-primary)] border-[var(--border-strong)] hover:bg-[var(--bg-hover)]',
   primary:
     'bg-[var(--emerald)] text-[#04140d] border-[var(--emerald)] hover:opacity-90',
   danger:

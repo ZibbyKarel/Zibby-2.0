@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 
 const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 16, width: 'min(420px, 80vw)' };
 const row: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' };
-const label: CSSProperties = { fontSize: 11, color: 'var(--text-2)', letterSpacing: '.08em', textTransform: 'uppercase' };
+const label: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: '.08em', textTransform: 'uppercase' };
 
 /**
  * Every divider variant — horizontal, vertical, with text, with spacing.

@@ -1,38 +1,13 @@
 import {
   forwardRef,
   type ButtonHTMLAttributes,
-  type CSSProperties,
   type ReactNode,
 } from 'react';
 import { Icon, IconName } from '../Icon';
 import type { Size } from '../../tokens';
-import { useTokens } from '../../DesignSystemContext';
 import { computeContainerStyle, type ContainerProps } from '../Container';
-import {
-  computeVisualStyle,
-  type SurfaceBackground,
-  type SurfaceBorderEdges,
-  type SurfaceBorderStyle,
-  type SurfaceBorderTone,
-  type SurfaceRadius,
-  type SurfaceShadow,
-} from '../../visualStyles';
 
-export type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'ghost'
-  | 'outline'
-  | 'danger'
-  /**
-   * Layout-passthrough variant. Drops the size-driven height/padding so the
-   * button can be a Card-shaped click target with arbitrary children, accepting
-   * Container layout/sizing/padding props plus visual treatment props
-   * (background, bordered, borderTone, borderStyle, radius, shadow). Use for
-   * custom click targets like a collapsible card header or a full-width row
-   * trigger.
-   */
-  | 'surface';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger';
 
 export type ButtonSize = Extract<Size, 'sm' | 'md' | 'lg'>;
 
@@ -45,34 +20,26 @@ export type ButtonProps = StandardButtonAttrs &
   ContainerProps & {
     /** Optional text. Mutually exclusive with `children`; when both are passed, `children` wins. */
     label?: ReactNode;
-    /** Free-form button content (used by the `surface` variant; falls back to label/icons mode otherwise). */
+    /** Free-form button content (falls back to label/icons mode when omitted). */
     children?: ReactNode;
     variant?: ButtonVariant;
-    /** Sizing preset. Ignored by the `surface` variant. */
+    /** Sizing preset. */
     size?: ButtonSize;
-    /** Leading icon (label/icons mode only). */
+    /** Leading icon. */
     startIcon?: IconName;
-    /** Trailing icon (label/icons mode only). */
+    /** Trailing icon. */
     endIcon?: IconName;
-
-    // Visual passthrough props — only meaningful for variant="surface".
-    background?: SurfaceBackground;
-    bordered?: boolean | SurfaceBorderEdges;
-    borderTone?: SurfaceBorderTone;
-    borderStyle?: SurfaceBorderStyle;
-    radius?: SurfaceRadius;
-    shadow?: SurfaceShadow;
   };
 
-const variantClasses: Record<Exclude<ButtonVariant, 'surface'>, string> = {
+const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'bg-[var(--emerald)] text-[#04140d] border-[var(--emerald)] hover:opacity-90',
   secondary:
-    'bg-[var(--bg-3)] text-[var(--text-0)] border-[var(--border)] hover:bg-[var(--bg-hover)]',
+    'bg-[var(--bg-raised)] text-[var(--text-primary)] border-[var(--border)] hover:bg-[var(--bg-hover)]',
   ghost:
-    'bg-transparent text-[var(--text-1)] border-transparent hover:bg-[var(--bg-hover)]',
+    'bg-transparent text-[var(--text-secondary)] border-transparent hover:bg-[var(--bg-hover)]',
   outline:
-    'bg-transparent text-[var(--text-0)] border-[var(--border-2)] hover:bg-[var(--bg-hover)]',
+    'bg-transparent text-[var(--text-primary)] border-[var(--border-strong)] hover:bg-[var(--bg-hover)]',
   danger:
     'bg-transparent text-[var(--rose)] border-[var(--border)] hover:bg-[var(--bg-hover)]',
 };
@@ -113,13 +80,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     endIcon,
     className = '',
     style,
-    // Visual passthrough (extracted so they don't leak onto the rendered DOM)
-    background,
-    bordered,
-    borderTone,
-    borderStyle,
-    radius,
-    shadow,
     // Container-style props (extracted so they don't leak as DOM attributes)
     padding,
     width,
@@ -148,7 +108,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     ...rest
   } = props;
 
-  const tokens = useTokens();
   const containerStyle = computeContainerStyle({
     padding,
     width, height, minWidth, maxWidth, minHeight, maxHeight,
@@ -157,13 +116,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     opacity, cursor, pointerEvents, userSelect, textAlign, resize,
     grow, shrink,
   });
-  const visualStyle =
-    variant === 'surface'
-      ? computeVisualStyle(
-          { background, bordered, borderTone, borderStyle, radius, shadow },
-          tokens,
-        )
-      : ({} as CSSProperties);
 
   const inner: ReactNode =
     children !== undefined ? (
@@ -188,16 +140,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       </>
     );
 
-  const cls =
-    variant === 'surface'
-      ? ['ds-button-surface', className].filter(Boolean).join(' ')
-      : `${STANDARD_BASE} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`.trim();
+  const cls = `${STANDARD_BASE} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`.trim();
 
   return (
     <button
       ref={ref}
       className={cls}
-      style={{ ...visualStyle, ...containerStyle, ...style }}
+      style={{ ...containerStyle, ...style }}
       {...rest}
     >
       {inner}

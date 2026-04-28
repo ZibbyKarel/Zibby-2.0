@@ -17,8 +17,8 @@ const trigger: CSSProperties = {
   padding: '6px 10px',
   border: '1px solid var(--border)',
   borderRadius: 6,
-  background: 'var(--bg-3)',
-  color: 'var(--text-0)',
+  background: 'var(--bg-raised)',
+  color: 'var(--text-primary)',
   cursor: 'pointer',
   fontSize: 12,
 };
@@ -28,7 +28,7 @@ const cancelBtn: CSSProperties = {
   border: '1px solid transparent',
   borderRadius: 6,
   background: 'transparent',
-  color: 'var(--text-1)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   fontSize: 12,
 };

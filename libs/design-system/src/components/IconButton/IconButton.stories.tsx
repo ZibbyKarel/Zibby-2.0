@@ -18,7 +18,7 @@ const row: CSSProperties = { display: 'flex', gap: 12, alignItems: 'center', fle
 const col: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 16 };
 const label: CSSProperties = {
   fontSize: 11,
-  color: 'var(--text-2)',
+  color: 'var(--text-tertiary)',
   letterSpacing: '.08em',
   textTransform: 'uppercase',
   marginBottom: 6,

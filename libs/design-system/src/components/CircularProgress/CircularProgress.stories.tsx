@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 
 const row: CSSProperties = { display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' };
 const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 16 };
-const label: CSSProperties = { fontSize: 11, color: 'var(--text-2)', letterSpacing: '.08em', textTransform: 'uppercase' };
+const label: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: '.08em', textTransform: 'uppercase' };
 
 /**
  * Every supported visual state side-by-side.
